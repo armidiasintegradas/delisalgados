@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import {
   ArrowLeft,
   Save,
@@ -109,8 +108,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setErrorMessage("O nome do produto é obrigatório.");
       return;
     }
-    if (!preparationType) {
-      setErrorMessage("Informe se o produto é frito, assado, congelado, pronto ou possui opções de preparo.");
+    if (priceType !== "variants" && !preparationType) {
+      setErrorMessage("Informe se o produto é frito, assado, congelado ou pronto.");
       return;
     }
 
