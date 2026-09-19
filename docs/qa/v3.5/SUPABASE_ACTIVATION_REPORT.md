@@ -30,6 +30,7 @@ Date: 2026-09-19
 - Transactional order RPC tested with real PostgreSQL writes
 - Sequence generated distinct codes `DL-0002` and `DL-0003` during QA
 - QA orders and items removed after verification
+- Order sequence reset safely because the orders table is empty; the first real production order will start at `DL-0001`
 
 ## Critical defect found and fixed
 
