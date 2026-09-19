@@ -644,12 +644,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </h2>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-[#FAF3E8] text-[#8C7367] text-[9px] font-mono font-bold">
-                Foto HD / WebP
+                Foto 1:1 / WebP
               </span>
             </div>
 
             {imageUrl ? (
-              <div className="relative rounded-2xl overflow-hidden border border-[#F0E2D2] aspect-video bg-[#FFF8EE]">
+              <div className="relative rounded-2xl overflow-hidden border border-[#F0E2D2] aspect-square max-w-[360px] mx-auto bg-[#FFF8EE]">
                 <img
                   src={imageUrl}
                   alt={name || "Produto Deli"}
@@ -657,7 +657,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 />
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-[#E8D9CB] aspect-video bg-[#FFF8EE] flex items-center justify-center text-center p-5">
+              <div className="rounded-2xl border border-dashed border-[#E8D9CB] aspect-square max-w-[360px] mx-auto bg-[#FFF8EE] flex items-center justify-center text-center p-5">
                 <div>
                   <Camera size={24} className="mx-auto text-[#C9AFA1] mb-2" />
                   <p className="text-xs font-bold text-[#7A6357]">Produto sem imagem cadastrada</p>
@@ -979,10 +979,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#3C1F15]">
                   Fotografia Principal
                 </span>
-                <span className="text-[9px] text-[#DF5F45] font-bold">WebP HD 16:9</span>
+                <span className="text-[9px] text-[#DF5F45] font-bold">WebP HD 1:1</span>
               </div>
               {imageUrl ? (
-                <div className="relative rounded-2xl overflow-hidden aspect-video bg-[#FFF8EE] border border-[#F0E2D2]">
+                <div className="relative rounded-2xl overflow-hidden aspect-square max-w-[360px] mx-auto bg-[#FFF8EE] border border-[#F0E2D2]">
                   <img
                     src={imageUrl}
                     alt={name || "Produto Deli"}
@@ -990,7 +990,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   />
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-[#E8D9CB] aspect-video bg-[#FFF8EE] flex items-center justify-center">
+                <div className="rounded-2xl border border-dashed border-[#E8D9CB] aspect-square max-w-[360px] mx-auto bg-[#FFF8EE] flex items-center justify-center">
                   <div className="text-center">
                     <Camera size={22} className="mx-auto text-[#C9AFA1] mb-1" />
                     <span className="text-[10px] font-bold text-[#8C7367]">Sem foto cadastrada</span>
