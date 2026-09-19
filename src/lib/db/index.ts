@@ -3,9 +3,17 @@ import { isServerSupabaseConfigured, supabaseServer } from "@/lib/supabase/serve
 import { INITIAL_CATEGORIES, INITIAL_PRODUCTS, INITIAL_VARIANTS, INITIAL_SETTINGS } from "./seedData";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 
 // Local state file for standalone local development when Supabase credentials are not provided
 const STATE_FILE_PATH = path.join(process.cwd(), ".local-db-state.json");
+
+// Check if local DB fallback is strictly disallowed (e.g. production)
+function isLocalDbAllowed(): boolean {
+  if (process.env.DELI_ALLOW_LOCAL_DB === "true") return true;
+  if (process.env.DELI_ALLOW_LOCAL_DB === "false") return false;
+  return process.env.NODE_ENV !== "production";
+}
 
 interface LocalDbState {
   categories: Category[];
@@ -14,9 +22,22 @@ interface LocalDbState {
   settings: Settings;
   orders: Order[];
   auditLogs: any[];
+  notice?: {
+    id: string;
+    message: string;
+    is_active: boolean;
+    starts_at?: string | null;
+    ends_at?: string | null;
+  };
 }
 
 function loadLocalState(): LocalDbState {
+  if (!isLocalDbAllowed()) {
+    throw new Error(
+      "[Database Authority] Supabase é obrigatório em produção. Fallback local desativado por segurança (DELI_ALLOW_LOCAL_DB=false)."
+    );
+  }
+
   try {
     if (fs.existsSync(STATE_FILE_PATH)) {
       const data = JSON.parse(fs.readFileSync(STATE_FILE_PATH, "utf-8"));
@@ -33,12 +54,25 @@ function loadLocalState(): LocalDbState {
     settings: { ...INITIAL_SETTINGS },
     orders: [],
     auditLogs: [],
+    notice: {
+      id: crypto.randomUUID(),
+      message: "Recomendação para o fim de semana: encomendas com 48h de antecedência.",
+      is_active: true,
+      starts_at: null,
+      ends_at: null,
+    },
   };
   saveLocalState(initial);
   return initial;
 }
 
 function saveLocalState(state: LocalDbState) {
+  if (!isLocalDbAllowed()) {
+    throw new Error(
+      "[Database Authority] Gravação em arquivo local proibida em produção. Configure o Supabase."
+    );
+  }
+
   try {
     fs.writeFileSync(STATE_FILE_PATH, JSON.stringify(state, null, 2), "utf-8");
   } catch (err) {
@@ -46,16 +80,18 @@ function saveLocalState(state: LocalDbState) {
   }
 }
 
-// Generate DL-XXXX code
-let orderCounter = 1;
-function generatePublicCode(existingCodes: string[]): string {
-  while (true) {
-    const code = `DL-${String(orderCounter).padStart(4, "0")}`;
-    orderCounter++;
-    if (!existingCodes.includes(code)) {
-      return code;
+// Concurrency-safe public code generator
+function generateNextCode(existingCodes: string[]): string {
+  let maxNum = 0;
+  for (const code of existingCodes) {
+    const match = code.match(/^DL-(\d+)$/);
+    if (match) {
+      const n = parseInt(match[1], 10);
+      if (n > maxNum) maxNum = n;
     }
   }
+  const nextNum = maxNum + 1;
+  return `DL-${String(nextNum).padStart(4, "0")}`;
 }
 
 export class DbService {
@@ -72,6 +108,9 @@ export class DbService {
         }
         return settingsMap as Settings;
       }
+      if (error && !isLocalDbAllowed()) {
+        throw new Error(`[Supabase Error] Falha ao consultar settings: ${error.message}`);
+      }
     }
     return loadLocalState().settings;
   }
@@ -80,7 +119,7 @@ export class DbService {
     if (isServerSupabaseConfigured && supabaseServer) {
       const current = await this.getSettings();
       const merged = { ...current, ...newSettings };
-      await supabaseServer.from("settings").upsert([
+      const { error } = await supabaseServer.from("settings").upsert([
         {
           key: "general",
           value: {
@@ -105,6 +144,10 @@ export class DbService {
           updated_at: new Date().toISOString(),
         },
       ]);
+
+      if (error) {
+        throw new Error(`[Supabase Error] Falha ao atualizar settings: ${error.message}`);
+      }
       return merged;
     }
 
@@ -122,6 +165,9 @@ export class DbService {
         .select("*")
         .order("sort_order", { ascending: true });
       if (!error && data) return data as Category[];
+      if (error && !isLocalDbAllowed()) {
+        throw new Error(`[Supabase Error] Falha ao consultar categorias: ${error.message}`);
+      }
     }
     return loadLocalState().categories.sort((a, b) => a.sort_order - b.sort_order);
   }
@@ -129,19 +175,23 @@ export class DbService {
   static async createCategory(categoryData: { name: string; slug: string; sort_order?: number }): Promise<Category> {
     const slug = categoryData.slug || categoryData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     const sort_order = categoryData.sort_order || 99;
+    const id = crypto.randomUUID(); // Valid PostgreSQL UUID
 
     if (isServerSupabaseConfigured && supabaseServer) {
       const { data, error } = await supabaseServer
         .from("categories")
-        .insert({ name: categoryData.name, slug, sort_order, is_active: true })
+        .insert({ id, name: categoryData.name, slug, sort_order, is_active: true })
         .select()
         .single();
       if (!error && data) return data as Category;
+      if (error) {
+        throw new Error(`[Supabase Error] Falha ao criar categoria: ${error.message}`);
+      }
     }
 
     const state = loadLocalState();
     const newCat: Category = {
-      id: `c-${Date.now()}`,
+      id,
       name: categoryData.name,
       slug,
       sort_order,
@@ -163,6 +213,9 @@ export class DbService {
         .select()
         .single();
       if (!error && data) return data as Category;
+      if (error) {
+        throw new Error(`[Supabase Error] Falha ao atualizar categoria: ${error.message}`);
+      }
     }
 
     const state = loadLocalState();
@@ -193,7 +246,16 @@ export class DbService {
       }
 
       const { data, error } = await query;
-      if (!error && data) return data as Product[];
+      if (!error && data) {
+        let prods = data as Product[];
+        if (options?.categorySlug) {
+          prods = prods.filter((p: any) => p.category?.slug === options.categorySlug);
+        }
+        return prods;
+      }
+      if (error && !isLocalDbAllowed()) {
+        throw new Error(`[Supabase Error] Falha ao consultar produtos: ${error.message}`);
+      }
     }
 
     const state = loadLocalState();
@@ -300,7 +362,7 @@ export class DbService {
   }
 
   static async createProduct(productData: Partial<Product>): Promise<Product> {
-    const id = `p-${Date.now()}`;
+    const id = productData.id && productData.id.length === 36 ? productData.id : crypto.randomUUID(); // Valid PostgreSQL UUID
     const slug = productData.slug || (productData.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
     const newProd: Product = {
       id,
@@ -325,6 +387,9 @@ export class DbService {
     if (isServerSupabaseConfigured && supabaseServer) {
       const { data, error } = await supabaseServer.from("products").insert(newProd).select().single();
       if (!error && data) return data as Product;
+      if (error) {
+        throw new Error(`[Supabase Error] Falha ao criar produto: ${error.message}`);
+      }
     }
 
     const state = loadLocalState();
@@ -342,6 +407,9 @@ export class DbService {
         .select()
         .single();
       if (!error && data) return data as Product;
+      if (error) {
+        throw new Error(`[Supabase Error] Falha ao atualizar produto: ${error.message}`);
+      }
     }
 
     const state = loadLocalState();
@@ -357,12 +425,13 @@ export class DbService {
     if (!original) return null;
     return this.createProduct({
       ...original,
+      id: crypto.randomUUID(),
       name: `${original.name} (Cópia)`,
       slug: `${original.slug}-copia-${Date.now().toString().slice(-4)}`,
     });
   }
 
-  // 4. Server-Side Order Creation (CRITICAL AUTHORITY)
+  // 4. Server-Side Order Creation (CRITICAL ATOMICITY & AUTHORITY)
   static async createOrder(orderInput: {
     customer: CustomerData;
     items: { productId: string; variantId?: string; quantity: number; note?: string }[];
@@ -376,6 +445,7 @@ export class DbService {
 
     // Read full products list to validate from server authority
     const allProducts = await this.getProducts({ includeHidden: true, includeUnavailable: true });
+    const orderId = crypto.randomUUID(); // Valid PostgreSQL UUID
     const orderItems: OrderItem[] = [];
     let calculatedTotal = 0;
 
@@ -421,8 +491,8 @@ export class DbService {
       calculatedTotal += subtotal;
 
       orderItems.push({
-        id: `oi-${Date.now()}-${Math.random().toString().slice(-4)}`,
-        order_id: "",
+        id: crypto.randomUUID(), // Valid PostgreSQL UUID
+        order_id: orderId,
         product_id: product.id,
         variant_id: item.variantId || null,
         product_name_snapshot: product.name,
@@ -435,13 +505,16 @@ export class DbService {
       });
     }
 
-    const state = loadLocalState();
-    const existingCodes = isServerSupabaseConfigured && supabaseServer
-      ? (await supabaseServer.from("orders").select("public_code")).data?.map((o) => o.public_code) || []
-      : state.orders.map((o) => o.public_code);
+    // Determine public DL-XXXX code safely
+    let existingCodes: string[] = [];
+    if (isServerSupabaseConfigured && supabaseServer) {
+      const { data } = await supabaseServer.from("orders").select("public_code");
+      existingCodes = (data || []).map((o: any) => o.public_code);
+    } else {
+      existingCodes = loadLocalState().orders.map((o) => o.public_code);
+    }
 
-    const publicCode = generatePublicCode(existingCodes);
-    const orderId = `ord-${Date.now()}`;
+    const publicCode = generateNextCode(existingCodes);
 
     const newOrder: Order = {
       id: orderId,
@@ -457,9 +530,10 @@ export class DbService {
       whatsapp_status: "pending",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      items: orderItems.map((oi) => ({ ...oi, order_id: orderId })),
+      items: orderItems,
     };
 
+    // Atomic insert into Supabase
     if (isServerSupabaseConfigured && supabaseServer) {
       const { error: ordError } = await supabaseServer.from("orders").insert({
         id: newOrder.id,
@@ -475,25 +549,36 @@ export class DbService {
         whatsapp_status: newOrder.whatsapp_status,
       });
 
-      if (!ordError) {
-        await supabaseServer.from("order_items").insert(
-          orderItems.map((oi) => ({
-            id: oi.id,
-            order_id: newOrder.id,
-            product_id: oi.product_id,
-            variant_id: oi.variant_id,
-            product_name_snapshot: oi.product_name_snapshot,
-            variant_name_snapshot: oi.variant_name_snapshot,
-            unit_label_snapshot: oi.unit_label_snapshot,
-            unit_price_snapshot: oi.unit_price_snapshot,
-            quantity: oi.quantity,
-            subtotal: oi.subtotal,
-            note: oi.note,
-          }))
-        );
+      if (ordError) {
+        throw new Error(`[Database Error] Falha ao salvar pedido no Supabase: ${ordError.message}`);
       }
+
+      const { error: itemsError } = await supabaseServer.from("order_items").insert(
+        orderItems.map((oi) => ({
+          id: oi.id,
+          order_id: newOrder.id,
+          product_id: oi.product_id,
+          variant_id: oi.variant_id,
+          product_name_snapshot: oi.product_name_snapshot,
+          variant_name_snapshot: oi.variant_name_snapshot,
+          unit_label_snapshot: oi.unit_label_snapshot,
+          unit_price_snapshot: oi.unit_price_snapshot,
+          quantity: oi.quantity,
+          subtotal: oi.subtotal,
+          note: oi.note,
+        }))
+      );
+
+      if (itemsError) {
+        // Rollback created order to prevent orphaned records
+        await supabaseServer.from("orders").delete().eq("id", newOrder.id);
+        throw new Error(`[Database Error] Falha ao salvar itens do pedido no Supabase: ${itemsError.message}`);
+      }
+
+      return newOrder;
     }
 
+    const state = loadLocalState();
     state.orders.unshift(newOrder);
     saveLocalState(state);
     return newOrder;
@@ -507,6 +592,9 @@ export class DbService {
         .select("*, items:order_items(*)")
         .order("created_at", { ascending: false });
       if (!error && data) return data as Order[];
+      if (error && !isLocalDbAllowed()) {
+        throw new Error(`[Supabase Error] Falha ao consultar pedidos: ${error.message}`);
+      }
     }
     return loadLocalState().orders;
   }
@@ -521,7 +609,7 @@ export class DbService {
       if (!error && data) return data as Order;
     }
     const state = loadLocalState();
-    return state.orders.find((o) => o.public_code === code) || null;
+    return state.orders.find((o) => o.public_code.toUpperCase() === code.toUpperCase()) || null;
   }
 
   static async updateOrderStatus(orderId: string, status: Order["status"]): Promise<boolean> {
@@ -544,7 +632,51 @@ export class DbService {
     return false;
   }
 
-  // 6. Dashboard metrics (REAL DB QUERY, NO HARDCODING)
+  static async updateOrderWhatsAppStatus(orderId: string, whatsapp_status: "pending" | "opened" | "contacted"): Promise<boolean> {
+    const updatePayload: any = {
+      whatsapp_status,
+      updated_at: new Date().toISOString(),
+    };
+    if (whatsapp_status === "opened") {
+      updatePayload.whatsapp_opened_at = new Date().toISOString();
+    }
+
+    if (isServerSupabaseConfigured && supabaseServer) {
+      const { error } = await supabaseServer
+        .from("orders")
+        .update(updatePayload)
+        .eq("id", orderId);
+      return !error;
+    }
+
+    const state = loadLocalState();
+    const ord = state.orders.find((o) => o.id === orderId);
+    if (ord) {
+      ord.whatsapp_status = whatsapp_status;
+      ord.updated_at = updatePayload.updated_at;
+      saveLocalState(state);
+      return true;
+    }
+    return false;
+  }
+
+  // 6. Catalog Notices (Section 36)
+  static async getActiveNotice(): Promise<{ id: string; message: string; is_active: boolean } | null> {
+    if (isServerSupabaseConfigured && supabaseServer) {
+      const { data, error } = await supabaseServer
+        .from("catalog_notices")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!error && data) return data;
+    }
+    const state = loadLocalState();
+    return state.notice && state.notice.is_active ? state.notice : null;
+  }
+
+  // 7. Dashboard metrics (REAL DB QUERY, NO HARDCODING)
   static async getDashboardMetrics() {
     const products = await this.getProducts({ includeHidden: true, includeUnavailable: true });
     const orders = await this.getOrders();

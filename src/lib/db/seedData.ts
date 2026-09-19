@@ -860,11 +860,11 @@ export const INITIAL_VARIANTS: ProductVariant[] = [
 
 export const INITIAL_SETTINGS: Settings = {
   "business_name": "Deli Salgados",
-  "whatsapp_number": "5581987654321",
+  "whatsapp_number": "",
   "instagram_url": "https://www.instagram.com/deli.salgados",
-  "address": "Recife, PE",
-  "pickup_information": "Retirada no balcão com agendamento prévio.",
-  "delivery_information": "Consulte taxa de entrega e rotas para seu endereço.",
+  "address": "",
+  "pickup_information": "",
+  "delivery_information": "",
   "whatsapp_opening_message": "Olá, Deli Salgados! Gostaria de enviar uma solicitação de pedido pelo cardápio digital:",
   "whatsapp_closing_message": "Aguardo confirmação da disponibilidade e do valor final. Obrigado!",
   "catalog_show_search": true,
@@ -875,3 +875,4 @@ export const INITIAL_SETTINGS: Settings = {
   "logo_url": null,
   "pattern_url": null
 };
+

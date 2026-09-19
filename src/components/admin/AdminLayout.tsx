@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -15,12 +15,13 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { Logo } from "@/components/public/Logo";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [todayOrdersCount, setTodayOrdersCount] = useState<number>(0);
 
   const basePath = pathname.startsWith("/delisalgados/admin")
     ? "/delisalgados/admin"
@@ -30,6 +31,22 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     pathname === `${basePath}/login` ||
     pathname === "/admin/login" ||
     pathname === "/delisalgados/admin/login";
+
+  useEffect(() => {
+    if (isLoginPage) return;
+    async function loadMetrics() {
+      try {
+        const res = await fetch("/api/admin/dashboard");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.metrics && typeof data.metrics.todayOrders === "number") {
+            setTodayOrdersCount(data.metrics.todayOrders);
+          }
+        }
+      } catch {}
+    }
+    loadMetrics();
+  }, [isLoginPage]);
 
   // Skip layout on login page
   if (isLoginPage) {
@@ -45,9 +62,13 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     { label: "Configurações", href: `${basePath}/configuracoes`, icon: SettingsIcon },
   ];
 
-  const handleLogout = () => {
-    localStorage.removeItem("deli_admin_auth");
-    document.cookie = "deli_admin_session=; path=/; max-age=0";
+  const handleLogout = async () => {
+    try {
+      if (isSupabaseConfigured && supabase) {
+        await supabase.auth.signOut();
+      }
+    } catch {}
+    document.cookie = "deli_test_session=; path=/; max-age=0";
     router.push(`${basePath}/login`);
   };
 
@@ -60,7 +81,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             <img src="/deli-logo-coral-official.png" alt="Deli Salgados" className="w-full h-full object-contain" />
           </div>
           <div>
-            <span className="font-serif italic font-black text-base text-white leading-none block">
+            <span className="font-display font-black text-base text-white leading-none block">
               Deli Salgados
             </span>
             <span className="text-[10px] text-white/80 font-medium leading-tight block">
@@ -92,7 +113,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 <img src="/deli-logo-coral-official.png" alt="Deli Salgados" className="w-full h-full object-contain" />
               </div>
               <div>
-                <span className="font-serif italic font-black text-base text-[#DF5F45] leading-none block">
+                <span className="font-display font-black text-base text-[#DF5F45] leading-none block">
                   Deli Salgados
                 </span>
                 <span className="text-[10px] text-[#7A6357] font-medium leading-tight block">
@@ -158,7 +179,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 <div className="text-[10px] text-[#9E8679]">Administrador</div>
               </div>
             </div>
-            <span className="text-[#9E8679] text-xs font-bold">›</span>
+            <LogOut size={14} className="text-[#9E8679] hover:text-[#DF5F45] transition" />
           </div>
         </div>
       </aside>
@@ -196,9 +217,11 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
         >
           <div className="relative">
             <ShoppingBag size={18} />
-            <span className="absolute -top-1 -right-2 w-3.5 h-3.5 bg-[#DF5F45] text-white rounded-full text-[8px] font-bold flex items-center justify-center">
-              4
-            </span>
+            {todayOrdersCount > 0 && (
+              <span className="absolute -top-1 -right-2 px-1 min-w-[14px] h-3.5 bg-[#DF5F45] text-white rounded-full text-[8px] font-bold flex items-center justify-center">
+                {todayOrdersCount}
+              </span>
+            )}
           </div>
           <span>PEDIDOS</span>
         </Link>

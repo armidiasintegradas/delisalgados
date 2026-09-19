@@ -210,7 +210,7 @@ export default function AdminProductsPage() {
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2.5">
           <Link
-            href="/admin/produtos/novo"
+            href="/delisalgados/admin/produtos/novo"
             className="py-2.5 px-3 bg-[#3C1F15] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-xs"
           >
             <Plus size={14} />
@@ -421,7 +421,7 @@ export default function AdminProductsPage() {
             </button>
 
             <Link
-              href="/admin/produtos/novo"
+              href="/delisalgados/admin/produtos/novo"
               className="px-3.5 py-1.5 rounded-xl bg-[#DF5F45] text-white hover:bg-[#C04220] text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
             >
               <Plus size={14} />

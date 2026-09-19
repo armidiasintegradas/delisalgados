@@ -3,14 +3,13 @@
 
 begin;
 
--- Initial default settings
+-- Initial default settings (do not overwrite if already set in production)
 insert into public.settings (key, value, updated_at)
 values 
-  ('general', '{"business_name": "Deli Salgados", "whatsapp_number": "5581987654321", "instagram_url": "https://www.instagram.com/deli.salgados", "address": "Recife, PE", "pickup_information": "Retirada no balcão sob agendamento.", "delivery_information": "Entrega sob consulta de taxa e rota."}'::jsonb, now()),
+  ('general', '{"business_name": "Deli Salgados", "whatsapp_number": "", "instagram_url": "https://www.instagram.com/deli.salgados", "address": "", "pickup_information": "", "delivery_information": ""}'::jsonb, now()),
   ('catalog', '{"show_search": true, "show_prices": true, "show_unavailable": false, "special_order_cta_enabled": true, "special_order_cta_text": "Precisa de um pedido especial para sua festa?"}'::jsonb, now()),
   ('messages', '{"whatsapp_opening_message": "Olá, Deli Salgados! Gostaria de enviar uma solicitação de pedido pelo cardápio digital:", "whatsapp_closing_message": "Aguardo confirmação da disponibilidade e do valor final. Obrigado!"}'::jsonb, now())
-on conflict (key) do update
-set value = excluded.value, updated_at = now();
+on conflict (key) do nothing;
 
 -- 11 Canonical Categories
 insert into public.categories (name, slug, sort_order, is_active)

@@ -97,7 +97,7 @@ export default function AdminCatalogSettingsPage() {
           <div className="text-[11px] font-bold uppercase tracking-wider text-[#8C7367]">
             PAINEL ADMINISTRATIVO &gt; TELA 14
           </div>
-          <h1 className="text-2xl font-serif italic font-black text-[#3C1F15] tracking-tight mt-0.5">
+          <h1 className="text-2xl font-display font-black text-[#3C1F15] tracking-tight mt-0.5">
             Apresentação do Cardápio Público
           </h1>
           <p className="text-xs text-[#7A6357] mt-1 max-w-xl leading-relaxed">
@@ -432,7 +432,7 @@ export default function AdminCatalogSettingsPage() {
                   <div className="w-5 h-5 rounded-full bg-[#E05A36] text-white flex items-center justify-center text-[10px]">
                     👨‍🍳
                   </div>
-                  <span className="font-serif italic font-bold text-xs text-[#3C1F15]">
+                  <span className="font-display font-bold text-xs text-[#3C1F15]">
                     Deli Salgados
                   </span>
                 </div>

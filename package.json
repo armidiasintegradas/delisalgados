@@ -11,6 +11,7 @@
     "test": "node --test tests/run-all-tests.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.49.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",

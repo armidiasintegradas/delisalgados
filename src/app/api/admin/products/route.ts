@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { DbService } from "@/lib/db";
+import { verifyAdminSession } from "@/lib/auth/adminAuth";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = await verifyAdminSession(request);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error || "Acesso restrito." }, { status: auth.status });
+  }
+
   try {
     const products = await DbService.getProducts({ includeHidden: true, includeUnavailable: true });
     return NextResponse.json({ products });
@@ -11,6 +17,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = await verifyAdminSession(request);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error || "Acesso restrito." }, { status: auth.status });
+  }
+
   try {
     const body = await request.json();
     if (body.action === "duplicate") {
@@ -25,6 +36,11 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const auth = await verifyAdminSession(request);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error || "Acesso restrito." }, { status: auth.status });
+  }
+
   try {
     const body = await request.json();
     // Bulk price updates or single update
@@ -59,3 +75,4 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

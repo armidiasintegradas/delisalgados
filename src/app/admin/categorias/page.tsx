@@ -286,7 +286,7 @@ export default function AdminCategoriesPage() {
           <div className="text-[11px] font-bold uppercase tracking-wider text-[#8C7367]">
             CATEGORIAS &amp; APRESENTAÇÃO &gt; PÚBLICO
           </div>
-          <h1 className="text-2xl font-serif italic font-black text-[#3C1F15] tracking-tight mt-0.5">
+          <h1 className="text-2xl font-display font-black text-[#3C1F15] tracking-tight mt-0.5">
             Categorias do Cardápio
           </h1>
           <p className="text-xs text-[#7A6357] mt-1 max-w-xl leading-relaxed">

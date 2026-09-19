@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import {
   Check,
   Save,
@@ -14,43 +13,45 @@ import {
   Lock,
   MessageCircle,
   Users,
-  Plus,
-  Edit2,
-  Trash2,
+  AlertTriangle,
   ExternalLink
 } from "lucide-react";
 import { Settings } from "@/types";
 
 export default function AdminSettingsPage() {
   const [businessName, setBusinessName] = useState("Deli Salgados");
-  const [whatsappNumber, setWhatsappNumber] = useState("(81) 98765-4321");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("https://www.instagram.com/deli.salgados");
-  const [address, setAddress] = useState("Rua das Camélias 112 - Bairro Jardim, São Paulo - SP");
-
-  const [pickupInfo, setPickupInfo] = useState("Retirada no balcão com agendamento prévio de horário.");
-  const [deliveryInfo, setDeliveryInfo] = useState("Entregas realizadas por parceiro sob consulta de frete direto no WhatsApp.");
-
-  const [clientInitialMsg, setClientInitialMsg] = useState("Olá, Deli Salgados! Gostaria de solicitar este pedido:\n[itens]\nModalidade: [retirada/retirada]");
-  const [attendantConfirmMsg, setAttendantConfirmMsg] = useState("Olá! Recebemos seu pedido com muito carinho aqui na Deli. Nossa equipe já confirmou a disponibilidade para a data desejada. Segue a chave Pix para confirmação da reserva:");
+  const [address, setAddress] = useState("");
+  const [pickupInfo, setPickupInfo] = useState("");
+  const [deliveryInfo, setDeliveryInfo] = useState("");
+  const [whatsappOpeningMsg, setWhatsappOpeningMsg] = useState("");
+  const [whatsappClosingMsg, setWhatsappClosingMsg] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadSettings() {
       try {
         const res = await fetch("/api/admin/settings");
-        const data = await res.json();
-        if (data.settings) {
-          const s = data.settings;
-          if (s.business_name) setBusinessName(s.business_name);
-          if (s.contact_whatsapp) setWhatsappNumber(s.contact_whatsapp);
-          if (s.contact_instagram) setInstagramUrl(s.contact_instagram);
-          if (s.pickup_information) setPickupInfo(s.pickup_information);
-          if (s.delivery_information) setDeliveryInfo(s.delivery_information);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.settings) {
+            const s = data.settings;
+            if (s.business_name) setBusinessName(s.business_name);
+            if (s.whatsapp_number) setWhatsappNumber(s.whatsapp_number);
+            if (s.instagram_url) setInstagramUrl(s.instagram_url);
+            if (s.address) setAddress(s.address);
+            if (s.pickup_information) setPickupInfo(s.pickup_information);
+            if (s.delivery_information) setDeliveryInfo(s.delivery_information);
+            if (s.whatsapp_opening_message) setWhatsappOpeningMsg(s.whatsapp_opening_message);
+            if (s.whatsapp_closing_message) setWhatsappClosingMsg(s.whatsapp_closing_message);
+          }
         }
       } catch (e) {
-        console.error(e);
+        console.error("Error loading settings:", e);
       }
     }
     loadSettings();
@@ -58,24 +59,33 @@ export default function AdminSettingsPage() {
 
   const handleSave = async () => {
     setSaving(true);
+    setFeedback(null);
+    setErrorMsg(null);
     try {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           business_name: businessName,
-          contact_whatsapp: whatsappNumber,
-          contact_instagram: instagramUrl,
-          pickup_information: pickupInfo,
-          delivery_information: deliveryInfo,
+          whatsapp_number: whatsappNumber.trim(),
+          instagram_url: instagramUrl.trim(),
+          address: address.trim(),
+          pickup_information: pickupInfo.trim(),
+          delivery_information: deliveryInfo.trim(),
+          whatsapp_opening_message: whatsappOpeningMsg,
+          whatsapp_closing_message: whatsappClosingMsg,
         }),
       });
+
       if (res.ok) {
         setFeedback("Configurações salvas com sucesso!");
         setTimeout(() => setFeedback(null), 3000);
+      } else {
+        const err = await res.json();
+        setErrorMsg(err.error || "Erro ao salvar configurações.");
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      setErrorMsg(e.message || "Falha na comunicação com o servidor.");
     } finally {
       setSaving(false);
     }
@@ -85,9 +95,16 @@ export default function AdminSettingsPage() {
     <div className="space-y-4 font-sans text-[#3C1F15]">
       {/* Toast Feedback */}
       {feedback && (
-        <div className="fixed bottom-5 right-5 z-50 bg-[#2E7D47] text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-5 right-5 z-50 bg-[#1FAA52] text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
           <Check size={16} />
           <span>{feedback}</span>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-2xl flex items-center gap-2">
+          <AlertTriangle size={16} className="text-red-500 shrink-0" />
+          <span>{errorMsg}</span>
         </div>
       )}
 
@@ -95,449 +112,201 @@ export default function AdminSettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <div className="text-[11px] font-bold uppercase tracking-wider text-[#8C7367]">
-            PAINEL ADMINISTRATIVO &gt; CONFIGURAÇÕES
+            PAINEL GESTÃO · CONFIGURAÇÕES OFICIAIS
           </div>
-          <h1 className="text-2xl font-serif italic font-black text-[#3C1F15] tracking-tight mt-0.5">
-            Configurações Gerais da Deli
+          <h1 className="text-2xl font-display font-black text-[#3C1F15] tracking-tight mt-0.5">
+            Configurações da Deli
           </h1>
-          <p className="text-xs text-[#7A6357] mt-1 max-w-xl leading-relaxed">
-            Parâmetros operacionais da cozinha, mensagens padrão e controle de acesso.
+          <p className="text-xs text-[#7A6357]">
+            Gerencie os canais de contato, mensagens padrão, informações de entrega e dados operacionais.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FFF8EE] border border-[#EBDCCF] text-xs font-bold text-[#7A6357] hover:bg-[#FAF3E8] transition shadow-2xs"
-          >
-            <RotateCcw size={13} />
-            <span>Descartar</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={saving}
-            onClick={handleSave}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#A93B1F] hover:bg-[#942B14] text-white text-xs font-bold transition shadow-xs disabled:opacity-50"
-          >
-            <Save size={13} className="text-white" />
-            <span>{saving ? "Salvando..." : "Salvar Alterações"}</span>
-          </button>
-        </div>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-5 py-2.5 rounded-xl bg-[#DF5F45] hover:bg-[#C94E36] text-white text-xs font-black uppercase tracking-wider shadow-sm flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
+        >
+          <Save size={14} />
+          <span>{saving ? "Salvando..." : "Salvar Alterações"}</span>
+        </button>
       </div>
 
-      {/* Row 1: Empresa & Contato + Ativos Oficiais */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        {/* Card 1 (7 cols): Empresa & Contato Oficial */}
-        <div className="lg:col-span-7 bg-white p-4 rounded-3xl border border-[#F0E2D2] shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between pb-1.5 border-b border-[#F4E8DB]">
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-[#FAF3E8] text-[#DF5F45] flex items-center justify-center text-xs">
-                🏪
-              </span>
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-[#3C1F15]">
-                  Empresa &amp; Contato Oficial
-                </h2>
-                <span className="text-[9px] text-[#9E8679]">IDENTIDADE PÚBLICA DO NEGÓCIO</span>
-              </div>
-            </div>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#E5F7EB] text-[#1FAA52] text-[9px] font-bold">
-              ✓ Ativo no Cardápio
-            </span>
+      {/* WhatsApp Configuration Alert if empty */}
+      {!whatsappNumber.trim() && (
+        <div className="p-4 bg-[#FFF4E8] border border-[#FADCC7] rounded-3xl flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-[#DF5F45] text-white flex items-center justify-center shrink-0 mt-0.5">
+            <AlertTriangle size={16} />
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div>
-              <label className="text-[9px] font-bold uppercase tracking-wider text-[#7A6357] block mb-0.5">
-                NOME COMERCIAL
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  className="w-full bg-[#FFFDF9] border border-[#E8D9CB] rounded-xl pl-8 pr-3 py-1.5 text-xs font-bold text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
-                />
-                <Store size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8C7367]" />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[9px] font-bold uppercase tracking-wider text-[#7A6357] block mb-0.5">
-                WHATSAPP OFICIAL DE VENDAS
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={whatsappNumber}
-                  onChange={(e) => setWhatsappNumber(e.target.value)}
-                  className="w-full bg-[#FFFDF9] border border-[#E8D9CB] rounded-xl pl-8 pr-3 py-1.5 text-xs font-bold text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
-                />
-                <Phone size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8C7367]" />
-              </div>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="text-[9px] font-bold uppercase tracking-wider text-[#7A6357] block mb-0.5">
-                PERFIL OFICIAL NO INSTAGRAM
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={instagramUrl}
-                  onChange={(e) => setInstagramUrl(e.target.value)}
-                  className="w-full bg-[#FFFDF9] border border-[#E8D9CB] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#3C1F15] focus:outline-none"
-                />
-                <Instagram size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8C7367]" />
-              </div>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="text-[9px] font-bold uppercase tracking-wider text-[#7A6357] block mb-0.5">
-                ENDEREÇO DA COZINHA / PONTO DE RETIRADA
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full bg-[#FFFDF9] border border-[#E8D9CB] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#3C1F15] focus:outline-none"
-                />
-                <MapPin size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8C7367]" />
-              </div>
-            </div>
-          </div>
-
-          <div className="p-2 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] flex items-center gap-2 text-[9px] text-[#7A6357]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#1FAA52]" />
-            <span>Exibido automaticamente no rodapé do cardápio e no link de compartilhamento.</span>
+          <div className="space-y-1">
+            <h3 className="font-display font-black text-xs uppercase tracking-wide text-[#DF5F45]">
+              WhatsApp da Deli ainda não configurado
+            </h3>
+            <p className="text-xs text-[#7A6357] leading-relaxed">
+              Por motivos de segurança e integridade, os botões públicos de envio e contato por WhatsApp permanecerão temporariamente desativados até que o número oficial seja inserido e salvo abaixo.
+            </p>
           </div>
         </div>
+      )}
 
-        {/* Card 2 (5 cols): Ativos Oficiais da Marca */}
-        <div className="lg:col-span-5 bg-white p-4 rounded-3xl border border-[#F0E2D2] shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between pb-1.5 border-b border-[#F4E8DB]">
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-[#FAF3E8] text-[#DF5F45] flex items-center justify-center text-xs">
-                🛡
-              </span>
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-[#3C1F15]">
-                  Ativos Oficiais da Marca
-                </h2>
-                <span className="text-[9px] text-[#9E8679]">IDENTIDADE VISUAL E PROTEÇÃO</span>
-              </div>
-            </div>
-            <Lock size={12} className="text-[#8C7367]" />
-          </div>
-
-          <div className="space-y-2">
-            {/* Logo Row */}
-            <div className="p-2.5 rounded-2xl bg-[#FFF8EE] border border-[#EBDCCF] flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#FAF3E8] border border-[#EBDCCF] flex items-center justify-center text-base">
-                  👨‍🍳
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-[#3C1F15] block">
-                    Logomarca Oficial
-                  </span>
-                  <span className="text-[8px] text-[#9E8679]">
-                    PNG TRANSPARENTE • 1024 × 1024 PX
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="px-2 py-0.5 rounded-full bg-[#E5F7EB] text-[#1FAA52] text-[8px] font-bold">
-                  Principal no Menu / Header
-                </span>
-                <Lock size={11} className="text-[#1FAA52]" />
-              </div>
-            </div>
-
-            {/* Pattern Row */}
-            <div className="p-2.5 rounded-2xl bg-[#FFF8EE] border border-[#EBDCCF] flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#FAF3E8] border border-[#EBDCCF] flex items-center justify-center text-xs font-mono text-[#8C7367]">
-                  :::
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-[#3C1F15] block">
-                    Pattern Tonal de Fundo
-                  </span>
-                  <span className="text-[8px] text-[#9E8679]">
-                    TEXTURA ARTESANAL • OPACIDADE 3%
-                  </span>
-                </div>
-              </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#FCECE8] text-[#DF5F45] text-[8px] font-bold">
-                Padrão
-              </span>
-            </div>
-          </div>
-
-          <div className="p-2 rounded-xl bg-[#FFFBF7] border border-[#F4E8DB] text-[9px] text-[#7A6357] leading-tight">
-            Arquivos mantidos sob licença de propriedade e fidelidade visual ao método impresso.
-          </div>
-        </div>
-      </div>
-
-      {/* Row 2: Modalidades de Atendimento + Mensagens Padrão */}
+      {/* Row 1: Dados Gerais & Redes Oficiais */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Card 3 (6 cols): Modalidades de Atendimento */}
-        <div className="lg:col-span-6 bg-white p-5 rounded-3xl border border-[#F0E2D2] shadow-2xs space-y-3.5">
-          <div className="flex items-center justify-between pb-2 border-b border-[#F4E8DB]">
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-[#FAF3E8] text-[#DF5F45] flex items-center justify-center text-xs">
-                📦
-              </span>
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-[#3C1F15]">
-                  Modalidades de Atendimento
-                </h2>
-                <span className="text-[10px] text-[#9E8679]">POLÍTICA DE RETIRADA E ENTREGAS</span>
-              </div>
-            </div>
-            <span className="px-2 py-0.5 rounded-full bg-[#E5F7EB] text-[#1FAA52] text-[10px] font-bold">
-              2 Habilitadas
-            </span>
+        {/* Card 1: Informações do Negócio (7 cols) */}
+        <div className="lg:col-span-7 bg-white p-5 rounded-3xl border border-[#F0E2D2] shadow-2xs space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-[#F4E8DB]">
+            <Store size={16} className="text-[#DF5F45]" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#3C1F15]">
+              Identificação &amp; Canais de Contato
+            </h2>
           </div>
 
           <div className="space-y-3">
-            <div className="p-3 rounded-2xl bg-[#FFFDF9] border border-[#E8D9CB] space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#3C1F15] flex items-center gap-1.5">
-                  <span>🏠</span>
-                  <span>Retirada no Balcão</span>
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-[#E5F7EB] text-[#1FAA52] text-[9px] font-bold">
-                  Habilitado
-                </span>
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-[#8C7367] block">
-                INSTRUÇÕES AOS CLIENTES NO CARDÁPIO
-              </span>
+            <div className="space-y-1">
+              <label className="text-[11px] font-black uppercase tracking-wider text-[#8C7367] block">
+                Nome do Negócio
+              </label>
               <input
                 type="text"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl px-3 py-2 text-xs text-[#3C1F15] font-semibold focus:outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between items-center">
+                <label className="text-[11px] font-black uppercase tracking-wider text-[#8C7367]">
+                  WhatsApp Oficial para Pedidos (com DDI 55)
+                </label>
+                <span className="text-[10px] text-[#DF5F45] font-bold">
+                  {whatsappNumber.trim() ? "Ativo" : "Não configurado"}
+                </span>
+              </div>
+              <input
+                type="text"
+                value={whatsappNumber}
+                onChange={(e) => setWhatsappNumber(e.target.value)}
+                placeholder="Ex: 5581999999999"
+                className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl px-3 py-2 text-xs text-[#3C1F15] font-semibold focus:outline-none"
+              />
+              <span className="text-[10px] text-[#9E8679] block">
+                Somente números com código do país (55) e DDD. Este número receberá as mensagens dos clientes.
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-black uppercase tracking-wider text-[#8C7367] block">
+                Perfil Oficial do Instagram
+              </label>
+              <input
+                type="text"
+                value={instagramUrl}
+                onChange={(e) => setInstagramUrl(e.target.value)}
+                placeholder="https://www.instagram.com/deli.salgados"
+                className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl px-3 py-2 text-xs text-[#3C1F15] font-semibold focus:outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-black uppercase tracking-wider text-[#8C7367] block">
+                Endereço Físico (se aplicável)
+              </label>
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Deixe em branco se for somente sob encomenda/retirada sob agendamento"
+                className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl px-3 py-2 text-xs text-[#3C1F15] focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Modalidades de Atendimento (5 cols) */}
+        <div className="lg:col-span-5 bg-white p-5 rounded-3xl border border-[#F0E2D2] shadow-2xs space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-[#F4E8DB]">
+            <span className="text-base">📦</span>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#3C1F15]">
+              Modalidades de Atendimento
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-[11px] font-black uppercase tracking-wider text-[#8C7367] block">
+                Instruções de Retirada no Balcão
+              </label>
+              <textarea
+                rows={2}
                 value={pickupInfo}
                 onChange={(e) => setPickupInfo(e.target.value)}
-                className="w-full bg-[#FFF8EE] border border-[#EBDCCF] rounded-xl px-3 py-1.5 text-xs text-[#3C1F15]"
+                placeholder="Ex: Retirada sob agendamento prévio de horário."
+                className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl p-2.5 text-xs text-[#3C1F15] focus:outline-none resize-none"
               />
             </div>
 
-            <div className="p-3 rounded-2xl bg-[#FFFDF9] border border-[#E8D9CB] space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#3C1F15] flex items-center gap-1.5">
-                  <span>🛵</span>
-                  <span>Expressa/Entrega a Fixo</span>
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-[#E5F7EB] text-[#1FAA52] text-[9px] font-bold">
-                  Habilitado
-                </span>
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-[#8C7367] block">
-                INFORMAÇÕES DE FRETE VIA WHATSAPP
-              </span>
-              <input
-                type="text"
+            <div className="space-y-1">
+              <label className="text-[11px] font-black uppercase tracking-wider text-[#8C7367] block">
+                Informações de Entrega
+              </label>
+              <textarea
+                rows={2}
                 value={deliveryInfo}
                 onChange={(e) => setDeliveryInfo(e.target.value)}
-                className="w-full bg-[#FFF8EE] border border-[#EBDCCF] rounded-xl px-3 py-1.5 text-xs text-[#3C1F15]"
+                placeholder="Ex: Entrega sob consulta de taxa e rotas disponíveis para seu bairro."
+                className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl p-2.5 text-xs text-[#3C1F15] focus:outline-none resize-none"
               />
             </div>
           </div>
-
-          <span className="text-[10px] text-[#9E8679] block">
-            Taxas calculadas individualmente conforme localização do frete.
-          </span>
-        </div>
-
-        {/* Card 4 (6 cols): Mensagens Padrão do WhatsApp */}
-        <div className="lg:col-span-6 bg-white p-5 rounded-3xl border border-[#F0E2D2] shadow-2xs space-y-3.5">
-          <div className="flex items-center justify-between pb-2 border-b border-[#F4E8DB]">
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-[#FAF3E8] text-[#1FAA52] flex items-center justify-center text-xs">
-                💬
-              </span>
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-[#3C1F15]">
-                  Mensagem Padrão do WhatsApp
-                </h2>
-                <span className="text-[10px] text-[#9E8679]">COMUNICAÇÃO HUMANIZADA</span>
-              </div>
-            </div>
-            <span className="px-2 py-0.5 rounded-full bg-[#FAF3E8] text-[#8C7367] text-[10px] font-bold uppercase tracking-wider">
-              DISPARO NATIVO
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-[#7A6357]">
-                  TEXTO INICIAL DO CLIENTE (GERADO PELO CARDÁPIO)
-                </span>
-                <span className="text-[9px] text-[#9E8679]">
-                  Variáveis: [itens], [total]
-                </span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-[#FFF8EE] border border-[#EBDCCF] text-xs text-[#3C1F15] leading-relaxed">
-                Olá, Deli Salgados! Gostaria de solicitar este pedido:<br />
-                <span className="text-[#8C7367]">[itens]</span><br />
-                Modalidade: [retirada/retirada]
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-[#7A6357]">
-                  CONFIRMAÇÃO DO ATENDENTE (RESPOSTA PRONTA)
-                </span>
-                <span className="text-[9px] text-[#1FAA52] font-bold">
-                  Pronta resposta
-                </span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-[#FFF8EE] border border-[#EBDCCF] text-xs text-[#3C1F15] leading-relaxed">
-                Olá! Recebemos seu pedido com muito carinho aqui na Deli. Nossa equipe já confirmou a disponibilidade para a data desejada. Segue a chave Pix para confirmação da reserva:
-              </div>
-            </div>
-          </div>
-
-          <span className="text-[10px] text-[#9E8679] block">
-            As mensagens garantem agilidade no atendimento de festas de fim de semana.
-          </span>
         </div>
       </div>
 
-      {/* Row 3: Acessos & Equipe da Cozinha (12 cols) */}
-      <div className="bg-white p-5 rounded-3xl border border-[#F0E2D2] shadow-2xs space-y-3.5">
-        <div className="flex items-center justify-between pb-2 border-b border-[#F4E8DB]">
-          <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-[#FAF3E8] text-[#DF5F45] flex items-center justify-center text-xs">
-              👥
-            </span>
-            <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#3C1F15]">
-                Acessos &amp; Equipe da Cozinha
-              </h2>
-              <span className="text-[10px] text-[#9E8679]">
-                OPERADORES AUTORIZADOS DO PAINEL DELI SALGADOS
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-[#FAF3E8] text-[#8C7367] text-[10px] font-bold">
-              SEGURANÇA INTERNA ATIVA
-            </span>
-            <button
-              type="button"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#52291D] hover:bg-[#3D1E15] text-white text-xs font-bold transition shadow-xs"
-            >
-              <Plus size={13} className="text-[#F8A79B]" />
-              <span>+ Convidar Usuário</span>
-            </button>
-          </div>
+      {/* Row 2: Mensagens Padrão do WhatsApp */}
+      <div className="bg-white p-5 rounded-3xl border border-[#F0E2D2] shadow-2xs space-y-4">
+        <div className="flex items-center gap-2 pb-2 border-b border-[#F4E8DB]">
+          <MessageCircle size={16} className="text-[#1FAA52]" />
+          <h2 className="text-xs font-bold uppercase tracking-wider text-[#3C1F15]">
+            Mensagens Padrão do Cardápio
+          </h2>
         </div>
 
-        {/* Users Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-[#3C1F15]">
-            <thead className="bg-[#FAF3E8] text-[#8C7367] uppercase font-bold text-[10px] tracking-wider border-b border-[#EEDFCE]">
-              <tr>
-                <th className="py-2.5 px-4">USUÁRIO / COLABORADOR</th>
-                <th className="py-2.5 px-4">NÍVEL DE ACESSO</th>
-                <th className="py-2.5 px-4">PERMISSÕES PRINCIPAIS</th>
-                <th className="py-2.5 px-4">ÚLTIMO ACESSO</th>
-                <th className="py-2.5 px-4 text-right">AÇÕES</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F6ECE2]">
-              {/* User 1 */}
-              <tr className="hover:bg-[#FFFDF9]">
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-[#DF5F45] text-white flex items-center justify-center font-bold text-xs">
-                      DG
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-[#3C1F15]">Deli Gestão</div>
-                      <div className="text-[10px] text-[#9E8679]">operacao@delisalgados.com.br</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="py-3 px-4">
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#FCECE8] text-[#DF5F45] text-[10px] font-bold uppercase tracking-wider">
-                    ADMINISTRADOR GERAL
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-[11px] text-[#7A6357]">
-                  Acesso Total: Cardápio, Equipe, Configurações e Finanças
-                </td>
-                <td className="py-3 px-4">
-                  <span className="text-[11px] text-[#1FAA52] font-semibold flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#1FAA52]" />
-                    <span>Conectado agora</span>
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-right">
-                  <span className="px-2.5 py-1 rounded-lg bg-[#FAF3E8] text-[#8C7367] text-[10px] font-bold">
-                    Você
-                  </span>
-                </td>
-              </tr>
-
-              {/* User 2 */}
-              <tr className="hover:bg-[#FFFDF9]">
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-[#EBDCCF] text-[#7A6357] flex items-center justify-center font-bold text-xs">
-                      AB
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-[#3C1F15]">Atendente Balcão</div>
-                      <div className="text-[10px] text-[#9E8679]">balcao@delisalgados.com.br</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="py-3 px-4">
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#FFF8EE] border border-[#EBDCCF] text-[#7A6357] text-[10px] font-bold uppercase tracking-wider">
-                    OPERADOR
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-[11px] text-[#7A6357]">
-                  Produtos, Preços, Pedidos e Mensagens
-                </td>
-                <td className="py-3 px-4 text-[11px] text-[#9E8679]">
-                  Hoje às 11:42
-                </td>
-                <td className="py-3 px-4 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <button type="button" className="p-1 text-[#8C7367] hover:text-[#3C1F15]">
-                      <Edit2 size={13} />
-                    </button>
-                    <button type="button" className="p-1 text-[#8C7367] hover:text-[#C04220]">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer info row */}
-        <div className="flex items-center justify-between pt-2 border-t border-[#F4E8DB] text-[10px] text-[#7A6357]">
-          <div className="flex items-center gap-1.5">
-            <Shield size={12} className="text-[#DF5F45]" />
-            <span>Acesso seguro protegido por autenticação de dois fatores no WhatsApp dos administradores.</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-[11px] font-black uppercase tracking-wider text-[#8C7367] block">
+              Mensagem de Abertura (enviada pelo cliente)
+            </label>
+            <textarea
+              rows={3}
+              value={whatsappOpeningMsg}
+              onChange={(e) => setWhatsappOpeningMsg(e.target.value)}
+              placeholder="Olá, Deli Salgados! Gostaria de enviar uma solicitação de pedido pelo cardápio digital:"
+              className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl p-2.5 text-xs text-[#3C1F15] focus:outline-none resize-none"
+            />
           </div>
-          <span className="font-bold text-[#8C7367]">2 DE 5 USUÁRIOS ATIVOS</span>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-black uppercase tracking-wider text-[#8C7367] block">
+              Mensagem de Fechamento (rodapé da solicitação)
+            </label>
+            <textarea
+              rows={3}
+              value={whatsappClosingMsg}
+              onChange={(e) => setWhatsappClosingMsg(e.target.value)}
+              placeholder="Aguardo confirmação da disponibilidade e do valor final. Obrigado!"
+              className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl p-2.5 text-xs text-[#3C1F15] focus:outline-none resize-none"
+            />
+          </div>
         </div>
+      </div>
+
+      {/* Security info card */}
+      <div className="p-4 bg-white rounded-3xl border border-[#F0E2D2] flex items-center justify-between text-xs text-[#7A6357]">
+        <div className="flex items-center gap-2">
+          <Shield size={16} className="text-[#1FAA52]" />
+          <span>Ambiente administrativo autenticado via Supabase Auth SSR.</span>
+        </div>
+        <span className="font-bold text-[#3C1F15]">Deli Salgados Gestão</span>
       </div>
     </div>
   );
 }
-

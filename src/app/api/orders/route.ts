@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { DbService } from "@/lib/db";
+import { verifyAdminSession } from "@/lib/auth/adminAuth";
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +21,12 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = await verifyAdminSession(request);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error || "Acesso restrito a administradores." }, { status: auth.status });
+  }
+
   try {
     const orders = await DbService.getOrders();
     return NextResponse.json({ orders });
@@ -29,3 +35,4 @@ export async function GET() {
     return NextResponse.json({ error: error.message || "Erro ao buscar pedidos" }, { status: 500 });
   }
 }
+

@@ -9,29 +9,39 @@ import { formatCurrency } from "@/lib/formatters";
 
 export default function MeusPedidosPage() {
   const [code, setCode] = useState("");
-  const [searchedOrder, setSearchedOrder] = useState<Order | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [searchedOrder, setSearchedOrder] = useState<any | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code.trim()) return;
+    if (!code.trim() || !phone.trim()) {
+      setErrorMessage("Por favor, preencha o código do pedido e o número de WhatsApp.");
+      return;
+    }
 
     setLoading(true);
-    setNotFound(false);
+    setErrorMessage(null);
     setSearchedOrder(null);
 
     try {
-      const cleanCode = code.trim().toUpperCase();
-      const res = await fetch(`/api/orders/${cleanCode}`);
+      const res = await fetch("/api/orders/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: code.trim(),
+          phone: phone.trim(),
+        }),
+      });
       const data = await res.json();
       if (res.ok && data.order) {
         setSearchedOrder(data.order);
       } else {
-        setNotFound(true);
+        setErrorMessage(data.error || "Não localizamos um pedido com esses dados.");
       }
     } catch {
-      setNotFound(true);
+      setErrorMessage("Não localizamos um pedido com esses dados.");
     } finally {
       setLoading(false);
     }
@@ -66,7 +76,7 @@ export default function MeusPedidosPage() {
             <div>
               <h1 className="text-base lg:text-lg font-bold leading-tight">Consultar Pedido</h1>
               <span className="text-[10px] text-[#FCE9D8] tracking-wide block">
-                Acompanhe o status pelo código DL-XXXX
+                Acompanhe o status com segurança
               </span>
             </div>
           </div>
@@ -82,27 +92,46 @@ export default function MeusPedidosPage() {
 
       <main className="w-full max-w-[440px] lg:max-w-[720px] mx-auto p-4 lg:p-8 space-y-4 flex-1">
         {/* Search input */}
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <input
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="Ex: DL-0001"
-            className="flex-1 bg-white border border-[#EBDCCF] rounded-2xl px-4 py-3 text-sm uppercase text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#E05A36]"
-          />
+        <form onSubmit={handleSearch} className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-3">
+          <div className="space-y-1">
+            <label className="text-[11px] font-black uppercase tracking-wider text-[#3C1F15] block">
+              Código do Pedido
+            </label>
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Ex: DL-0001"
+              className="w-full bg-[#FFFBF7] border border-[#EBDCCF] rounded-2xl px-4 py-3 text-sm uppercase text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-black uppercase tracking-wider text-[#3C1F15] block">
+              WhatsApp informado no pedido
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Ex: (81) 98765-4321"
+              className="w-full bg-[#FFFBF7] border border-[#EBDCCF] rounded-2xl px-4 py-3 text-sm text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
+            />
+          </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-3 rounded-2xl bg-[#3C1F15] text-white font-bold text-xs shadow hover:bg-[#27120A] transition shrink-0"
+            className="w-full py-3.5 rounded-2xl bg-[#3C1F15] text-white font-bold text-xs shadow-lg hover:bg-[#27120A] transition shrink-0 cursor-pointer"
           >
-            {loading ? "..." : "Buscar"}
+            {loading ? "Consultando..." : "Consultar Status do Pedido"}
           </button>
         </form>
 
-        {notFound && (
+        {errorMessage && (
           <div className="p-4 bg-white rounded-2xl border border-[#F0DCBE] text-center">
             <p className="text-xs text-[#7A6357]">
-              Nenhum pedido encontrado com o código informado.
+              {errorMessage}
             </p>
           </div>
         )}
@@ -122,8 +151,8 @@ export default function MeusPedidosPage() {
             </div>
 
             <div className="space-y-1.5 text-xs text-[#614439]">
-              <div><strong>Cliente:</strong> {searchedOrder.customer_name}</div>
               <div><strong>Data desejada:</strong> {searchedOrder.desired_date}</div>
+              <div><strong>Modalidade:</strong> {searchedOrder.fulfillment_type === "pickup" ? "Retirada no balcão" : "Entrega"}</div>
               <div><strong>Total:</strong> {formatCurrency(searchedOrder.total)}</div>
             </div>
 
@@ -132,10 +161,10 @@ export default function MeusPedidosPage() {
                 Itens:
               </span>
               <div className="space-y-1">
-                {(searchedOrder.items || []).map((item) => (
-                  <div key={item.id} className="text-xs flex justify-between text-[#3C1F15]">
+                {(searchedOrder.items || []).map((item: any, idx: number) => (
+                  <div key={idx} className="text-xs flex justify-between text-[#3C1F15]">
                     <span>
-                      {item.quantity} {item.unit_label_snapshot} — {item.product_name_snapshot}
+                      {item.quantity} {item.unit_label} — {item.product_name} {item.variant_name ? `(${item.variant_name})` : ""}
                     </span>
                     <span className="font-semibold">{formatCurrency(item.subtotal)}</span>
                   </div>
@@ -150,3 +179,4 @@ export default function MeusPedidosPage() {
     </div>
   );
 }
+

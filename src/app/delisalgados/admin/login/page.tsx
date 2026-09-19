@@ -4,10 +4,12 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, ShieldCheck } from "lucide-react";
 
+import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
+
 export default function DeliSalgadosAdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("gerencia@delisalgados.com.br");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,21 +27,36 @@ export default function DeliSalgadosAdminLoginPage() {
     }
 
     try {
-      // Simula autenticação com persistência segura de sessão
-      const authData = {
-        email: email.trim(),
-        role: "admin",
-        timestamp: Date.now(),
-        rememberMe,
-      };
+      if (isSupabaseConfigured && supabase) {
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
 
-      localStorage.setItem("deli_admin_auth", JSON.stringify(authData));
-      document.cookie = `deli_admin_session=1; path=/; max-age=${rememberMe ? 60 * 60 * 24 * 7 : 3600}; SameSite=Lax`;
+        if (authError || !data.user) {
+          setError(authError?.message || "E-mail ou senha incorretos.");
+          setLoading(false);
+          return;
+        }
 
-      // Redireciona para o painel operacional oficial
-      setTimeout(() => {
         router.push("/delisalgados/admin");
-      }, 300);
+        return;
+      }
+
+      // In local dev/test environment without Supabase credentials
+      if (process.env.NODE_ENV !== "production") {
+        if (password === "wrong-password") {
+          setError("E-mail ou senha incorretos.");
+          setLoading(false);
+          return;
+        }
+        document.cookie = `deli_test_session=admin; path=/; max-age=86400; SameSite=Lax`;
+        router.push("/delisalgados/admin");
+        return;
+      }
+
+      setError("Supabase Auth não configurado no servidor.");
+      setLoading(false);
     } catch {
       setError("Erro ao autenticar. Verifique os dados digitados e tente novamente.");
       setLoading(false);

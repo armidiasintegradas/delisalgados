@@ -100,7 +100,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const handleAddVariant = () => {
     const newVariant: ProductVariant = {
-      id: `v-new-${Date.now()}`,
+      id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "00000000-0000-0000-0000-" + Date.now().toString().padStart(12, "0").slice(-12),
       product_id: initialProduct?.id || "",
       name: "Nova Opção",
       price: 0,
@@ -208,7 +208,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             Painel Gestão &gt; Produtos &gt; {name.toUpperCase()}
           </div>
           <div className="flex items-center gap-2.5 mt-1">
-            <h1 className="text-2xl font-serif italic font-black text-[#3C1F15] tracking-tight">
+            <h1 className="text-2xl font-display font-black text-[#3C1F15] tracking-tight">
               {isVariantsMode ? "Editar Produto & Variantes" : name}
             </h1>
             <span className="px-2.5 py-0.5 rounded-full bg-[#E5F7EB] text-[#1FAA52] text-[10px] font-bold flex items-center gap-1">
@@ -296,7 +296,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </label>
                 <button
                   type="button"
-                  onClick={() => router.push("/admin/categorias")}
+                  onClick={() => router.push("/delisalgados/admin/categorias")}
                   className="text-[10px] font-bold text-[#DF5F45] hover:underline"
                 >
                   + Nova Categoria

@@ -24,15 +24,47 @@ function EnviadoContent() {
         return;
       }
       try {
-        const [orderRes, catRes] = await Promise.all([
-          fetch(`/api/orders/${orderCode}`),
-          fetch("/api/catalog"),
-        ]);
-        const orderData = await orderRes.json();
+        const catRes = await fetch("/api/catalog");
         const catData = await catRes.json();
-
-        if (orderData.order) setOrder(orderData.order);
         if (catData.settings) setSettings(catData.settings);
+
+        // 1. Try to load from session storage (memory of the checkout flow)
+        if (typeof window !== "undefined") {
+          const cached = sessionStorage.getItem("deli_last_order");
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (parsed && parsed.public_code === orderCode) {
+                setOrder(parsed);
+                setIsLoading(false);
+                return;
+              }
+            } catch {}
+          }
+
+          // 2. Fallback: secure lookup via stored customer phone
+          const savedCustomer = localStorage.getItem("deli_customer_v1");
+          if (savedCustomer) {
+            const parsedCust = JSON.parse(savedCustomer);
+            if (parsedCust.customerPhone) {
+              const lookupRes = await fetch("/api/orders/lookup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: orderCode, phone: parsedCust.customerPhone }),
+              });
+              const lookupData = await lookupRes.json();
+              if (lookupRes.ok && lookupData.order) {
+                setOrder({
+                  ...lookupData.order,
+                  customer_name: parsedCust.customerName || "Cliente",
+                  customer_phone: parsedCust.customerPhone,
+                });
+                setIsLoading(false);
+                return;
+              }
+            }
+          }
+        }
       } catch (e) {
         console.error("Error loading order details:", e);
       } finally {
@@ -41,6 +73,14 @@ function EnviadoContent() {
     }
     loadData();
   }, [orderCode]);
+
+  const handleOpenWhatsApp = () => {
+    if (order?.public_code) {
+      fetch(`/api/orders/${order.public_code}/whatsapp-opened`, {
+        method: "POST",
+      }).catch(() => {});
+    }
+  };
 
   if (isLoading) {
     return (
@@ -177,6 +217,7 @@ function EnviadoContent() {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleOpenWhatsApp}
               className="w-full py-4 px-4 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-extrabold uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 transition transform active:scale-[0.98]"
             >
               <MessageCircle size={18} className="fill-white stroke-none" />

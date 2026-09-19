@@ -85,7 +85,10 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Não foi possível criar o pedido.");
       }
 
-      // Order created server-side! Clear cart and redirect to Screen 06
+      // Order created server-side! Store in session and clear cart
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("deli_last_order", JSON.stringify(data.order));
+      }
       clearCart();
       router.push(`/pedido/enviado?code=${data.order.public_code}`);
     } catch (err: any) {

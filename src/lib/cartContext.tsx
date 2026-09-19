@@ -35,7 +35,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Load from localStorage on mount
   useEffect(() => {
     try {
-      if (typeof window !== "undefined" && window.location.search.includes("mock_cart=stitch")) {
+      if (
+        typeof window !== "undefined" &&
+        process.env.NODE_ENV !== "production" &&
+        window.location.search.includes("mock_cart=stitch")
+      ) {
         const stitchCart: CartItem[] = [
           {
             id: "p0000000-0000-0000-0000-000000000031",
@@ -129,7 +133,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (existingIdx > -1) {
         const updated = [...prev];
         const currentItem = updated[existingIdx];
-        const step = minQty >= 100 ? 50 : 1;
+        const step = minQty >= 100 ? 100 : 1;
         const newQty = currentItem.quantity + (quantity || step);
         updated[existingIdx] = {
           ...currentItem,
@@ -162,7 +166,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return prev
         .map((item) => {
           if (item.id !== id) return item;
-          const step = item.minimumQuantity >= 100 ? (delta > 0 ? 50 : -50) : (delta > 0 ? 1 : -1);
+          const step = item.minimumQuantity >= 100 ? (delta > 0 ? 100 : -100) : (delta > 0 ? 1 : -1);
           const newQty = item.quantity + step;
 
           // If lowered below minimum quantity, remove the item

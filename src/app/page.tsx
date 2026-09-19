@@ -51,9 +51,21 @@ export default function CatalogPage() {
 
   const { items: cartItems, totalAmount, removeItem } = useCart();
 
-  // Check if splash was already viewed in this session or skipped via URL
+  // Check if splash should be shown (strictly mobile/tablet < 1024px)
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // 1. DESKTOP (>= 1024px): Splash completely omitted per Section 11
+      if (window.innerWidth >= 1024) {
+        setShowSplash(false);
+        return;
+      }
+
+      // 2. Respect user accessibility settings (prefers-reduced-motion)
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setShowSplash(false);
+        return;
+      }
+
       if (window.location.search.includes("nosplash=1")) {
         return;
       }

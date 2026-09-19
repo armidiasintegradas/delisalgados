@@ -120,7 +120,7 @@ export default function AdminDashboardPage() {
             <ExternalLink size={13} />
           </Link>
           <Link
-            href="/admin/produtos/novo"
+            href="/delisalgados/admin/produtos/novo"
             className="px-3 py-1.5 rounded-xl bg-[#3C1F15] text-white hover:bg-[#27120A] text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
           >
             <Plus size={14} />
@@ -131,7 +131,7 @@ export default function AdminDashboardPage() {
 
       {/* Greeting Title */}
       <div>
-        <h1 className="text-2xl font-serif italic font-black text-[#3C1F15] tracking-tight">
+        <h1 className="text-2xl font-display font-black text-[#3C1F15] tracking-tight">
           Bom dia, Deli!
         </h1>
         <p className="text-xs text-[#7A6357] mt-0.5 max-w-2xl leading-relaxed">
@@ -212,7 +212,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="text-[10px] font-bold text-white/95 bg-black/15 px-2 py-0.5 rounded-md">
-            Sincronizados via WhatsApp
+            Solicitações geradas pelo cardápio
           </div>
         </div>
       </div>
@@ -232,13 +232,13 @@ export default function AdminDashboardPage() {
                 ● Em Exibição
               </span>
             </div>
-            <p className="text-xs text-[#7A6357] font-serif italic">
-              &ldquo;Recomendação para o fim de semana: encomendas até sexta-feira às 18h&rdquo;
+            <p className="text-xs text-[#7A6357]">
+              Recomendação para o fim de semana: encomendas com 48h de antecedência.
             </p>
           </div>
         </div>
         <Link
-          href="/admin/cardapio"
+          href="/delisalgados/admin/cardapio"
           className="px-2.5 py-1 rounded-xl bg-[#FFF8EE] border border-[#EBDCCF] text-xs font-bold text-[#3C1F15] hover:bg-[#F5ECE0] transition shrink-0"
         >
           Editar Aviso
@@ -259,7 +259,7 @@ export default function AdminDashboardPage() {
                   </h2>
                 </div>
                 <p className="text-[11px] text-[#7A6357] mt-0.5">
-                  Controle rápido de 6 itens mais demandados. Alterações refletem instantaneamente no cardápio público.
+                  Controle rápido de 6 itens para edição imediata no cardápio público.
                 </p>
               </div>
               <span className="px-2 py-1 rounded-full bg-[#FFF4E8] text-[#DF5F45] text-[10px] font-bold shrink-0">
@@ -270,23 +270,16 @@ export default function AdminDashboardPage() {
             {/* Product items list */}
             <div className="divide-y divide-[#F7EFE6] mt-1">
               {quickProducts.map((item) => {
-                let thumb = "/products/coxinha.jpg";
-                if (item.slug.includes("risole")) thumb = "/products/risoles.jpg";
-                else if (item.slug.includes("queijo")) thumb = "/products/bolinho-queijo.jpg";
-                else if (item.slug.includes("camarao")) thumb = "/products/camarao.jpg";
-                else if (item.slug.includes("empada")) thumb = "/products/empada-frango.jpg";
-                else if (item.slug.includes("torta")) thumb = "/products/torta-frango.jpg";
+                const thumb = item.image_url || "/deli-avatar-official.png";
 
                 return (
                   <div key={item.id} className="py-2.5 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] overflow-hidden shrink-0 relative">
-                        <Image
+                      <div className="w-10 h-10 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] overflow-hidden shrink-0 relative flex items-center justify-center p-1">
+                        <img
                           src={thumb}
                           alt={item.name}
-                          fill
-                          className="object-cover"
-                          unoptimized
+                          className="w-full h-full object-cover rounded-lg"
                         />
                       </div>
                       <div className="min-w-0">
@@ -298,9 +291,11 @@ export default function AdminDashboardPage() {
                             {item.category?.name || "Salgados"}
                           </span>
                         </div>
-                        <p className="text-[10px] text-[#9E8679] truncate">
-                          {item.description || "Ingredientes selecionados e preparo artesanal"}
-                        </p>
+                        {item.description && (
+                          <p className="text-[10px] text-[#9E8679] truncate">
+                            {item.description}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -344,7 +339,7 @@ export default function AdminDashboardPage() {
 
           <div className="pt-3 border-t border-[#F4E8DB] mt-3">
             <Link
-              href="/admin/produtos"
+              href="/delisalgados/admin/produtos"
               className="text-xs font-bold text-[#DF5F45] hover:underline flex items-center gap-1"
             >
               <span>Ver todos os produtos do cardápio</span>
@@ -353,18 +348,18 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Right Column: Últimos Pedidos WhatsApp (5 cols) */}
+        {/* Right Column: Últimas Solicitações (5 cols) */}
         <div className="lg:col-span-5 bg-white rounded-3xl p-5 border border-[#F0E2D2] shadow-2xs flex flex-col justify-between">
           <div>
             <div className="pb-3 border-b border-[#F4E8DB]">
               <div className="flex items-center gap-2">
                 <span className="text-[#1FAA52] text-sm">📋</span>
                 <h2 className="text-sm font-bold text-[#3C1F15]">
-                  Últimos Pedidos WhatsApp
+                  Últimas Solicitações
                 </h2>
               </div>
               <p className="text-[11px] text-[#7A6357] mt-0.5">
-                Novos pedidos enviados pelos clientes através do cardápio público.
+                Pedidos criados pelo cardápio digital e encaminhados para atendimento.
               </p>
             </div>
 
@@ -414,10 +409,10 @@ export default function AdminDashboardPage() {
                       : fulfillmentLabel;
 
                   const rawPhone = (order.customer_phone || "").replace(/\D/g, "");
-                  const waUrl =
-                    rawPhone.length >= 10
-                      ? `https://wa.me/${rawPhone.startsWith("55") ? rawPhone : `55${rawPhone}`}`
-                      : "https://wa.me/5581987654321";
+                  const isValidPhone = rawPhone.length >= 10;
+                  const waUrl = isValidPhone
+                    ? `https://wa.me/${rawPhone.startsWith("55") ? rawPhone : `55${rawPhone}`}`
+                    : null;
 
                   return (
                     <div
@@ -449,21 +444,30 @@ export default function AdminDashboardPage() {
                       </div>
                       <div className="flex items-center gap-2 pt-1">
                         <Link
-                          href="/admin/pedidos"
+                          href="/delisalgados/admin/pedidos"
                           className="flex-1 py-1.5 rounded-xl bg-[#FDEAE4] text-[#DF5F45] text-center text-[10px] font-bold hover:bg-[#FADBD0] transition flex items-center justify-center gap-1"
                         >
                           <FileText size={12} />
                           <span>Detalhes pedido</span>
                         </Link>
-                        <a
-                          href={waUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 py-1.5 rounded-xl bg-[#1FAA52] text-white text-center text-[10px] font-bold hover:bg-[#198B43] transition flex items-center justify-center gap-1 shadow-2xs"
-                        >
-                          <MessageCircle size={12} />
-                          <span>Atender WhatsApp</span>
-                        </a>
+                        {waUrl ? (
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 py-1.5 rounded-xl bg-[#1FAA52] text-white text-center text-[10px] font-bold hover:bg-[#198B43] transition flex items-center justify-center gap-1 shadow-2xs"
+                          >
+                            <MessageCircle size={12} />
+                            <span>Atender WhatsApp</span>
+                          </a>
+                        ) : (
+                          <button
+                            disabled
+                            className="flex-1 py-1.5 rounded-xl bg-[#F5ECE0] text-[#9E8679] text-center text-[10px] font-bold cursor-not-allowed flex items-center justify-center gap-1"
+                          >
+                            <span>Sem WhatsApp</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -474,7 +478,7 @@ export default function AdminDashboardPage() {
 
           <div className="pt-3 border-t border-[#F4E8DB] mt-3">
             <Link
-              href="/admin/pedidos"
+              href="/delisalgados/admin/pedidos"
               className="text-xs font-bold text-[#DF5F45] hover:underline flex items-center justify-between"
             >
               <span>Ver todos os Pedidos</span>
@@ -482,29 +486,6 @@ export default function AdminDashboardPage() {
             </Link>
           </div>
         </div>
-      </div>
-
-      {/* Bottom Operational Notice Banner */}
-      <div className="bg-[#FFF4E8] rounded-2xl p-3.5 border border-[#FADCC7] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-full bg-[#DF5F45] text-white flex items-center justify-center shrink-0">
-            <Bell size={14} />
-          </div>
-          <div>
-            <span className="text-[10px] uppercase font-bold tracking-wider text-[#3C1F15] block">
-              Atenção Operacional
-            </span>
-            <p className="text-xs text-[#7A6357]">
-              Expediente de hoje: 18 encomendas de salgados para retirar / 11 entregas agendadas até as 17:30.
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={() => {}}
-          className="px-3 py-1.5 rounded-xl bg-white border border-[#EBDCCF] text-xs font-bold text-[#3C1F15] hover:bg-[#FAF3E8] transition shrink-0 shadow-2xs"
-        >
-          Regras de Encomenda do Dia
-        </button>
       </div>
     </div>
   );
