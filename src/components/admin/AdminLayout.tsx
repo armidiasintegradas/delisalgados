@@ -22,23 +22,33 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const basePath = pathname.startsWith("/delisalgados/admin")
+    ? "/delisalgados/admin"
+    : "/admin";
+
+  const isLoginPage =
+    pathname === `${basePath}/login` ||
+    pathname === "/admin/login" ||
+    pathname === "/delisalgados/admin/login";
+
   // Skip layout on login page
-  if (pathname === "/admin/login") {
+  if (isLoginPage) {
     return <>{children}</>;
   }
 
   const navLinks = [
-    { label: "Visão Geral", href: "/admin", icon: LayoutDashboard },
-    { label: "Produtos", href: "/admin/produtos", icon: UtensilsCrossed },
-    { label: "Categorias", href: "/admin/categorias", icon: Layers },
-    { label: "Pedidos", href: "/admin/pedidos", icon: ShoppingBag },
-    { label: "Cardápio", href: "/admin/cardapio", icon: Sliders },
-    { label: "Configurações", href: "/admin/configuracoes", icon: SettingsIcon },
+    { label: "Visão Geral", href: `${basePath}`, icon: LayoutDashboard },
+    { label: "Produtos", href: `${basePath}/produtos`, icon: UtensilsCrossed },
+    { label: "Categorias", href: `${basePath}/categorias`, icon: Layers },
+    { label: "Pedidos", href: `${basePath}/pedidos`, icon: ShoppingBag },
+    { label: "Cardápio", href: `${basePath}/cardapio`, icon: Sliders },
+    { label: "Configurações", href: `${basePath}/configuracoes`, icon: SettingsIcon },
   ];
 
   const handleLogout = () => {
     localStorage.removeItem("deli_admin_auth");
-    router.push("/admin/login");
+    document.cookie = "deli_admin_session=; path=/; max-age=0";
+    router.push(`${basePath}/login`);
   };
 
   return (
@@ -46,7 +56,9 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       {/* Mobile Top Header */}
       <div className="md:hidden bg-[#DF5F45] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-xs w-full">
         <div className="flex items-center gap-2.5">
-          <Logo size="sm" showText={false} />
+          <div className="w-8 h-8 rounded-full bg-white p-0.5 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+            <img src="/logo-coral.png" alt="Deli Salgados" className="w-full h-full object-contain" />
+          </div>
           <div>
             <span className="font-serif italic font-black text-base text-white leading-none block">
               Deli Salgados
@@ -76,7 +88,9 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
           {/* Brand header */}
           <div className="flex items-center justify-between px-2 py-3 mb-6">
             <div className="flex items-center gap-2.5">
-              <Logo size="sm" showText={false} />
+              <div className="w-9 h-9 rounded-full bg-white p-0.5 flex items-center justify-center overflow-hidden shrink-0 shadow-xs border border-[#F0E2D2]">
+                <img src="/logo-coral.png" alt="Deli Salgados" className="w-full h-full object-contain" />
+              </div>
               <div>
                 <span className="font-serif italic font-black text-base text-[#DF5F45] leading-none block">
                   Deli Salgados
@@ -96,8 +110,8 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             {navLinks.map((item) => {
               const Icon = item.icon;
               const isActive =
-                item.href === "/admin"
-                  ? pathname === "/admin"
+                item.href === basePath
+                  ? pathname === basePath
                   : pathname.startsWith(item.href);
 
               return (
@@ -157,27 +171,27 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       {/* Mobile Bottom Admin Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full bg-[#FFFDF9] border-t border-[#F0E2D2] px-4 py-2 flex items-center justify-around z-40 shadow-lg">
         <Link
-          href="/admin/produtos"
+          href={`${basePath}/produtos`}
           className={`flex flex-col items-center gap-0.5 text-[10px] font-black ${
-            pathname.startsWith("/admin/produtos") ? "text-[#DF5F45]" : "text-[#8C7367]"
+            pathname.startsWith(`${basePath}/produtos`) ? "text-[#DF5F45]" : "text-[#8C7367]"
           }`}
         >
           <UtensilsCrossed size={18} />
           <span>PRODUTOS</span>
         </Link>
         <Link
-          href="/admin/cardapio"
+          href={`${basePath}/cardapio`}
           className={`flex flex-col items-center gap-0.5 text-[10px] font-black ${
-            pathname.startsWith("/admin/cardapio") ? "text-[#DF5F45]" : "text-[#8C7367]"
+            pathname.startsWith(`${basePath}/cardapio`) ? "text-[#DF5F45]" : "text-[#8C7367]"
           }`}
         >
           <Layers size={18} />
           <span>ESTOQUE</span>
         </Link>
         <Link
-          href="/admin/pedidos"
+          href={`${basePath}/pedidos`}
           className={`flex flex-col items-center gap-0.5 text-[10px] font-black relative ${
-            pathname.startsWith("/admin/pedidos") ? "text-[#DF5F45]" : "text-[#8C7367]"
+            pathname.startsWith(`${basePath}/pedidos`) ? "text-[#DF5F45]" : "text-[#8C7367]"
           }`}
         >
           <div className="relative">
@@ -189,9 +203,9 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
           <span>PEDIDOS</span>
         </Link>
         <Link
-          href="/admin/configuracoes"
+          href={`${basePath}/configuracoes`}
           className={`flex flex-col items-center gap-0.5 text-[10px] font-black ${
-            pathname.startsWith("/admin/configuracoes") ? "text-[#DF5F45]" : "text-[#8C7367]"
+            pathname.startsWith(`${basePath}/configuracoes`) ? "text-[#DF5F45]" : "text-[#8C7367]"
           }`}
         >
           <SettingsIcon size={18} />

@@ -38,7 +38,11 @@ export default function PerfilPage() {
 
       <main className="p-4 space-y-4">
         <div className="bg-white p-6 rounded-3xl border border-[#EBDCCF] shadow-xs text-center space-y-3">
-          <Logo size="md" showText={true} />
+          <img
+            src="/logo-coral.png"
+            alt="Deli Salgados"
+            className="w-20 h-auto mx-auto object-contain drop-shadow-xs"
+          />
           <p className="text-xs text-[#7A6357] leading-relaxed max-w-xs mx-auto">
             {settings?.business_name || "Deli Salgados"} — tradição e sabor artesanal para eventos, comemorações e momentos especiais.
           </p>
@@ -70,25 +74,6 @@ export default function PerfilPage() {
             <MapPin size={16} className="text-[#E05A36]" />
             <span>{settings?.address || "Recife, PE"}</span>
           </div>
-        </div>
-
-        {/* Admin portal shortcut */}
-        <div className="pt-4">
-          <Link
-            href="/admin"
-            className="w-full p-4 rounded-2xl bg-[#3C1F15] hover:bg-[#27120A] text-white flex items-center justify-between shadow-md transition"
-          >
-            <div className="flex items-center gap-2.5">
-              <Shield size={18} className="text-[#F8A79B]" />
-              <div className="text-left">
-                <div className="text-xs font-bold">Painel Administrativo</div>
-                <div className="text-[10px] text-[#E8D9CB]">
-                  Gestão de catálogo, preços, pedidos e estoque
-                </div>
-              </div>
-            </div>
-            <span className="text-xs text-[#F8A79B] font-bold">Acessar &gt;</span>
-          </Link>
         </div>
       </main>
 

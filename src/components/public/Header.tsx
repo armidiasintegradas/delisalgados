@@ -31,8 +31,12 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Top bar: Logo, Search, Cart, Profile */}
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center shrink-0">
-            <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-xs p-1">
-              <Logo size="sm" showText={false} />
+            <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-xs overflow-hidden p-0.5">
+              <img
+                src="/logo-coral.png"
+                alt="Deli Salgados"
+                className="w-full h-full object-contain"
+              />
             </div>
           </Link>
 

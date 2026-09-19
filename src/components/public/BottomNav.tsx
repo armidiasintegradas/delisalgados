@@ -32,7 +32,7 @@ export const BottomNav: React.FC = () => {
       label: "PERFIL",
       href: "/perfil",
       icon: User,
-      active: pathname === "/perfil" || pathname.startsWith("/admin"),
+      active: pathname === "/perfil",
     },
   ];
 

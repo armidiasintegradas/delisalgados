@@ -6,7 +6,8 @@ export const metadata: Metadata = {
   title: "Deli Salgados — Cardápio Digital",
   description: "Cardápio digital oficial e encomendas da Deli Salgados.",
   icons: {
-    icon: "/pattern.svg",
+    icon: "/logo-square.png",
+    apple: "/logo-square.png",
   },
 };
 
