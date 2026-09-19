@@ -462,6 +462,93 @@ export class DbService {
     return state.products[idx];
   }
 
+  static async syncProductVariants(
+    productId: string,
+    variants: ProductVariant[]
+  ): Promise<ProductVariant[]> {
+    const normalized = (variants || []).map((variant, index) => ({
+      id:
+        variant.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(variant.id)
+          ? variant.id
+          : crypto.randomUUID(),
+      product_id: productId,
+      name: variant.name?.trim() || `Opção ${index + 1}`,
+      price: Number(variant.price || 0),
+      unit_label: variant.unit_label || "UND",
+      minimum_quantity: Number(variant.minimum_quantity || 1),
+      sort_order: Number(variant.sort_order || index + 1),
+      is_active: variant.is_active !== false,
+      preparation_type: variant.preparation_type || null,
+    }));
+
+    if (isServerSupabaseConfigured && supabaseServer) {
+      const { data: existing, error: existingError } = await supabaseServer
+        .from("product_variants")
+        .select("id")
+        .eq("product_id", productId);
+
+      if (existingError) {
+        throw new Error(`[Supabase Error] Falha ao consultar variantes: ${existingError.message}`);
+      }
+
+      if (normalized.length > 0) {
+        const { error: upsertError } = await supabaseServer
+          .from("product_variants")
+          .upsert(normalized, { onConflict: "id" });
+
+        if (upsertError) {
+          throw new Error(`[Supabase Error] Falha ao salvar variantes: ${upsertError.message}`);
+        }
+      }
+
+      const activeIds = new Set(normalized.map((variant) => variant.id));
+      const idsToDeactivate = (existing || [])
+        .map((row: any) => row.id as string)
+        .filter((id: string) => !activeIds.has(id));
+
+      if (idsToDeactivate.length > 0) {
+        const { error: deactivateError } = await supabaseServer
+          .from("product_variants")
+          .update({ is_active: false, updated_at: new Date().toISOString() })
+          .in("id", idsToDeactivate);
+
+        if (deactivateError) {
+          throw new Error(`[Supabase Error] Falha ao desativar variantes antigas: ${deactivateError.message}`);
+        }
+      }
+
+      const { data, error } = await supabaseServer
+        .from("product_variants")
+        .select("*")
+        .eq("product_id", productId)
+        .order("sort_order", { ascending: true });
+
+      if (error) {
+        throw new Error(`[Supabase Error] Falha ao recarregar variantes: ${error.message}`);
+      }
+
+      return (data || []) as ProductVariant[];
+    }
+
+    const state = loadLocalState();
+    state.variants = state.variants.map((variant) =>
+      variant.product_id === productId && !normalized.some((next) => next.id === variant.id)
+        ? { ...variant, is_active: false }
+        : variant
+    );
+
+    for (const next of normalized) {
+      const index = state.variants.findIndex((variant) => variant.id === next.id);
+      if (index >= 0) state.variants[index] = { ...state.variants[index], ...next };
+      else state.variants.push(next as ProductVariant);
+    }
+
+    saveLocalState(state);
+    return state.variants
+      .filter((variant) => variant.product_id === productId)
+      .sort((a, b) => a.sort_order - b.sort_order);
+  }
+
   static async duplicateProduct(id: string): Promise<Product | null> {
     const original = await this.getProductById(id);
     if (!original) return null;
