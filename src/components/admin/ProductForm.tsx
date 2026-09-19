@@ -139,8 +139,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setErrorMessage("O nome do produto é obrigatório.");
       return;
     }
-    if (priceType !== "variants" && !preparationType) {
-      setErrorMessage("Informe se o produto é frito, assado, congelado ou pronto.");
+    if (!preparationType) {
+      setErrorMessage("Informe se o produto é frito, assado, congelado, pronto ou possui opções de preparo.");
       return;
     }
 
@@ -158,7 +158,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       base_price: priceType === "simple" ? Number(basePrice) : null,
       availability,
       is_visible: isVisible,
-      preparation_type: priceType === "variants" ? "variants" : preparationType,
+      preparation_type: preparationType,
       image_url: imageUrl.trim() || null,
       sort_order: Number(displayOrder),
       variants,
@@ -752,6 +752,27 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6357] block mb-1">
+                    Forma de Preparo / Entrega
+                  </label>
+                  <select
+                    value={preparationType}
+                    onChange={(e) => setPreparationType(e.target.value as PreparationType)}
+                    className="w-full bg-[#FFFDF9] border border-[#E8D9CB] rounded-xl px-3 py-2 text-xs font-bold text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="fried">Frito</option>
+                    <option value="baked">Assado / Forno</option>
+                    <option value="frozen">Congelado</option>
+                    <option value="ready">Pronto / Montado</option>
+                    <option value="variants">Varia conforme a opção</option>
+                  </select>
+                  <span className="text-[10px] text-[#9E8679] mt-0.5 block">
+                    Use “Varia conforme a opção” quando cada variante tiver um preparo diferente.
+                  </span>
                 </div>
 
                 <div>
