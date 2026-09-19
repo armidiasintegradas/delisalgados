@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
-import { Product, ProductVariant } from "@/types";
+import { Product, ProductVariant, PreparationType } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import { useCart } from "@/lib/cartContext";
 
@@ -24,6 +24,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   const isVariants = product?.price_type === "variants";
   const activeVariants = (product?.variants || []).filter((v) => v.is_active);
+
+  const preparationLabel: Record<Exclude<PreparationType, "variants">, string> = {
+    fried: "FRITO",
+    baked: "ASSADO",
+    frozen: "CONGELADO",
+    ready: "PRONTO",
+  };
 
   // Reset state when product changes
   useEffect(() => {
@@ -101,6 +108,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
           <h2 className="font-display text-2xl font-bold text-[#3C1F15] leading-tight">
             {product.name}
           </h2>
+          {product.preparation_type && product.preparation_type !== "variants" && (
+            <span className="inline-flex mt-2 px-2.5 py-1 rounded-full bg-[#FDEAE4] text-[#C84B32] text-[10px] font-extrabold uppercase tracking-wide">
+              {preparationLabel[product.preparation_type]}
+            </span>
+          )}
           {product.description && (
             <p className="text-xs text-[#7A6357] mt-1 leading-relaxed font-medium">
               {product.description}
@@ -149,6 +161,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                           <div className="text-sm font-bold text-[#3C1F15]">
                             {v.name}
                           </div>
+                          {v.preparation_type && (
+                            <div className="mt-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#C84B32]">
+                              {preparationLabel[v.preparation_type]}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <span className="text-sm font-extrabold text-[#3C1F15]">
