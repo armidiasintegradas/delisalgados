@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { DbService } from "@/lib/db";
 import { verifyAdminSession } from "@/lib/auth/adminAuth";
+import { isServerSupabaseConfigured } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
@@ -11,13 +12,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Dados incompletos para criação do pedido." }, { status: 400 });
     }
 
-    // SERVER-SIDE AUTHORITY: calculate prices, snapshots, validation
-    const order = await DbService.createOrder({ customer, items });
+    if (process.env.NODE_ENV === "production" && !isServerSupabaseConfigured && process.env.DELI_ALLOW_LOCAL_DB !== "true") {
+      return NextResponse.json(
+        { error: "Pedidos temporariamente indisponíveis. Banco de dados não configurado." },
+        { status: 503 }
+      );
+    }
 
-    return NextResponse.json({ success: true, order }, { status: 201 });
+    // SERVER-SIDE AUTHORITY: calculate prices, snapshots, validation, transactional RPC
+    const result = await DbService.createOrder({ customer, items });
+    const { handoffToken, ...orderData } = result;
+
+    return NextResponse.json(
+      {
+        success: true,
+        order: orderData,
+        handoffToken: handoffToken,
+      },
+      { status: 201 }
+    );
   } catch (error: any) {
     console.error("Error creating order:", error);
-    return NextResponse.json({ error: error.message || "Falha ao processar pedido" }, { status: 400 });
+    const status = error.status || 400;
+    return NextResponse.json({ error: error.message || "Falha ao processar pedido" }, { status });
   }
 }
 

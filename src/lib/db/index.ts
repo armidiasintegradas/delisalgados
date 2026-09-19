@@ -435,7 +435,13 @@ export class DbService {
   static async createOrder(orderInput: {
     customer: CustomerData;
     items: { productId: string; variantId?: string; quantity: number; note?: string }[];
-  }): Promise<Order> {
+  }): Promise<Order & { handoffToken: string }> {
+    if (process.env.NODE_ENV === "production" && !isServerSupabaseConfigured && process.env.DELI_ALLOW_LOCAL_DB !== "true") {
+      const err: any = new Error("Pedidos temporariamente indisponíveis. Banco de dados não configurado.");
+      err.status = 503;
+      throw err;
+    }
+
     if (!orderInput.items || orderInput.items.length === 0) {
       throw new Error("O pedido não possui itens.");
     }
@@ -505,15 +511,65 @@ export class DbService {
       });
     }
 
-    // Determine public DL-XXXX code safely
-    let existingCodes: string[] = [];
+    // Generate secure handoff token (32 bytes hex = 64 chars) and SHA-256 hash
+    const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    // Atomic insert into Supabase via Transactional RPC
     if (isServerSupabaseConfigured && supabaseServer) {
-      const { data } = await supabaseServer.from("orders").select("public_code");
-      existingCodes = (data || []).map((o: any) => o.public_code);
-    } else {
-      existingCodes = loadLocalState().orders.map((o) => o.public_code);
+      const orderPayload = {
+        id: orderId,
+        customer_name: orderInput.customer.customerName.trim(),
+        customer_phone: orderInput.customer.customerPhone.trim(),
+        desired_date: orderInput.customer.desiredDate,
+        fulfillment_type: orderInput.customer.fulfillmentType,
+        delivery_address: orderInput.customer.deliveryAddress?.trim() || null,
+        customer_note: orderInput.customer.customerNote?.trim() || null,
+        total: Number(calculatedTotal.toFixed(2)),
+      };
+
+      const itemsPayload = orderItems.map((oi) => ({
+        id: oi.id,
+        product_id: oi.product_id,
+        variant_id: oi.variant_id,
+        product_name_snapshot: oi.product_name_snapshot,
+        variant_name_snapshot: oi.variant_name_snapshot,
+        unit_label_snapshot: oi.unit_label_snapshot,
+        unit_price_snapshot: oi.unit_price_snapshot,
+        quantity: oi.quantity,
+        subtotal: oi.subtotal,
+        note: oi.note,
+      }));
+
+      const { data: createdData, error: rpcError } = await supabaseServer.rpc(
+        "create_deli_order_v34",
+        {
+          p_order: orderPayload,
+          p_items: itemsPayload,
+          p_token_hash: tokenHash,
+          p_token_expires_at: tokenExpiresAt,
+        }
+      );
+
+      if (rpcError) {
+        throw new Error(`[Database Error] Falha transacional ao criar pedido no Supabase: ${rpcError.message}`);
+      }
+
+      const createdOrder: Order = {
+        ...(createdData as Order),
+        items: createdData.items || orderItems,
+      };
+
+      return {
+        ...createdOrder,
+        handoffToken: token,
+      };
     }
 
+    // Local DB fallback for testing/offline dev
+    const state = loadLocalState();
+    const existingCodes = state.orders.map((o) => o.public_code);
     const publicCode = generateNextCode(existingCodes);
 
     const newOrder: Order = {
@@ -528,60 +584,20 @@ export class DbService {
       total: Number(calculatedTotal.toFixed(2)),
       status: "generated",
       whatsapp_status: "pending",
+      handoff_token_hash: tokenHash,
+      handoff_token_expires_at: tokenExpiresAt,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       items: orderItems,
     };
 
-    // Atomic insert into Supabase
-    if (isServerSupabaseConfigured && supabaseServer) {
-      const { error: ordError } = await supabaseServer.from("orders").insert({
-        id: newOrder.id,
-        public_code: newOrder.public_code,
-        customer_name: newOrder.customer_name,
-        customer_phone: newOrder.customer_phone,
-        desired_date: newOrder.desired_date,
-        fulfillment_type: newOrder.fulfillment_type,
-        delivery_address: newOrder.delivery_address,
-        customer_note: newOrder.customer_note,
-        total: newOrder.total,
-        status: newOrder.status,
-        whatsapp_status: newOrder.whatsapp_status,
-      });
-
-      if (ordError) {
-        throw new Error(`[Database Error] Falha ao salvar pedido no Supabase: ${ordError.message}`);
-      }
-
-      const { error: itemsError } = await supabaseServer.from("order_items").insert(
-        orderItems.map((oi) => ({
-          id: oi.id,
-          order_id: newOrder.id,
-          product_id: oi.product_id,
-          variant_id: oi.variant_id,
-          product_name_snapshot: oi.product_name_snapshot,
-          variant_name_snapshot: oi.variant_name_snapshot,
-          unit_label_snapshot: oi.unit_label_snapshot,
-          unit_price_snapshot: oi.unit_price_snapshot,
-          quantity: oi.quantity,
-          subtotal: oi.subtotal,
-          note: oi.note,
-        }))
-      );
-
-      if (itemsError) {
-        // Rollback created order to prevent orphaned records
-        await supabaseServer.from("orders").delete().eq("id", newOrder.id);
-        throw new Error(`[Database Error] Falha ao salvar itens do pedido no Supabase: ${itemsError.message}`);
-      }
-
-      return newOrder;
-    }
-
-    const state = loadLocalState();
     state.orders.unshift(newOrder);
     saveLocalState(state);
-    return newOrder;
+
+    return {
+      ...newOrder,
+      handoffToken: token,
+    };
   }
 
   // 5. Orders management
@@ -610,6 +626,52 @@ export class DbService {
     }
     const state = loadLocalState();
     return state.orders.find((o) => o.public_code.toUpperCase() === code.toUpperCase()) || null;
+  }
+
+  static async getOrderByHandoffToken(code: string, token: string): Promise<Order | null> {
+    if (!code || !token || typeof token !== "string") return null;
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const nowIso = new Date().toISOString();
+
+    if (isServerSupabaseConfigured && supabaseServer) {
+      const { data, error } = await supabaseServer
+        .from("orders")
+        .select("*, items:order_items(*)")
+        .eq("public_code", code.toUpperCase())
+        .eq("handoff_token_hash", tokenHash)
+        .single();
+
+      if (error || !data) return null;
+
+      // Verify expiration
+      if (data.handoff_token_expires_at && data.handoff_token_expires_at < nowIso) {
+        return null; // Expired
+      }
+
+      return data as Order;
+    }
+
+    const state = loadLocalState();
+    const ord = state.orders.find(
+      (o) =>
+        o.public_code.toUpperCase() === code.toUpperCase() &&
+        o.handoff_token_hash === tokenHash
+    );
+
+    if (!ord) return null;
+
+    if (ord.handoff_token_expires_at && ord.handoff_token_expires_at < nowIso) {
+      return null;
+    }
+
+    return ord;
+  }
+
+  static async updateOrderWhatsAppOpenedWithToken(code: string, token: string): Promise<boolean> {
+    const order = await this.getOrderByHandoffToken(code, token);
+    if (!order) return false;
+    return this.updateOrderWhatsAppStatus(order.id, "opened");
   }
 
   static async updateOrderStatus(orderId: string, status: Order["status"]): Promise<boolean> {

@@ -82,17 +82,22 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Não foi possível criar o pedido.");
+        throw new Error(data.error || "Não foi possível registrar seu pedido agora. Seus itens continuam no carrinho. Tente novamente em instantes.");
       }
 
-      // Order created server-side! Store in session and clear cart
+      // Order created server-side! Store in session with handoff token
       if (typeof window !== "undefined") {
         sessionStorage.setItem("deli_last_order", JSON.stringify(data.order));
+        if (data.handoffToken) {
+          sessionStorage.setItem("deli_handoff_token", data.handoffToken);
+        }
       }
-      clearCart();
-      router.push(`/pedido/enviado?code=${data.order.public_code}`);
+
+      // Note: Cart is NOT cleared here. It remains intact until the handoff page confirms loading.
+      const tokenParam = data.handoffToken ? `&t=${encodeURIComponent(data.handoffToken)}` : "";
+      router.push(`/pedido/enviado?code=${encodeURIComponent(data.order.public_code)}${tokenParam}`);
     } catch (err: any) {
-      setErrorMessage(err.message || "Erro inesperado ao processar pedido.");
+      setErrorMessage(err.message || "Não foi possível registrar seu pedido agora. Seus itens continuam no carrinho. Tente novamente em instantes.");
       setIsSubmitting(false);
     }
   };
@@ -155,9 +160,22 @@ export default function CheckoutPage() {
             </Link>
 
             {errorMessage && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
-                <AlertCircle size={16} className="shrink-0" />
-                <span>{errorMessage}</span>
+              <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-2xl flex flex-col gap-2.5 shadow-sm">
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle size={18} className="shrink-0 text-rose-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-bold text-rose-900 leading-snug">Não foi possível registrar seu pedido agora.</p>
+                    <p className="text-rose-700 mt-0.5">{errorMessage}</p>
+                    <p className="text-rose-600/90 text-[11px] mt-1 font-semibold">Seus itens continuam seguros no carrinho.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => handleSubmit(e as any)}
+                  className="self-start px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition shadow-xs"
+                >
+                  TENTAR NOVAMENTE
+                </button>
               </div>
             )}
 

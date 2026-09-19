@@ -75,6 +75,8 @@ export interface Order {
   total: number;
   status: OrderStatus;
   whatsapp_status: string;
+  handoff_token_hash?: string | null;
+  handoff_token_expires_at?: string | null;
   created_at: string;
   updated_at: string;
   items?: OrderItem[];

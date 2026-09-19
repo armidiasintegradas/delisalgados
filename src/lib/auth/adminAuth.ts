@@ -111,8 +111,11 @@ export async function verifyAdminSession(
   }
 
   // In test / dev environment:
-  const testCookie = request.cookies.get("deli_test_session")?.value;
-  if (bearerToken === "deli-admin-test-token" || testCookie === "admin") {
+  const cookieHeader = request.headers.get("cookie") || "";
+  const nextRequestCookie = (request as any).cookies?.get?.("deli_test_session")?.value;
+  const isTestSession = nextRequestCookie === "admin" || cookieHeader.includes("deli_test_session=admin");
+
+  if (bearerToken === "deli-admin-test-token" || isTestSession) {
     return {
       authorized: true,
       status: 200,

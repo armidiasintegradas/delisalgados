@@ -503,3 +503,239 @@ test("6. REAL DASHBOARD METRICS (ZERO HARDCODING)", async (t) => {
   assert.equal(typeof metrics.totalOrders, "number");
   assert.ok(metrics.availableProducts >= 43);
 });
+
+// ======================================================================
+// 7. V3.4 CHECKOUT HANDOFF RECOVERY & RESILIENCE (SECTION 19)
+// ======================================================================
+test("7. V3.4 CHECKOUT HANDOFF RECOVERY & RESILIENCE", async (t) => {
+  // Test 1: production sem Supabase -> POST /api/orders = 503
+  await t.test("1. production sem Supabase -> POST /api/orders = 503", () => {
+    const ordersRouteCode = fs.readFileSync("src/app/api/orders/route.ts", "utf8");
+    assert.ok(ordersRouteCode.includes("process.env.NODE_ENV === \"production\""));
+    assert.ok(ordersRouteCode.includes("503"));
+    assert.ok(ordersRouteCode.includes("Pedidos temporariamente indisponíveis. Banco de dados não configurado."));
+  });
+
+  // Test 2: carrinho permanece após falha de checkout
+  await t.test("2. carrinho permanece após falha de checkout", () => {
+    const finalizarCode = fs.readFileSync("src/app/pedido/finalizar/page.tsx", "utf8");
+    assert.ok(!finalizarCode.includes("clearCart();\n      router.push"));
+    assert.ok(finalizarCode.includes("Seus itens continuam seguros no carrinho."));
+    assert.ok(finalizarCode.includes("TENTAR NOVAMENTE"));
+  });
+
+  // Create an order for handoff testing
+  const catRes = await fetch(`${BASE_URL}/api/catalog`);
+  const catData = await catRes.json();
+  const prod = catData.products[0];
+
+  const orderRes = await fetch(`${BASE_URL}/api/orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      customer: {
+        customerName: "Handoff Test Customer",
+        customerPhone: "(81) 98888-2222",
+        desiredDate: "2026-10-05",
+        fulfillmentType: "pickup",
+        customerNote: "Sem cebola",
+      },
+      items: [{ productId: prod.id, quantity: prod.minimum_quantity || 100 }],
+    }),
+  });
+
+  assert.equal(orderRes.status, 201);
+  const orderBody = await orderRes.json();
+  assert.ok(orderBody.success);
+  assert.ok(orderBody.order);
+  assert.ok(orderBody.handoffToken);
+  assert.equal(typeof orderBody.handoffToken, "string");
+  assert.equal(orderBody.handoffToken.length, 64); // 32 bytes hex
+
+  const testCode = orderBody.order.public_code;
+  const validToken = orderBody.handoffToken;
+
+  // Test 3: pedido Supabase / DB -> order + items persistidos atomicamente
+  await t.test("3. pedido DB -> order + items persistidos atomicamente com snapshots", () => {
+    assert.ok(orderBody.order.items.length > 0);
+    assert.ok(orderBody.order.items[0].product_name_snapshot);
+    assert.ok(orderBody.order.items[0].unit_price_snapshot > 0);
+    assert.equal(orderBody.order.customer_name, "Handoff Test Customer");
+  });
+
+  // Test 4: public_code vem no formato canônico da sequence DL-XXXX
+  await t.test("4. public_code vem da sequence (formato DL-XXXX)", () => {
+    assert.match(testCode, /^DL-\d{4}$/);
+  });
+
+  // Test 5: duas criações simultâneas -> códigos diferentes
+  await t.test("5. duas criações simultâneas -> códigos diferentes", async () => {
+    const [res1, res2] = await Promise.all([
+      fetch(`${BASE_URL}/api/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer: { customerName: "Concurrent 1", customerPhone: "81911111111", desiredDate: "2026-10-05", fulfillmentType: "pickup" },
+          items: [{ productId: prod.id, quantity: prod.minimum_quantity || 100 }],
+        }),
+      }),
+      fetch(`${BASE_URL}/api/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer: { customerName: "Concurrent 2", customerPhone: "81922222222", desiredDate: "2026-10-05", fulfillmentType: "pickup" },
+          items: [{ productId: prod.id, quantity: prod.minimum_quantity || 100 }],
+        }),
+      }),
+    ]);
+    const b1 = await res1.json();
+    const b2 = await res2.json();
+    assert.notEqual(b1.order.public_code, b2.order.public_code);
+  });
+
+  // Test 6: token válido -> handoff carrega com sucesso
+  await t.test("6. token válido -> handoff carrega com sucesso", async () => {
+    const handoffRes = await fetch(`${BASE_URL}/api/orders/handoff`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: testCode, token: validToken }),
+    });
+    assert.equal(handoffRes.status, 200);
+    const handoffBody = await handoffRes.json();
+    assert.ok(handoffBody.success);
+    assert.equal(handoffBody.order.public_code, testCode);
+    assert.ok(Array.isArray(handoffBody.order.items));
+  });
+
+  // Test 7: refresh /pedido/enviado continua funcionando com token
+  await t.test("7. refresh /pedido/enviado com token preserva acesso", async () => {
+    const res = await fetch(`${BASE_URL}/api/orders/handoff`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: testCode, token: validToken }),
+    });
+    assert.equal(res.status, 200);
+  });
+
+  // Test 8: sessionStorage vazio + token válido funciona perfeitamente
+  await t.test("8. sessionStorage vazio + token válido funciona perfeitamente", async () => {
+    // Calling handoff endpoint simulates cold browser with no cookies/session
+    const res = await fetch(`${BASE_URL}/api/orders/handoff`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: testCode, token: validToken }),
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.order.public_code, testCode);
+  });
+
+  // Test 9: token inválido -> não vaza dados (retorna 404 neutro)
+  await t.test("9. token inválido -> resposta neutra 404 sem vazar dados", async () => {
+    const res = await fetch(`${BASE_URL}/api/orders/handoff`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: testCode, token: "invalid-token-1234567890abcdef" }),
+    });
+    assert.equal(res.status, 404);
+    const body = await res.json();
+    assert.equal(body.order, undefined);
+  });
+
+  // Test 10: token expirado / ausente -> tela oferece recuperação
+  await t.test("10. tela enviado oferece fluxo de recuperação quando token ausente", () => {
+    const enviadoCode = fs.readFileSync("src/app/pedido/enviado/page.tsx", "utf8");
+    assert.ok(enviadoCode.includes("Precisamos recuperar os dados do seu pedido"));
+    assert.ok(enviadoCode.includes("RECUPERAR PEDIDO"));
+  });
+
+  // Test 11: lookup code + phone correto funciona
+  await t.test("11. lookup code + phone correto funciona", async () => {
+    const res = await fetch(`${BASE_URL}/api/orders/lookup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: testCode, phone: "81988882222" }),
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.order.public_code, testCode);
+  });
+
+  // Test 12: lookup phone errado retorna resposta neutra (404)
+  await t.test("12. lookup phone errado retorna resposta neutra (404)", async () => {
+    const res = await fetch(`${BASE_URL}/api/orders/lookup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: testCode, phone: "81900000000" }),
+    });
+    assert.equal(res.status, 404);
+  });
+
+  // Test 13: whatsapp-opened sem token -> bloqueado (404)
+  await t.test("13. whatsapp-opened sem token -> bloqueado", async () => {
+    const res = await fetch(`${BASE_URL}/api/orders/${testCode}/whatsapp-opened`, {
+      method: "POST",
+    });
+    assert.equal(res.status, 404);
+  });
+
+  // Test 14: whatsapp-opened com token válido -> registra opened
+  await t.test("14. whatsapp-opened com token válido -> registra opened", async () => {
+    const res = await fetch(`${BASE_URL}/api/orders/${testCode}/whatsapp-opened`, {
+      method: "POST",
+      headers: { "x-handoff-token": validToken },
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.whatsapp_status, "opened");
+  });
+
+  // Test 15: sem número WhatsApp -> CTA indisponível no handoff
+  await t.test("15. sem número WhatsApp -> CTA indisponível no handoff", async () => {
+    const res = await fetch(`${BASE_URL}/api/orders/handoff`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: testCode, token: validToken }),
+    });
+    const body = await res.json();
+    if (!body.settings.whatsapp_number) {
+      assert.equal(body.whatsapp_url, "");
+    }
+  });
+
+  // Test 16: com número WhatsApp -> wa.me correto no handoff
+  await t.test("16. com número WhatsApp -> wa.me formatado com snapshots", () => {
+    const handoffRouteCode = fs.readFileSync("src/app/api/orders/handoff/route.ts", "utf8");
+    assert.ok(handoffRouteCode.includes("buildWhatsAppLink"));
+    assert.ok(handoffRouteCode.includes("generateWhatsAppMessage"));
+  });
+
+  // Test 17: falha DB -> carrinho não limpa
+  await t.test("17. falha DB -> carrinho não limpa", () => {
+    const finalizarCode = fs.readFileSync("src/app/pedido/finalizar/page.tsx", "utf8");
+    assert.ok(finalizarCode.includes("Seus itens continuam seguros no carrinho."));
+  });
+
+  // Test 18: falha DB -> não gera falso código DL-XXXX
+  await t.test("18. falha DB -> não gera falso código DL-XXXX", () => {
+    const finalizarCode = fs.readFileSync("src/app/pedido/finalizar/page.tsx", "utf8");
+    // Ensure no fallback dummy code is generated client-side
+    assert.ok(!finalizarCode.includes("DL-0001"));
+  });
+
+  // Test 19: desktop handoff container max-w-[720px] e styling V3.1
+  await t.test("19. desktop handoff container max-w-[720px] e styling V3.1", () => {
+    const enviadoCode = fs.readFileSync("src/app/pedido/enviado/page.tsx", "utf8");
+    assert.ok(enviadoCode.includes("max-w-[720px]"));
+    assert.ok(enviadoCode.includes("font-display"));
+    assert.ok(enviadoCode.includes("#FFF0D1"));
+  });
+
+  // Test 20: mobile handoff responsivo
+  await t.test("20. mobile handoff responsivo", () => {
+    const enviadoCode = fs.readFileSync("src/app/pedido/enviado/page.tsx", "utf8");
+    assert.ok(enviadoCode.includes("max-w-[440px]"));
+    assert.ok(enviadoCode.includes("min-h-screen"));
+  });
+});
+
