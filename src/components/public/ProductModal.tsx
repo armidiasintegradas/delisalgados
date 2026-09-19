@@ -50,7 +50,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const unitLabel = selectedVariant
     ? selectedVariant.unit_label
     : product.unit_label;
-  const step = minQty >= 100 ? 50 : 1;
+  const step = minQty >= 100 ? 100 : 1;
 
   const subtotal = Number((unitPrice * quantity).toFixed(2));
 
@@ -73,11 +73,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs p-0 animate-in fade-in duration-200"
+      className="fixed inset-y-0 inset-x-0 mx-auto max-w-[440px] w-full z-50 flex items-end justify-center bg-black/50 backdrop-blur-xs p-0 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[440px] bg-[#FFFDF6] rounded-t-[32px] shadow-2xl border-t border-[#EAD8C7] flex flex-col overflow-hidden pb-5 animate-in slide-in-from-bottom-6 duration-300 relative"
+        className="w-full bg-[#FFFDF6] rounded-t-[32px] shadow-2xl border-t border-[#EAD8C7] flex flex-col overflow-hidden pb-5 animate-in slide-in-from-bottom-6 duration-300 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Handle */}
@@ -96,16 +96,16 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         {/* Header */}
         <div className="px-5 pt-1 pb-3 pr-14">
           <span className="inline-block px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide bg-[#FFE8E0] text-[#E05A36] mb-1">
-            {product.slug === "camarao-empanado-1kg" ? "PORÇÃO ESPECIAL · 1 KG" : `${product.category?.name || "Cardápio"} • ${unitLabel}`}
+            {`${product.category?.name || "Cardápio"} • ${unitLabel}`}
           </span>
           <h2 className="font-display text-2xl font-bold text-[#3C1F15] leading-tight">
-            {product.slug === "camarao-empanado-1kg" ? "Camarão Empanado" : product.name}
+            {product.name}
           </h2>
-          <p className="text-xs text-[#7A6357] mt-1 leading-relaxed font-medium">
-            {product.slug === "camarao-empanado-1kg"
-              ? "Camarões selecionados empanados na farinha crocante artesanal"
-              : (product.description || "Ingredientes selecionados e preparo artesanal")}
-          </p>
+          {product.description && (
+            <p className="text-xs text-[#7A6357] mt-1 leading-relaxed font-medium">
+              {product.description}
+            </p>
+          )}
         </div>
 
         {/* Scrollable Content */}
@@ -114,16 +114,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
           {isVariants && activeVariants.length > 0 && (
             <div>
               <label className="text-xs font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-2">
-                Escolha uma opção de preparo:
+                Opções:
               </label>
               <div className="space-y-2">
                 {activeVariants.map((v) => {
                   const isChecked = selectedVariant?.id === v.id;
-                  const isFrito = v.name.toLowerCase().includes("frito");
-                  const displayVariantName = isFrito ? "Frito Pronto" : v.name;
-                  const displaySubtitle = isFrito
-                    ? "Fritura sequinha pronto para servir"
-                    : "Ultra-congelado para você fritar na hora";
 
                   return (
                     <div
@@ -152,10 +147,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                         </div>
                         <div>
                           <div className="text-sm font-bold text-[#3C1F15]">
-                            {displayVariantName}
-                          </div>
-                          <div className="text-[11px] text-[#7A6357]">
-                            {displaySubtitle}
+                            {v.name}
                           </div>
                         </div>
                       </div>

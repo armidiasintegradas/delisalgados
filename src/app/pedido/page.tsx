@@ -21,9 +21,11 @@ export default function CartPage() {
           >
             <ArrowLeft size={18} />
           </Link>
-          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden border border-white/20">
-            <img src="/logo-official.png" alt="Logo" className="w-6 h-6 object-contain" />
-          </div>
+          <img
+            src="/deli-logo-cream-official.png"
+            alt="Deli Salgados"
+            className="h-8 w-auto object-contain select-none"
+          />
           <div>
             <h1 className="text-base font-bold leading-tight">Seu pedido</h1>
             <span className="text-[10px] text-[#FCE9D8] tracking-wide block">

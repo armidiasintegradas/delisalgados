@@ -1,0 +1,32 @@
+{
+  "deli-avatar-official.png": {
+    "dimensions": "2000x2000",
+    "size_bytes": 409880,
+    "sha256": "9bad1895b0ca72a7de16b87cfb4c3671534864831d64d37291b22e05a9313e4a"
+  },
+  "deli-favicon-official.png": {
+    "dimensions": "1449x2000",
+    "size_bytes": 447443,
+    "sha256": "85b88e76faf26ee43f522a8f9a7a4a01b24dd56cfcd9673d376f16d84bfcb46e"
+  },
+  "deli-logo-coral-official.png": {
+    "dimensions": "1456x1954",
+    "size_bytes": 250849,
+    "sha256": "5a22448cca8a1e10a08c968648efb17c7fab1857cb6ec83058772946ed2c513c"
+  },
+  "deli-logo-cream-alt-official.png": {
+    "dimensions": "741x1024",
+    "size_bytes": 238450,
+    "sha256": "a113e2b248fad6fb4a481f744801b6313e1a92fdc36bd57557c60a8c74ce9531"
+  },
+  "deli-logo-cream-official.png": {
+    "dimensions": "1456x1954",
+    "size_bytes": 217690,
+    "sha256": "0a2f0f717ef2e8fbbe59b2ee312ae5d0796968c23e27b1da502c663198aea9ee"
+  },
+  "deli-pattern-official.png": {
+    "dimensions": "5669x4016",
+    "size_bytes": 3309241,
+    "sha256": "7b8e9c3125544beaab1f55dc40d50f240bccbdb68793510151b1df76b21fe123"
+  }
+}

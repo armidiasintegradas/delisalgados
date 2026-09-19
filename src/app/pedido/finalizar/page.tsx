@@ -184,7 +184,7 @@ export default function CheckoutPage() {
               {/* Customer Phone (WhatsApp) */}
               <div>
                 <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1">
-                  WHATSAPP *
+                  WhatsApp para contato *
                 </label>
                 <input
                   type="tel"
@@ -236,8 +236,8 @@ export default function CheckoutPage() {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#E05A36] inline-block shrink-0" />
                 <span>
                   {customerData.fulfillmentType === "pickup" && "Retirada em nosso balcão de atendimento no horário combinado."}
-                  {customerData.fulfillmentType === "delivery" && "Consulte taxa de entrega e rotas para seu endereço."}
-                  {customerData.fulfillmentType === "to_agree" && "Detalhes do frete ou retirada combinados no WhatsApp."}
+                  {customerData.fulfillmentType === "delivery" && "Os detalhes da entrega serão confirmados pela Deli no WhatsApp."}
+                  {customerData.fulfillmentType === "to_agree" && "Os detalhes da entrega serão confirmados pela Deli no WhatsApp."}
                 </span>
               </p>
             </div>

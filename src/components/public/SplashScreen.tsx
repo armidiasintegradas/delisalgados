@@ -9,16 +9,16 @@ interface SplashScreenProps {
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({
   onFinish,
-  minDuration = 1600,
+  minDuration = 1400,
 }) => {
-  const [phase, setPhase] = useState<"entrance" | "breathing" | "exiting" | "hidden">("entrance");
+  const [phase, setPhase] = useState<"visible" | "exiting" | "hidden">("visible");
 
   const handleExit = useCallback(() => {
     setPhase("exiting");
     const hideTimer = setTimeout(() => {
       setPhase("hidden");
       if (onFinish) onFinish();
-    }, 550);
+    }, 450);
     return () => clearTimeout(hideTimer);
   }, [onFinish]);
 
@@ -31,12 +31,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
     // Check prefers-reduced-motion
     const prefersReducedMotion =
       typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const duration = prefersReducedMotion ? 700 : minDuration;
-
-    // Transition from entrance to breathing at 750ms
-    const breatheTimer = setTimeout(() => {
-      setPhase((prev) => (prev === "entrance" ? "breathing" : prev));
-    }, 750);
+    const duration = prefersReducedMotion ? 600 : minDuration;
 
     // Transition to exit
     const exitTimer = setTimeout(() => {
@@ -44,7 +39,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
     }, duration);
 
     return () => {
-      clearTimeout(breatheTimer);
       clearTimeout(exitTimer);
     };
   }, [minDuration, handleExit]);
@@ -56,56 +50,26 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
   return (
     <div
       onClick={handleExit}
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#DF5F45] select-none cursor-pointer overflow-hidden transition-opacity duration-550 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+      className={`fixed inset-y-0 inset-x-0 mx-auto max-w-[440px] w-full z-50 flex items-center justify-center select-none cursor-pointer overflow-hidden transition-opacity duration-450 ease-out shadow-2xl ${
         isExiting ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
       style={{
-        background: "radial-gradient(circle at center, #E8644A 0%, #DF5F45 60%, #D04E35 100%)",
+        backgroundColor: "#DF5F45",
+        backgroundImage: "url('/deli-pattern-official.png')",
+        backgroundRepeat: "repeat",
+        backgroundSize: "500px auto",
       }}
       aria-label="Deli Salgados - Tela inicial"
     >
-      {/* Ambient Radial Soft Glow */}
-      <div
-        className={`absolute rounded-full pointer-events-none transition-all duration-700 ${
-          isExiting ? "opacity-0 scale-125" : "animate-splash-glow"
-        }`}
-        style={{
-          width: "min(80vw, 80vh, 500px)",
-          height: "min(80vw, 80vh, 500px)",
-          background:
-            "radial-gradient(circle, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 45%, transparent 70%)",
-        }}
-      />
-
-      {/* Main Logo Container - Fills 50% of the screen adaptively */}
-      <div
-        className={`relative z-10 flex flex-col items-center justify-center transition-all duration-550 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${
-          isExiting
-            ? "opacity-0 -translate-y-6 scale-105"
-            : phase === "entrance"
-            ? "animate-splash-entrance"
-            : "animate-splash-breathe"
-        }`}
-        style={{
-          width: "min(50vw, 42vh, 340px)",
-          minWidth: "195px",
-        }}
-      >
+      {/* Official Centered Transparent Brand Logo */}
+      <div className="relative z-10 flex items-center justify-center animate-splash-entrance">
         <img
-          src="/logo-official.png"
+          src="/deli-logo-cream-official.png"
           alt="Deli Salgados"
-          className="w-full h-auto drop-shadow-[0_12px_28px_rgba(60,31,21,0.28)] select-none pointer-events-none object-contain"
+          className="w-[190px] h-auto object-contain select-none pointer-events-none drop-shadow-[0_8px_20px_rgba(60,31,21,0.25)]"
         />
-      </div>
-
-      {/* Subtle indicator hint to tap to skip */}
-      <div
-        className={`absolute bottom-8 text-[11px] font-medium tracking-wide text-white/70 uppercase transition-opacity duration-500 pointer-events-none ${
-          isExiting ? "opacity-0" : "opacity-60"
-        }`}
-      >
-        Toque para entrar
       </div>
     </div>
   );
 };
+

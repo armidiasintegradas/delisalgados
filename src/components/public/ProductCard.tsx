@@ -12,16 +12,6 @@ interface ProductCardProps {
   showPrices?: boolean;
 }
 
-// Stitch reference descriptions fallback
-const STITCH_DESCRIPTIONS: Record<string, string> = {
-  "coxinha-frango": "Frango desfiado temperado com ervas finas",
-  "risole-carne": "Carne moída nobre bem temperadinha",
-  "bolinho-queijo": "Queijo derretido cremoso e casquinha crocante",
-  "bolinho-presunto-queijo": "Combinação clássica que agrada a todos",
-  "bolinho-calabresa": "Calabresa moída com temperos da casa",
-  "pastel-festa": "Pastel crocante e sequinho para festas",
-};
-
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onOpenOptions,
@@ -44,9 +34,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     }
   }
 
-  // Description from product or fallback to Stitch canonical
-  const description =
-    product.description || STITCH_DESCRIPTIONS[product.slug] || "";
+  // Canonical description strictly from product database
+  const description = product.description || "";
 
   // Check if item is already in cart
   const cartItem = items.find((i) => i.productId === product.id);

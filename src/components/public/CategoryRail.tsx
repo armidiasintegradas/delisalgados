@@ -19,18 +19,11 @@ export const CategoryRail: React.FC<CategoryRailProps> = ({
     return name;
   };
 
-  // Reorder categories: salgados first, empadas second, preserving all canonical categories
-  const orderedCategories = [...categories]
-    .sort((a, b) => {
-      if (a.slug === "salgados") return -1;
-      if (b.slug === "salgados") return 1;
-      if (a.slug === "empadas") return -1;
-      if (b.slug === "empadas") return 1;
-      return a.sort_order - b.sort_order;
-    });
+  // Respect canonical backend sort_order
+  const orderedCategories = [...categories].sort((a, b) => a.sort_order - b.sort_order);
 
   return (
-    <div className="sticky top-[110px] z-20 bg-[#FFF0D1]/95 backdrop-blur-md py-3 px-4 w-full overflow-hidden min-w-0">
+    <div className="bg-[#FFF0D1]/95 backdrop-blur-md py-2.5 px-4 w-full overflow-hidden min-w-0 border-b border-[#F0DEC0]/60">
       <div className="w-full flex items-center gap-2.5 overflow-x-auto no-scrollbar py-0.5 min-w-0">
 
         <button

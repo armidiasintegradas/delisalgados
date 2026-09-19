@@ -28,11 +28,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   font-family: 'Fredoka', 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
-/* Watermark background pattern matching Stitch */
+/* Official Deli Salgados watermark background using canonical pattern */
 .catalog-bg-pattern {
   background-color: #FFF0D1;
-  background-image: radial-gradient(rgba(235, 215, 185, 0.4) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: url('/deli-pattern-official.png');
+  background-repeat: repeat;
+  background-size: 500px auto;
 }
 
 /* Custom scrollbar */
@@ -56,52 +57,20 @@ nextjs-portal,
   display: none !important;
 }
 
-/* Splash screen fluid entrance & breathing animations */
-@keyframes splashEntrance {
-  0% {
+/* Splash screen subtle fade entrance */
+@keyframes splashFadeIn {
+  from {
     opacity: 0;
-    transform: scale(0.82) translateY(20px);
+    transform: scale(0.96);
   }
-  65% {
+  to {
     opacity: 1;
-    transform: scale(1.025) translateY(-2px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes splashBreathing {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-8px) scale(1.025);
-  }
-}
-
-@keyframes splashGlowPulse {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(0.92);
-  }
-  50% {
-    opacity: 0.65;
-    transform: scale(1.15);
+    transform: scale(1);
   }
 }
 
 .animate-splash-entrance {
-  animation: splashEntrance 750ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-splash-breathe {
-  animation: splashBreathing 3s ease-in-out infinite;
-}
-
-.animate-splash-glow {
-  animation: splashGlowPulse 3s ease-in-out infinite;
+  animation: splashFadeIn 400ms ease-out forwards;
 }
 
 

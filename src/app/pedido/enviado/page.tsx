@@ -19,69 +19,6 @@ function EnviadoContent() {
 
   useEffect(() => {
     async function loadData() {
-      if (orderCode === "DL-0042" || searchParams.get("mock") === "stitch") {
-        setOrder({
-          id: "mock-order-0042",
-          public_code: "DL-0042",
-          customer_name: "Maria Silva",
-          customer_phone: "(81) 98765-4321",
-          desired_date: "25/09/2026",
-          fulfillment_type: "pickup",
-          total: 545.0,
-          status: "confirmed",
-          whatsapp_status: "sent",
-          delivery_address: null,
-          customer_note: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          items: [
-            {
-              id: "item-1",
-              order_id: "mock-order-0042",
-              product_id: "p0000000-0000-0000-0000-000000000031",
-              variant_id: null,
-              product_name_snapshot: "Coxinha",
-              variant_name_snapshot: null,
-              unit_price_snapshot: 1.7,
-              unit_label_snapshot: "un.",
-              quantity: 100,
-              subtotal: 170.0,
-              note: null,
-              created_at: new Date().toISOString(),
-            },
-            {
-              id: "item-2",
-              order_id: "mock-order-0042",
-              product_id: "p0000000-0000-0000-0000-000000000038",
-              variant_id: null,
-              product_name_snapshot: "Bolinho de Queijo",
-              variant_name_snapshot: null,
-              unit_price_snapshot: 2.0,
-              unit_label_snapshot: "un.",
-              quantity: 100,
-              subtotal: 200.0,
-              note: null,
-              created_at: new Date().toISOString(),
-            },
-            {
-              id: "item-3",
-              order_id: "mock-order-0042",
-              product_id: "p0000000-0000-0000-0000-000000000036",
-              variant_id: "v-1",
-              product_name_snapshot: "Camarão Empanado",
-              variant_name_snapshot: "Congelado",
-              unit_price_snapshot: 175.0,
-              unit_label_snapshot: "1 kg",
-              quantity: 1,
-              subtotal: 175.0,
-              note: null,
-              created_at: new Date().toISOString(),
-            },
-          ],
-        });
-        setIsLoading(false);
-        return;
-      }
       if (!orderCode) {
         setIsLoading(false);
         return;
@@ -131,26 +68,12 @@ function EnviadoContent() {
     );
   }
 
-  const effectiveSettings: Settings = settings || {
-    business_name: "Deli Salgados",
-    whatsapp_number: "5581987654321",
-    instagram_url: "https://www.instagram.com/deli.salgados",
-    address: "Recife, PE",
-    pickup_information: "",
-    delivery_information: "",
-    whatsapp_opening_message: "Olá, Deli Salgados! Gostaria de enviar uma solicitação de pedido pelo cardápio digital:",
-    whatsapp_closing_message: "Aguardo confirmação da disponibilidade e do valor final. Obrigado!",
-    catalog_show_search: true,
-    catalog_show_prices: true,
-    catalog_show_unavailable: false,
-    special_order_cta_enabled: true,
-    special_order_cta_text: "",
-    logo_url: null,
-    pattern_url: null,
-  };
-
-  const whatsappMessage = order ? generateWhatsAppMessage(order, effectiveSettings) : "";
-  const whatsappUrl = buildWhatsAppLink(effectiveSettings.whatsapp_number, whatsappMessage);
+  const whatsappNumber = settings?.whatsapp_number || "";
+  const whatsappMessage =
+    order && settings && whatsappNumber
+      ? generateWhatsAppMessage(order, settings)
+      : "";
+  const whatsappUrl = whatsappNumber ? buildWhatsAppLink(whatsappNumber, whatsappMessage) : "";
 
   return (
     <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] mx-auto shadow-2xl justify-between relative">
@@ -163,9 +86,11 @@ function EnviadoContent() {
           >
             <ArrowLeft size={18} />
           </Link>
-          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden border border-white/20">
-            <img src="/logo-official.png" alt="Logo" className="w-6 h-6 object-contain" />
-          </div>
+          <img
+            src="/deli-logo-cream-official.png"
+            alt="Deli Salgados"
+            className="h-8 w-auto object-contain select-none"
+          />
           <div>
             <h1 className="text-base font-bold leading-tight">Quase lá!</h1>
             <span className="text-[10px] text-[#FCE9D8] tracking-wide block">
@@ -213,32 +138,15 @@ function EnviadoContent() {
               </p>
 
               <div className="py-1 space-y-1 border-y border-[#E2F2E7] text-[11px]">
-                {order.items && order.items.length > 0 ? (
-                  order.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-[#3C1F15]">
-                      <span>
-                        • {item.product_name_snapshot}
-                        {item.variant_name_snapshot && ` (${item.variant_name_snapshot})`} · {item.quantity} {item.unit_label_snapshot || "un."}
-                      </span>
-                      <span className="font-bold">{formatCurrency(item.subtotal)}</span>
-                    </div>
-                  ))
-                ) : (
-                  <>
-                    <div className="flex justify-between text-[#3C1F15]">
-                      <span>• Coxinha · 100 un.</span>
-                      <span className="font-bold">R$ 170,00</span>
-                    </div>
-                    <div className="flex justify-between text-[#3C1F15]">
-                      <span>• Bolinho de Queijo · 100 un.</span>
-                      <span className="font-bold">R$ 200,00</span>
-                    </div>
-                    <div className="flex justify-between text-[#3C1F15]">
-                      <span>• Camarão Empanado (Congelado) · 1 kg</span>
-                      <span className="font-bold">R$ 175,00</span>
-                    </div>
-                  </>
-                )}
+                {order.items && order.items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-[#3C1F15]">
+                    <span>
+                      • {item.product_name_snapshot}
+                      {item.variant_name_snapshot && ` (${item.variant_name_snapshot})`} · {item.quantity} {item.unit_label_snapshot || "un."}
+                    </span>
+                    <span className="font-bold">{formatCurrency(item.subtotal)}</span>
+                  </div>
+                ))}
               </div>
 
               <div className="text-[10px] space-y-0.5 text-[#6B5347] pt-0.5">
@@ -264,24 +172,30 @@ function EnviadoContent() {
 
         {/* Action Buttons */}
         <div className="space-y-2.5 pb-4">
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full py-4 px-4 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-extrabold uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 transition transform active:scale-[0.98]"
-          >
-            <MessageCircle size={18} className="fill-white stroke-none" />
-            <span>Abrir WhatsApp</span>
-          </a>
-
-          {effectiveSettings.instagram_url && (
+          {whatsappUrl ? (
             <a
-              href={effectiveSettings.instagram_url}
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#F58529] via-[#DD2A7B] to-[#8134AF] hover:opacity-95 text-white text-xs font-extrabold uppercase tracking-wide shadow-md flex items-center justify-center gap-2 transition transform active:scale-[0.98]"
+              className="w-full py-4 px-4 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-extrabold uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 transition transform active:scale-[0.98]"
             >
-              <Instagram size={17} className="stroke-[2.2]" />
+              <MessageCircle size={18} className="fill-white stroke-none" />
+              <span>Abrir WhatsApp</span>
+            </a>
+          ) : (
+            <div className="w-full p-3.5 rounded-2xl bg-[#FFF4D9] border border-[#E8D9CB] text-center text-[#7A6357] text-xs font-semibold">
+              WhatsApp da loja não configurado no sistema.
+            </div>
+          )}
+
+          {settings?.instagram_url && (
+            <a
+              href={settings.instagram_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3.5 px-4 rounded-2xl bg-[#3C1F15] hover:bg-[#27120A] text-[#FFFDF9] text-xs font-extrabold uppercase tracking-wide shadow-md flex items-center justify-center gap-2 transition transform active:scale-[0.98] border border-[#EAD8C7]"
+            >
+              <Instagram size={17} className="stroke-[2.2] text-[#E05A36]" />
               <span>DELI NO INSTA</span>
             </a>
           )}
