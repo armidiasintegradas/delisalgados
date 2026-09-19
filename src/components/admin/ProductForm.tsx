@@ -20,7 +20,7 @@ import {
   Edit2,
   Layers,
 } from "lucide-react";
-import { Product, Category, ProductVariant, PriceType, Availability } from "@/types";
+import { Product, Category, ProductVariant, PriceType, Availability, PreparationType } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 
 interface ProductFormProps {
@@ -36,16 +36,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 }) => {
   const router = useRouter();
 
-  const [name, setName] = useState(initialProduct?.name || "Empadinha de Camarão");
+  const [name, setName] = useState(initialProduct?.name || "");
   const [categoryId, setCategoryId] = useState(
     initialProduct?.category_id || categories.find((c) => c.slug === "empadas")?.id || categories[0]?.id || ""
   );
-  const [slug, setSlug] = useState(initialProduct?.slug || "empadinha-camarao");
-  const [description, setDescription] = useState(
-    initialProduct?.description || "Camarões frescos selecionados, refogados com ervas e azeite em massa podre amanteigada tradicional."
-  );
-  const [internalNotes, setInternalNotes] = useState(
-    "Fornecedor de camarão fresco de Santos; massa leva banha e manteiga especial."
+  const [slug, setSlug] = useState(initialProduct?.slug || "");
+  const [description, setDescription] = useState(initialProduct?.description || "");
+  const [internalNotes, setInternalNotes] = useState(initialProduct?.note || "");
+  const [imageUrl, setImageUrl] = useState(initialProduct?.image_url || "");
+  const [preparationType, setPreparationType] = useState<PreparationType | "">(
+    initialProduct?.preparation_type || ""
   );
   const [unitLabel, setUnitLabel] = useState(initialProduct?.unit_label || "UND");
   const [minimumQuantity, setMinimumQuantity] = useState(initialProduct?.minimum_quantity || 100);
@@ -53,38 +53,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [basePrice, setBasePrice] = useState<number | string>(
     initialProduct?.base_price !== null && initialProduct?.base_price !== undefined
       ? initialProduct.base_price
-      : 5.20
+      : 0
   );
-  const [displayOrder, setDisplayOrder] = useState(4);
+  const [displayOrder, setDisplayOrder] = useState(initialProduct?.sort_order || 99);
   const [availability, setAvailability] = useState<Availability>(
     initialProduct?.availability || "available"
   );
   const [isVisible, setIsVisible] = useState(initialProduct?.is_visible ?? true);
   const [variants, setVariants] = useState<ProductVariant[]>(
-    initialProduct?.variants && initialProduct.variants.length > 0
-      ? initialProduct.variants
-      : [
-          {
-            id: "v-1",
-            product_id: initialProduct?.id || "",
-            name: "Congelado",
-            price: 175.0,
-            unit_label: "1 kg",
-            minimum_quantity: 1,
-            sort_order: 1,
-            is_active: true,
-          },
-          {
-            id: "v-2",
-            product_id: initialProduct?.id || "",
-            name: "Frito Pronto",
-            price: 195.0,
-            unit_label: "1 kg",
-            minimum_quantity: 1,
-            sort_order: 2,
-            is_active: true,
-          },
-        ]
+    initialProduct?.variants || []
   );
 
   const [isSaving, setIsSaving] = useState(false);
@@ -108,6 +85,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       minimum_quantity: 1,
       sort_order: variants.length + 1,
       is_active: true,
+      preparation_type: null,
     };
     setVariants([...variants, newVariant]);
   };
@@ -131,6 +109,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setErrorMessage("O nome do produto é obrigatório.");
       return;
     }
+    if (!preparationType) {
+      setErrorMessage("Informe se o produto é frito, assado, congelado, pronto ou possui opções de preparo.");
+      return;
+    }
 
     setIsSaving(true);
 
@@ -146,6 +128,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       base_price: priceType === "simple" ? Number(basePrice) : null,
       availability,
       is_visible: isVisible,
+      preparation_type: priceType === "variants" ? "variants" : preparationType,
+      image_url: imageUrl.trim() || null,
+      sort_order: Number(displayOrder),
       variants,
     };
 
@@ -177,7 +162,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   const isVariantsMode = priceType === "variants";
-  const numPrice = Number(basePrice) || 5.20;
+  const numPrice = Number(basePrice) || 0;
   const numMin = Number(minimumQuantity) || 100;
   const centoTotal = numPrice * numMin;
 
@@ -313,6 +298,27 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6357] block mb-1">
+                Forma de Preparo / Entrega
+              </label>
+              <select
+                value={preparationType}
+                onChange={(e) => setPreparationType(e.target.value as PreparationType)}
+                className="w-full bg-[#FFFDF9] border border-[#E8D9CB] rounded-xl px-3 py-2 text-xs font-bold text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
+              >
+                <option value="">Selecione...</option>
+                <option value="fried">Frito</option>
+                <option value="baked">Assado / Forno</option>
+                <option value="frozen">Congelado</option>
+                <option value="ready">Pronto / Montado</option>
+                <option value="variants">Opções de preparo</option>
+              </select>
+              <span className="text-[10px] text-[#9E8679] mt-0.5 block">
+                Esta informação aparece no cardápio e no modal do produto.
+              </span>
             </div>
 
             <div>
@@ -612,30 +618,37 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </span>
             </div>
 
-            <div className="relative rounded-2xl overflow-hidden border border-[#F0E2D2] aspect-video bg-[#FFF8EE] group">
-              <Image
-                src="/products/empada-hd.jpg"
-                alt="Empadinha de Camarão"
-                fill
-                className="object-cover"
-                unoptimized
-              />
-              <div className="absolute inset-0 bg-black/25 flex items-end justify-between p-3">
-                <span className="text-white text-xs font-bold drop-shadow">
-                  empada-camarao.webp (840 KB)
-                </span>
-                <button
-                  type="button"
-                  className="px-2.5 py-1 rounded-xl bg-white/95 text-[#3C1F15] text-[10px] font-bold hover:bg-white transition flex items-center gap-1 shadow"
-                >
-                  <Camera size={12} />
-                  <span>Alterar Imagem</span>
-                </button>
+            {imageUrl ? (
+              <div className="relative rounded-2xl overflow-hidden border border-[#F0E2D2] aspect-video bg-[#FFF8EE]">
+                <img
+                  src={imageUrl}
+                  alt={name || "Produto Deli"}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
-            </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-[#E8D9CB] aspect-video bg-[#FFF8EE] flex items-center justify-center text-center p-5">
+                <div>
+                  <Camera size={24} className="mx-auto text-[#C9AFA1] mb-2" />
+                  <p className="text-xs font-bold text-[#7A6357]">Produto sem imagem cadastrada</p>
+                </div>
+              </div>
+            )}
 
-            <div className="p-2.5 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] text-[10px] text-[#7A6357] leading-relaxed">
-              Imagens de alta qualidade aumentam a taxa de conversão em pedidos em até 38%. Evite fotos com pouca iluminação.
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6357] block mb-1">
+                URL da imagem
+              </label>
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://.../produto.webp"
+                className="w-full bg-[#FFFDF9] border border-[#E8D9CB] rounded-xl px-3 py-2 text-xs text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
+              />
+              <p className="text-[10px] text-[#9E8679] mt-1">
+                Use a URL pública do Supabase Storage. Nenhuma foto genérica será atribuída automaticamente.
+              </p>
             </div>
           </div>
         </div>
