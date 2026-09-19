@@ -1,0 +1,13 @@
+<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.12">
+    <!-- Mini empanada / croissant curve -->
+    <path d="M 10,25 C 10,15 25,15 25,25 Z" />
+    <path d="M 12,23 Q 17,20 23,23" />
+    <!-- Wheat / fork motif -->
+    <path d="M 45,10 L 45,26 M 42,12 L 45,16 L 48,12" />
+    <!-- Mini star / sparkle -->
+    <path d="M 35,45 L 35,51 M 32,48 L 38,48" />
+    <circle cx="15" cy="45" r="3" />
+    <circle cx="48" cy="40" r="2" />
+  </g>
+</svg>

@@ -1,0 +1,61 @@
+import { NextResponse } from "next/server";
+import { DbService } from "@/lib/db";
+
+export async function GET() {
+  try {
+    const products = await DbService.getProducts({ includeHidden: true, includeUnavailable: true });
+    return NextResponse.json({ products });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    if (body.action === "duplicate") {
+      const duplicated = await DbService.duplicateProduct(body.id);
+      return NextResponse.json({ success: true, product: duplicated });
+    }
+    const product = await DbService.createProduct(body);
+    return NextResponse.json({ success: true, product }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    // Bulk price updates or single update
+    if (body.bulkPrices && Array.isArray(body.bulkPrices)) {
+      let updatedCount = 0;
+      for (const item of body.bulkPrices) {
+        if (item.id && typeof item.price === "number") {
+          const ok = await DbService.updateProductPrice(item.id, item.price);
+          if (ok) updatedCount++;
+        }
+      }
+      return NextResponse.json({ success: true, updatedCount, message: `${updatedCount} preços atualizados.` });
+    }
+
+    if (body.id && body.action === "updateAvailability") {
+      await DbService.updateProductAvailability(body.id, body.availability);
+      return NextResponse.json({ success: true, message: "Disponibilidade alterada." });
+    }
+
+    if (body.id && body.action === "toggleVisibility") {
+      await DbService.toggleProductVisibility(body.id, body.is_visible);
+      return NextResponse.json({ success: true, message: "Visibilidade alterada." });
+    }
+
+    if (body.id) {
+      const updated = await DbService.updateProduct(body.id, body);
+      return NextResponse.json({ success: true, product: updated, message: "Produto atualizado com sucesso." });
+    }
+
+    return NextResponse.json({ error: "Ação não suportada" }, { status: 400 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
