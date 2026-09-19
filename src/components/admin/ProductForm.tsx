@@ -64,6 +64,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   );
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -97,6 +98,36 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const handleRemoveVariant = (idx: number) => {
     setVariants(variants.filter((_, i) => i !== idx));
+  };
+
+  const handleImageUpload = async (file?: File | null) => {
+    if (!file) return;
+    setErrorMessage(null);
+    setIsUploadingImage(true);
+
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("productId", initialProduct?.id || "novo");
+      form.append("slug", slug || name || "produto");
+
+      const res = await fetch("/api/admin/products/image", {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Falha ao enviar imagem.");
+      }
+
+      setImageUrl(data.publicUrl);
+      setSuccessMessage("Imagem enviada. Salve o produto para vincular a foto ao cadastro.");
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Falha ao enviar imagem.");
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -634,19 +665,36 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </div>
             )}
 
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6357] block mb-1">
-                URL da imagem
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6357] block">
+                Imagem do produto
               </label>
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://.../produto.webp"
-                className="w-full bg-[#FFFDF9] border border-[#E8D9CB] rounded-xl px-3 py-2 text-xs text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
-              />
-              <p className="text-[10px] text-[#9E8679] mt-1">
-                Use a URL pública do Supabase Storage. Nenhuma foto genérica será atribuída automaticamente.
+              <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold cursor-pointer hover:bg-[#27120A] transition">
+                <Camera size={14} />
+                <span>{isUploadingImage ? "Enviando..." : "Enviar foto"}</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={isUploadingImage}
+                  onChange={(e) => handleImageUpload(e.target.files?.[0])}
+                  className="hidden"
+                />
+              </label>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[#9E8679] block mb-1">
+                  URL pública
+                </label>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://.../produto.webp"
+                  className="w-full bg-[#FFFDF9] border border-[#E8D9CB] rounded-xl px-3 py-2 text-xs text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
+                />
+              </div>
+              <p className="text-[10px] text-[#9E8679]">
+                JPG, PNG ou WebP, até 5 MB. O arquivo é salvo no Supabase Storage.
               </p>
             </div>
           </div>
