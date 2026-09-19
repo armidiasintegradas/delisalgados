@@ -28,8 +28,13 @@ export async function POST(request: Request) {
       const duplicated = await DbService.duplicateProduct(body.id);
       return NextResponse.json({ success: true, product: duplicated });
     }
-    const product = await DbService.createProduct(body);
-    return NextResponse.json({ success: true, product }, { status: 201 });
+    const { variants, category, ...productInput } = body;
+    const product = await DbService.createProduct(productInput);
+    if (Array.isArray(variants)) {
+      await DbService.syncProductVariants(product.id, variants);
+    }
+    const reloaded = await DbService.getProductById(product.id);
+    return NextResponse.json({ success: true, product: reloaded || product }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
@@ -66,8 +71,17 @@ export async function PUT(request: Request) {
     }
 
     if (body.id) {
-      const updated = await DbService.updateProduct(body.id, body);
-      return NextResponse.json({ success: true, product: updated, message: "Produto atualizado com sucesso." });
+      const { id, variants, category, ...productUpdates } = body;
+      const updated = await DbService.updateProduct(id, productUpdates);
+      if (Array.isArray(variants)) {
+        await DbService.syncProductVariants(id, variants);
+      }
+      const reloaded = await DbService.getProductById(id);
+      return NextResponse.json({
+        success: true,
+        product: reloaded || updated,
+        message: "Produto atualizado com sucesso.",
+      });
     }
 
     return NextResponse.json({ error: "Ação não suportada" }, { status: 400 });
