@@ -24,8 +24,8 @@ export const Header: React.FC<HeaderProps> = ({
   const itemCount = items.length > 0 ? items.length : totalUnits;
 
   return (
-    <header className="sticky top-0 z-30 bg-gradient-to-b from-[#F56649] via-[#F46447] to-[#EF6E54] text-white shadow-xs w-[390px]">
-      <div className="w-[390px] px-4 pt-3 pb-4">
+    <header className="sticky top-0 z-30 bg-gradient-to-b from-[#F56649] via-[#F46447] to-[#EF6E54] text-white shadow-xs w-full">
+      <div className="w-full px-4 pt-3 pb-4">
 
 
         {/* Top bar: Logo, Search, Cart, Profile */}

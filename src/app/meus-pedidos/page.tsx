@@ -47,7 +47,7 @@ export default function MeusPedidosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] flex flex-col pb-24 max-w-md mx-auto">
+    <div className="w-full max-w-[440px] mx-auto min-h-screen bg-[#FFFDF9] shadow-2xl flex flex-col pb-24 relative">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-gradient-to-b from-[#E25C37] via-[#DF532E] to-[#D5451F] text-white px-4 py-3.5 shadow-md flex items-center gap-2.5">
         <Link

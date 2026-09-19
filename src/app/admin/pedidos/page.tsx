@@ -241,15 +241,17 @@ export default function AdminOrdersPage() {
       case "generated":
         return { label: "Solicitação gerada", bg: "bg-[#FBECE8] text-[#DF5F45]" };
       case "contacted":
-        return { label: "Cliente Contactado", bg: "bg-[#E6F0FA] text-[#1E70B8]" };
+        return { label: "Cliente contatado", bg: "bg-[#E6F0FA] text-[#1E70B8]" };
       case "confirmed":
-        return { label: "Confirmado para Prod.", bg: "bg-[#E5F7EB] text-[#1FAA52]" };
+        return { label: "Confirmado pela Deli", bg: "bg-[#E5F7EB] text-[#1FAA52]" };
       case "preparing":
-        return { label: "Em Preparação", bg: "bg-[#FBECE8] text-[#C04220]" };
+        return { label: "Em preparação", bg: "bg-[#FFF4D9] text-[#B85D19]" };
       case "completed":
         return { label: "Concluído", bg: "bg-[#E5F7EB] text-[#1FAA52]" };
+      case "cancelled":
+        return { label: "Cancelado", bg: "bg-[#F5EBE6] text-[#7A6357]" };
       default:
-        return { label: "Pendente", bg: "bg-gray-100 text-gray-600" };
+        return { label: "Solicitação gerada", bg: "bg-[#FBECE8] text-[#DF5F45]" };
     }
   };
 

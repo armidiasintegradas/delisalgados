@@ -42,7 +42,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8EE] flex flex-col md:flex-row text-[#3C1F15] font-sans w-full max-w-[390px] md:max-w-none overflow-x-hidden">
+    <div className="min-h-screen bg-[#FFF8EE] flex flex-col md:flex-row text-[#3C1F15] font-sans w-full overflow-x-hidden">
       {/* Mobile Top Header */}
       <div className="md:hidden bg-[#DF5F45] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-xs w-full">
         <div className="flex items-center gap-2.5">
@@ -155,7 +155,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       </main>
 
       {/* Mobile Bottom Admin Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-[390px] max-w-[390px] bg-[#FFFDF9] border-t border-[#F0E2D2] px-4 py-2 flex items-center justify-around z-40 shadow-lg">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full bg-[#FFFDF9] border-t border-[#F0E2D2] px-4 py-2 flex items-center justify-around z-40 shadow-lg">
         <Link
           href="/admin/produtos"
           className={`flex flex-col items-center gap-0.5 text-[10px] font-black ${

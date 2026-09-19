@@ -37,8 +37,8 @@ export const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 w-[390px] z-30 bg-[#FFFDF9] border-t border-[#EBDCCF] shadow-lg">
-      <div className="w-[390px] grid grid-cols-4 h-16">
+    <nav className="fixed bottom-0 inset-x-0 mx-auto max-w-[440px] w-full z-30 bg-[#FFFDF9] border-t border-[#EBDCCF] shadow-lg">
+      <div className="w-full grid grid-cols-4 h-16">
 
 
 

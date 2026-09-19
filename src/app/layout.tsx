@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className="bg-[#FFFDF9] text-[#3C1F15] antialiased min-h-screen flex flex-col">
+      <body className="bg-[#F5F2EB] text-[#3C1F15] antialiased min-h-screen flex flex-col">
         <CartProvider>
           {children}
         </CartProvider>

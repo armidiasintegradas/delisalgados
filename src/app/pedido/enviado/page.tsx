@@ -153,7 +153,7 @@ function EnviadoContent() {
   const whatsappUrl = buildWhatsAppLink(effectiveSettings.whatsapp_number, whatsappMessage);
 
   return (
-    <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-[390px] max-w-[390px] mx-auto justify-between">
+    <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] mx-auto shadow-2xl justify-between relative">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-[#DF5F45] text-white px-4 py-3.5 shadow-md flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -273,6 +273,18 @@ function EnviadoContent() {
             <MessageCircle size={18} className="fill-white stroke-none" />
             <span>Abrir WhatsApp</span>
           </a>
+
+          {effectiveSettings.instagram_url && (
+            <a
+              href={effectiveSettings.instagram_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#F58529] via-[#DD2A7B] to-[#8134AF] hover:opacity-95 text-white text-xs font-extrabold uppercase tracking-wide shadow-md flex items-center justify-center gap-2 transition transform active:scale-[0.98]"
+            >
+              <Instagram size={17} className="stroke-[2.2]" />
+              <span>DELI NO INSTA</span>
+            </a>
+          )}
 
           <Link
             href="/"

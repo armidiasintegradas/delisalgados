@@ -72,9 +72,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-start bg-black/80 backdrop-blur-[2px] p-0 animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs p-0 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div
-        className="w-[390px] max-w-[390px] bg-[#FFFDF6] rounded-t-[32px] shadow-2xl border-t border-[#EAD8C7] flex flex-col overflow-hidden pb-5 animate-in slide-in-from-bottom-6 duration-300 relative"
+        className="w-full max-w-[440px] bg-[#FFFDF6] rounded-t-[32px] shadow-2xl border-t border-[#EAD8C7] flex flex-col overflow-hidden pb-5 animate-in slide-in-from-bottom-6 duration-300 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Handle */}

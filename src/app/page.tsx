@@ -85,10 +85,6 @@ export default function CatalogPage() {
   // Group filtered products by category when "Todos" is selected and no search
   // In Stitch Screen 02, the signature category shown first is "Salgados & Fritos" (combining salgados & bolinhos)
   const categoriesWithProducts = React.useMemo(() => {
-    // Check if salgados exists
-    const salgadosCat = categories.find((c) => c.slug === "salgados");
-    const bolinhosCat = categories.find((c) => c.slug === "bolinhos");
-
     // Reordered categories: salgados first, empadas second, then others
     const orderedCategories = [...categories].sort((a, b) => {
       if (a.slug === "salgados") return -1;
@@ -99,20 +95,11 @@ export default function CatalogPage() {
     });
 
     return orderedCategories
-      .filter((cat) => cat.slug !== "bolinhos") // Bolinhos are grouped into Salgados & Fritos
       .map((cat) => {
         let items = filteredProducts.filter((p) => p.category_id === cat.id);
-        let displayName = cat.name;
+        const displayName = cat.name;
 
         if (cat.slug === "salgados") {
-          displayName = cat.name;
-          if (bolinhosCat) {
-            const bolinhoItems = filteredProducts.filter(
-              (p) => p.category_id === bolinhosCat.id
-            );
-            items = [...items, ...bolinhoItems];
-          }
-          // Stitch Screen 02 priority order
           const stitchOrder = [
             "coxinha-frango",
             "risole-carne",
@@ -140,7 +127,7 @@ export default function CatalogPage() {
   }, [categories, filteredProducts]);
 
   return (
-    <div className="min-h-screen catalog-bg-pattern flex flex-col pb-36 w-[390px] max-w-[390px] min-w-[390px] overflow-x-hidden relative">
+    <div className="w-full max-w-[440px] mx-auto min-h-screen catalog-bg-pattern flex flex-col pb-36 overflow-x-hidden relative bg-[#FFFDF9] shadow-2xl">
       {/* 01 — Splash Screen */}
 
 
@@ -207,7 +194,13 @@ export default function CatalogPage() {
                     {displayName}
                   </h2>
                   <span className="shrink-0 text-[10px] font-extrabold text-[#E05A36] bg-[#FFF0E2] border border-[#F8D3BE] px-2.5 py-1 rounded-full uppercase tracking-wider">
-                    A PARTIR DE 100 UN.
+                    {items[0]?.minimum_quantity >= 100
+                      ? `A PARTIR DE ${items[0]?.minimum_quantity} UN.`
+                      : items[0]?.unit_label?.toLowerCase().includes("kg")
+                      ? "PORÇÃO 1 KG"
+                      : items[0]?.minimum_quantity > 1
+                      ? `MÍNIMO ${items[0]?.minimum_quantity} UN.`
+                      : "POR UNIDADE"}
                   </span>
                 </div>
 

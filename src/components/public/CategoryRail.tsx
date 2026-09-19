@@ -19,9 +19,8 @@ export const CategoryRail: React.FC<CategoryRailProps> = ({
     return name;
   };
 
-  // Reorder categories: salgados first, empadas second, and omit bolinhos (merged into salgados)
+  // Reorder categories: salgados first, empadas second, preserving all canonical categories
   const orderedCategories = [...categories]
-    .filter((c) => c.slug !== "bolinhos")
     .sort((a, b) => {
       if (a.slug === "salgados") return -1;
       if (b.slug === "salgados") return 1;
@@ -31,8 +30,8 @@ export const CategoryRail: React.FC<CategoryRailProps> = ({
     });
 
   return (
-    <div className="sticky top-[110px] z-20 bg-[#FFF0D1]/90 backdrop-blur-md py-3 px-4 w-[390px] max-w-[390px] overflow-hidden min-w-0">
-      <div className="w-[390px] max-w-[390px] flex items-center gap-2.5 overflow-x-auto no-scrollbar py-0.5 min-w-0">
+    <div className="sticky top-[110px] z-20 bg-[#FFF0D1]/95 backdrop-blur-md py-3 px-4 w-full overflow-hidden min-w-0">
+      <div className="w-full flex items-center gap-2.5 overflow-x-auto no-scrollbar py-0.5 min-w-0">
 
         <button
           onClick={() => onSelectCategory(null)}

@@ -20,7 +20,7 @@ export default function CheckoutPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-[390px] max-w-[390px] mx-auto" />
+      <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] mx-auto shadow-2xl" />
     );
   }
 
@@ -95,7 +95,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-[390px] max-w-[390px] mx-auto">
+    <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] mx-auto shadow-2xl relative">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-[#DF5F45] text-white px-4 py-3.5 shadow-md flex items-center gap-3">
         <Link

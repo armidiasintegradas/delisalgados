@@ -14,7 +14,7 @@ export const FloatingCartBar: React.FC = () => {
   const count = items.length > 0 ? items.length : totalUnits;
 
   return (
-    <div className="fixed bottom-[74px] left-0 w-[390px] z-20 px-3.5 pointer-events-none">
+    <div className="fixed bottom-[74px] inset-x-0 mx-auto max-w-[440px] w-full z-20 px-3.5 pointer-events-none">
       <div className="w-full pointer-events-auto">
 
 
