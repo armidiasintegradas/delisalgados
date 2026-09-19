@@ -181,7 +181,7 @@ export default function AdminProductsPage() {
   ].slice(0, 8);
 
   return (
-    <div className="space-y-4 w-full max-w-[390px] md:max-w-none overflow-x-hidden">
+    <div className="space-y-4 w-full overflow-x-hidden">
       {/* Toast feedback */}
       {feedbackMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-[#2E7D47] text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
@@ -194,7 +194,7 @@ export default function AdminProductsPage() {
       )}
 
       {/* MOBILE VIEW (md:hidden) — Matches Stitch Screen 16 */}
-      <div className="md:hidden space-y-3 w-full max-w-[390px]">
+      <div className="md:hidden space-y-3 w-full">
         {/* Version & Sync */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 px-3 py-1 bg-[#FAF3E8] border border-[#EBDCCF] rounded-full text-[11px] font-bold text-[#6D4C41]">
@@ -247,7 +247,7 @@ export default function AdminProductsPage() {
                 : "bg-white border border-[#E8D9CB] text-[#7A6357]"
             }`}
           >
-            Todos ({products.length || 35})
+            Todos ({products.length})
           </button>
           <button
             onClick={() => setStatusFilter("available")}
@@ -258,7 +258,7 @@ export default function AdminProductsPage() {
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#1FAA52]"></span>
-            <span>Disponíveis ({availableCount || 31})</span>
+            <span>Disponíveis ({availableCount})</span>
           </button>
           <button
             onClick={() => setStatusFilter("unavailable")}
@@ -269,7 +269,7 @@ export default function AdminProductsPage() {
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#DF5F45]"></span>
-            <span>Indisponíveis ({unavailableCount || 4})</span>
+            <span>Indisponíveis ({unavailableCount})</span>
           </button>
         </div>
 
@@ -293,8 +293,8 @@ export default function AdminProductsPage() {
         <div className="space-y-3 pt-1">
           {mobileProducts.map((p, idx) => {
             const cat = categories.find((c) => c.id === p.category_id);
-            const isUnavailable = p.availability === "unavailable" || idx === 2;
-            const isSobEncomenda = idx === 3;
+            const isUnavailable = p.availability === "unavailable";
+            const isSobEncomenda = p.availability === "on_request";
             
             let thumb = "/products/coxinha.jpg";
             if (p.slug.includes("camarao")) thumb = "/products/camarao.jpg";
@@ -443,19 +443,16 @@ export default function AdminProductsPage() {
         {/* Metric Quick Badges */}
         <div className="flex items-center gap-2 flex-wrap text-[11px] font-bold">
           <span className="px-3 py-1 rounded-full bg-[#FFF4F2] text-[#DF5F45] border border-[#FBD6CF]">
-            ● {products.length || 41} produtos cadastrados
+            ● {products.length} produtos cadastrados
           </span>
           <span className="px-3 py-1 rounded-full bg-[#F2F8F4] text-[#1FAA52] border border-[#D5EADB]">
-            ✓ {availableCount || 39} em exibição no ar
+            ✓ {availableCount} em exibição no ar
           </span>
           <span className="px-3 py-1 rounded-full bg-[#FAF3E8] text-[#7A6357] border border-[#EBDCCF]">
-            ⊘ {unavailableCount || 2} pausados / indisponíveis
+            ⊘ {unavailableCount} pausados / indisponíveis
           </span>
           <span className="px-3 py-1 rounded-full bg-[#FAF3E8] text-[#7A6357] border border-[#EBDCCF]">
-            {variantsCount || 3} com variação
-          </span>
-          <span className="px-3 py-1 rounded-full bg-[#FAF3E8] text-[#7A6357] border border-[#EBDCCF]">
-            6 porções de festa (1 kg)
+            {variantsCount} com variação
           </span>
         </div>
 

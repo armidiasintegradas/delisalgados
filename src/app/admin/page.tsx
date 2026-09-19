@@ -24,11 +24,11 @@ import { formatCurrency } from "@/lib/formatters";
 
 export default function AdminDashboardPage() {
   const [metrics, setMetrics] = useState({
-    availableProducts: 41,
-    unavailableProducts: 2,
+    availableProducts: 0,
+    unavailableProducts: 0,
     hiddenProducts: 0,
-    todayOrders: 6,
-    totalOrders: 42,
+    todayOrders: 0,
+    totalOrders: 0,
   });
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [quickProducts, setQuickProducts] = useState<Product[]>([]);
@@ -44,14 +44,13 @@ export default function AdminDashboardPage() {
       const prodsData = await prodsRes.json();
 
       if (dashData.metrics) {
-        setMetrics((prev) => ({
-          ...prev,
-          availableProducts: dashData.metrics.availableProducts || 41,
-          unavailableProducts: dashData.metrics.unavailableProducts || 2,
-          hiddenProducts: dashData.metrics.hiddenProducts || 0,
-          todayOrders: dashData.metrics.todayOrders || 6,
-          totalOrders: dashData.metrics.totalOrders || 42,
-        }));
+        setMetrics({
+          availableProducts: dashData.metrics.availableProducts ?? 0,
+          unavailableProducts: dashData.metrics.unavailableProducts ?? 0,
+          hiddenProducts: dashData.metrics.hiddenProducts ?? 0,
+          todayOrders: dashData.metrics.todayOrders ?? 0,
+          totalOrders: dashData.metrics.totalOrders ?? 0,
+        });
         if (dashData.metrics.recentOrders && dashData.metrics.recentOrders.length > 0) {
           setRecentOrders(dashData.metrics.recentOrders);
         }
@@ -153,10 +152,10 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="text-2xl font-black text-[#1FAA52] my-1">
-            {metrics.availableProducts || 41}
+            {metrics.availableProducts}
           </div>
           <div className="text-[10px] text-[#2E7D47] font-medium bg-[#E3F4E9] px-2 py-0.5 rounded-md">
-            Pronta-entrega: 16 itens | Sob enc.: 25
+            Pronta-entrega e sob encomenda
           </div>
         </div>
 
@@ -171,10 +170,10 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="text-2xl font-black text-[#DF5F45] my-1">
-            02
+            {metrics.unavailableProducts}
           </div>
           <div className="text-[10px] text-[#C04220] font-medium bg-[#FCE8E4] px-2 py-0.5 rounded-md">
-            1 bolinho pausado | 1 empada esgotada
+            Itens indisponíveis no catálogo
           </div>
         </div>
 
@@ -182,17 +181,17 @@ export default function AdminDashboardPage() {
         <div className="bg-[#FFFBF2] p-3.5 rounded-2xl border border-[#F8E7C5] shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase font-bold tracking-wider text-[#B8860B]">
-              Produtos c/ Variação
+              Total de Pedidos
             </span>
             <div className="w-5 h-5 rounded-full bg-[#FDF0D5] flex items-center justify-center text-[#B8860B]">
               <Layers size={13} />
             </div>
           </div>
           <div className="text-2xl font-black text-[#3C1F15] my-1">
-            03
+            {metrics.totalOrders}
           </div>
           <div className="text-[10px] text-[#8C6D1F] font-medium bg-[#FAF2D8] px-2 py-0.5 rounded-md">
-            Camarão / Tortas / Empadas especiais
+            Histórico registrado no sistema
           </div>
         </div>
 
@@ -207,10 +206,13 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="my-1">
-            <div className="text-2xl font-black">6 <span className="text-xs font-semibold opacity-90">pedidos novos</span></div>
+            <div className="text-2xl font-black">
+              {metrics.todayOrders}{" "}
+              <span className="text-xs font-semibold opacity-90">pedidos</span>
+            </div>
           </div>
           <div className="text-[10px] font-bold text-white/95 bg-black/15 px-2 py-0.5 rounded-md">
-            TOTAL DO DIA: R$ 1.850,00
+            Sincronizados via WhatsApp
           </div>
         </div>
       </div>
@@ -267,116 +269,76 @@ export default function AdminDashboardPage() {
 
             {/* Product items list */}
             <div className="divide-y divide-[#F7EFE6] mt-1">
-              {[
-                {
-                  id: "1",
-                  name: "Coxinha",
-                  subtitle: "Salgados de 100 un. e opções frito/cong.",
-                  category: "Salgados",
-                  img: "/products/coxinha.jpg",
-                  status: "available",
-                },
-                {
-                  id: "2",
-                  name: "Risoles de Carne",
-                  subtitle: "100 un. Carne moída temperadinha",
-                  category: "Salgados",
-                  img: "/products/risoles.jpg",
-                  status: "available",
-                },
-                {
-                  id: "3",
-                  name: "Bolinho de Queijo",
-                  subtitle: "100 un. Queijo cremoso crocante",
-                  category: "Salgados",
-                  img: "/products/bolinho-queijo.jpg",
-                  status: "available",
-                },
-                {
-                  id: "4",
-                  name: "Mini Empada de Frango",
-                  subtitle: "100 un. Massa podre que derrete",
-                  category: "Empadas",
-                  img: "/products/empada-frango.jpg",
-                  status: "unavailable",
-                },
-                {
-                  id: "5",
-                  name: "Torta Salgada de Frango c/ Catupiry",
-                  subtitle: "500g e 1,5kg porções especiais",
-                  category: "Tortas Salgadas",
-                  img: "/products/torta-frango.jpg",
-                  status: "consult",
-                },
-                {
-                  id: "6",
-                  name: "Camarão Empanado",
-                  subtitle: "1 kg selecionado na farinha panko",
-                  category: "Porções Especiais",
-                  img: "/products/camarao.jpg",
-                  status: "available",
-                },
-              ].map((item) => (
-                <div key={item.id} className="py-2.5 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] overflow-hidden shrink-0 relative">
-                      <Image
-                        src={item.img}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#3C1F15] truncate">
-                          {item.name}
-                        </span>
-                        <span className="px-1.5 py-0.2 rounded bg-[#FFF4E8] text-[#8C5237] text-[9px] font-semibold">
-                          {item.category}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-[#9E8679] truncate">
-                        {item.subtitle}
-                      </p>
-                    </div>
-                  </div>
+              {quickProducts.map((item) => {
+                let thumb = "/products/coxinha.jpg";
+                if (item.slug.includes("risole")) thumb = "/products/risoles.jpg";
+                else if (item.slug.includes("queijo")) thumb = "/products/bolinho-queijo.jpg";
+                else if (item.slug.includes("camarao")) thumb = "/products/camarao.jpg";
+                else if (item.slug.includes("empada")) thumb = "/products/empada-frango.jpg";
+                else if (item.slug.includes("torta")) thumb = "/products/torta-frango.jpg";
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => handleAvailabilityChange(item.id, "available")}
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${
-                        item.status === "available"
-                          ? "bg-[#1FAA52] text-white shadow-2xs"
-                          : "bg-[#F5F2EB] text-[#7A6357] hover:bg-[#EBDCCF]"
-                      }`}
-                    >
-                      Disponível
-                    </button>
-                    <button
-                      onClick={() => handleAvailabilityChange(item.id, "unavailable")}
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${
-                        item.status === "unavailable"
-                          ? "bg-[#C04220] text-white shadow-2xs"
-                          : "bg-[#F5F2EB] text-[#7A6357] hover:bg-[#EBDCCF]"
-                      }`}
-                    >
-                      Esgotado
-                    </button>
-                    <button
-                      onClick={() => handleAvailabilityChange(item.id, "available")}
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${
-                        item.status === "consult"
-                          ? "bg-[#4A3228] text-white shadow-2xs"
-                          : "bg-[#F5F2EB] text-[#7A6357] hover:bg-[#EBDCCF]"
-                      }`}
-                    >
-                      Sob Consulta
-                    </button>
+                return (
+                  <div key={item.id} className="py-2.5 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] overflow-hidden shrink-0 relative">
+                        <Image
+                          src={thumb}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-[#3C1F15] truncate">
+                            {item.name}
+                          </span>
+                          <span className="px-1.5 py-0.2 rounded bg-[#FFF4E8] text-[#8C5237] text-[9px] font-semibold">
+                            {item.category?.name || "Salgados"}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-[#9E8679] truncate">
+                          {item.description || "Ingredientes selecionados e preparo artesanal"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleAvailabilityChange(item.id, "available")}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${
+                          item.availability === "available"
+                            ? "bg-[#1FAA52] text-white shadow-2xs"
+                            : "bg-[#F5F2EB] text-[#7A6357] hover:bg-[#EBDCCF]"
+                        }`}
+                      >
+                        Disponível
+                      </button>
+                      <button
+                        onClick={() => handleAvailabilityChange(item.id, "unavailable")}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${
+                          item.availability === "unavailable"
+                            ? "bg-[#C04220] text-white shadow-2xs"
+                            : "bg-[#F5F2EB] text-[#7A6357] hover:bg-[#EBDCCF]"
+                        }`}
+                      >
+                        Esgotado
+                      </button>
+                      <button
+                        onClick={() => handleAvailabilityChange(item.id, "on_request")}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${
+                          item.availability === "on_request"
+                            ? "bg-[#4A3228] text-white shadow-2xs"
+                            : "bg-[#F5F2EB] text-[#7A6357] hover:bg-[#EBDCCF]"
+                        }`}
+                      >
+                        Sob Consulta
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -385,7 +347,7 @@ export default function AdminDashboardPage() {
               href="/admin/produtos"
               className="text-xs font-bold text-[#DF5F45] hover:underline flex items-center gap-1"
             >
-              <span>Ver todos os 41 produtos do cardápio</span>
+              <span>Ver todos os produtos do cardápio</span>
               <ChevronRight size={13} />
             </Link>
           </div>
@@ -408,92 +370,105 @@ export default function AdminDashboardPage() {
 
             {/* Orders list */}
             <div className="space-y-3 mt-3">
-              {/* Order 1 */}
-              <div className="p-3.5 rounded-2xl bg-[#FFFBF7] border border-[#F4E8DB] space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-[#DF5F45]">
-                      #DL-0042
-                    </span>
-                    <span className="text-xs font-bold text-[#3C1F15]">
-                      Maria Fernandes
-                    </span>
-                  </div>
-                  <span className="text-xs font-black text-[#3C1F15]">
-                    R$ 545,00
-                  </span>
+              {recentOrders.length === 0 ? (
+                <div className="p-4 rounded-2xl bg-[#FFFBF7] border border-[#F4E8DB] text-center space-y-1">
+                  <p className="text-xs font-bold text-[#3C1F15]">Nenhum pedido recente</p>
+                  <p className="text-[11px] text-[#7A6357]">
+                    Novos pedidos enviados pelos clientes através do cardápio público aparecerão aqui.
+                  </p>
                 </div>
-                <p className="text-[11px] text-[#7A6357]">
-                  3 itens com camarão, bolinho e coxinha
-                </p>
-                <div className="text-[10px] text-[#9E8679]">
-                  Entrega agendada: 20/09 às 16h
-                </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <Link
-                    href="/admin/pedidos"
-                    className="flex-1 py-1.5 rounded-xl bg-[#FDEAE4] text-[#DF5F45] text-center text-[10px] font-bold hover:bg-[#FADBD0] transition flex items-center justify-center gap-1"
-                  >
-                    <FileText size={12} />
-                    <span>Detalhes pedido</span>
-                  </Link>
-                  <a
-                    href="https://wa.me/5511997454531"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 py-1.5 rounded-xl bg-[#1FAA52] text-white text-center text-[10px] font-bold hover:bg-[#198B43] transition flex items-center justify-center gap-1 shadow-2xs"
-                  >
-                    <MessageCircle size={12} />
-                    <span>Atender WhatsApp</span>
-                  </a>
-                </div>
-              </div>
+              ) : (
+                recentOrders.slice(0, 3).map((order, idx) => {
+                  const statusInfo = (() => {
+                    switch (order.status) {
+                      case "generated":
+                        return { label: "Solicitação gerada", bg: "bg-[#FBECE8] text-[#DF5F45]" };
+                      case "contacted":
+                        return { label: "Cliente contatado", bg: "bg-[#E6F0FA] text-[#1E70B8]" };
+                      case "confirmed":
+                        return { label: "Confirmado pela Deli", bg: "bg-[#E5F7EB] text-[#1FAA52]" };
+                      case "preparing":
+                        return { label: "Em preparação", bg: "bg-[#FFF4D9] text-[#B85D19]" };
+                      case "completed":
+                        return { label: "Concluído", bg: "bg-[#E5F7EB] text-[#1FAA52]" };
+                      case "cancelled":
+                        return { label: "Cancelado", bg: "bg-[#F5EBE6] text-[#7A6357]" };
+                      default:
+                        return { label: "Solicitação gerada", bg: "bg-[#FBECE8] text-[#DF5F45]" };
+                    }
+                  })();
 
-              {/* Order 2 */}
-              <div className="p-3 rounded-2xl bg-[#FFFBF7] border border-[#F4E8DB] flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-[#DF5F45]">
-                      #DL-0041
-                    </span>
-                    <span className="text-xs font-bold text-[#3C1F15]">
-                      Carlos Henrique
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-[#7A6357] mt-0.5">
-                    2 itens • Retirada Balcão
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-black text-[#3C1F15]">R$ 220,00</div>
-                  <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-[#E5F7EB] text-[#1FAA52] text-[9px] font-bold">
-                    Pronto p/ Entrega
-                  </span>
-                </div>
-              </div>
+                  const fulfillmentLabel =
+                    order.fulfillment_type === "delivery"
+                      ? "Entrega"
+                      : order.fulfillment_type === "to_agree"
+                      ? "A combinar"
+                      : "Retirada Balcão";
 
-              {/* Order 3 */}
-              <div className="p-3 rounded-2xl bg-[#FFFBF7] border border-[#F4E8DB] flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-[#DF5F45]">
-                      #DL-0040
-                    </span>
-                    <span className="text-xs font-bold text-[#3C1F15]">
-                      Julia Albuquerque
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-[#7A6357] mt-0.5">
-                    1 item (Camarão 1 kg) • Entrega
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-black text-[#3C1F15]">R$ 195,00</div>
-                  <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-[#FFF4E8] text-[#DF5F45] text-[9px] font-bold">
-                    Em Preparação
-                  </span>
-                </div>
-              </div>
+                  const itemsDesc =
+                    order.items && order.items.length > 0
+                      ? `${order.items.length} ${order.items.length === 1 ? "item" : "itens"}: ${order.items
+                          .map((i) => i.product_name_snapshot)
+                          .slice(0, 3)
+                          .join(", ")}`
+                      : fulfillmentLabel;
+
+                  const rawPhone = (order.customer_phone || "").replace(/\D/g, "");
+                  const waUrl =
+                    rawPhone.length >= 10
+                      ? `https://wa.me/${rawPhone.startsWith("55") ? rawPhone : `55${rawPhone}`}`
+                      : "https://wa.me/5581987654321";
+
+                  return (
+                    <div
+                      key={order.id || idx}
+                      className="p-3 rounded-2xl bg-[#FFFBF7] border border-[#F4E8DB] space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-[#DF5F45]">
+                            {order.public_code?.startsWith("#")
+                              ? order.public_code
+                              : `#${order.public_code || "DL-0000"}`}
+                          </span>
+                          <span className="text-xs font-bold text-[#3C1F15]">
+                            {order.customer_name}
+                          </span>
+                        </div>
+                        <span className="text-xs font-black text-[#3C1F15]">
+                          {formatCurrency(order.total)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-[#7A6357]">
+                        <span className="truncate max-w-[200px]">{itemsDesc}</span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-bold shrink-0 ${statusInfo.bg}`}
+                        >
+                          {statusInfo.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <Link
+                          href="/admin/pedidos"
+                          className="flex-1 py-1.5 rounded-xl bg-[#FDEAE4] text-[#DF5F45] text-center text-[10px] font-bold hover:bg-[#FADBD0] transition flex items-center justify-center gap-1"
+                        >
+                          <FileText size={12} />
+                          <span>Detalhes pedido</span>
+                        </Link>
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 py-1.5 rounded-xl bg-[#1FAA52] text-white text-center text-[10px] font-bold hover:bg-[#198B43] transition flex items-center justify-center gap-1 shadow-2xs"
+                        >
+                          <MessageCircle size={12} />
+                          <span>Atender WhatsApp</span>
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
