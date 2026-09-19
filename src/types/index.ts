@@ -10,7 +10,6 @@ export interface Category {
   slug: string;
   sort_order: number;
   is_active: boolean;
-  preparation_type?: Exclude<PreparationType, 'variants'> | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -24,6 +23,7 @@ export interface ProductVariant {
   minimum_quantity: number;
   sort_order: number;
   is_active: boolean;
+  preparation_type?: Exclude<PreparationType, 'variants'> | null;
   created_at?: string;
   updated_at?: string;
 }
