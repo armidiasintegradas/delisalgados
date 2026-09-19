@@ -557,3 +557,371 @@ $$;
 
 -- 4. Grant execution permissions to authenticated & service_role
 GRANT EXECUTE ON FUNCTION public.create_deli_order_v34(JSONB, JSONB, TEXT, TIMESTAMPTZ) TO service_role;
+
+
+-- ====================================================================
+-- V3.5 POST-BOOTSTRAP HARDENING
+-- ====================================================================
+-- DELI SALGADOS — V3.5 RLS / FUNCTION HARDENING
+-- Restrict privileged policies/functions and add missing supporting indexes.
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1
+    from public.admin_profiles
+    where id = (select auth.uid())
+      and coalesce(is_active, true) = true
+  );
+$$;
+
+alter function public.next_order_public_code() set search_path = public, pg_temp;
+
+revoke all on function public.create_deli_order_v34(jsonb, jsonb, text, timestamptz) from public;
+revoke execute on function public.create_deli_order_v34(jsonb, jsonb, text, timestamptz) from anon;
+revoke execute on function public.create_deli_order_v34(jsonb, jsonb, text, timestamptz) from authenticated;
+grant execute on function public.create_deli_order_v34(jsonb, jsonb, text, timestamptz) to service_role;
+
+revoke all on function public.is_admin() from public;
+revoke execute on function public.is_admin() from anon;
+grant execute on function public.is_admin() to authenticated;
+
+drop policy if exists "Public can read active categories" on public.categories;
+drop policy if exists "Admins have full access to categories" on public.categories;
+create policy "Public can read active categories"
+  on public.categories for select to anon
+  using (is_active = true);
+create policy "Admins have full access to categories"
+  on public.categories for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "Public can read visible products" on public.products;
+drop policy if exists "Admins have full access to products" on public.products;
+create policy "Public can read visible products"
+  on public.products for select to anon
+  using (is_visible = true);
+create policy "Admins have full access to products"
+  on public.products for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "Public can read active product variants" on public.product_variants;
+drop policy if exists "Admins have full access to product variants" on public.product_variants;
+create policy "Public can read active product variants"
+  on public.product_variants for select to anon
+  using (is_active = true);
+create policy "Admins have full access to product variants"
+  on public.product_variants for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "Public can read settings" on public.settings;
+drop policy if exists "Admins can manage settings" on public.settings;
+create policy "Public can read settings"
+  on public.settings for select to anon
+  using (true);
+create policy "Admins can manage settings"
+  on public.settings for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "Public can read active notices" on public.catalog_notices;
+drop policy if exists "Admins can manage notices" on public.catalog_notices;
+create policy "Public can read active notices"
+  on public.catalog_notices for select to anon
+  using (is_active = true);
+create policy "Admins can manage notices"
+  on public.catalog_notices for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "Admins can manage orders" on public.orders;
+create policy "Admins can manage orders"
+  on public.orders for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "Admins can manage order items" on public.order_items;
+create policy "Admins can manage order items"
+  on public.order_items for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "Admins can read own profile or admin profiles" on public.admin_profiles;
+create policy "Admins can read own profile or admin profiles"
+  on public.admin_profiles for select to authenticated
+  using (((select auth.uid()) = id) or public.is_admin());
+
+drop policy if exists "Admins can read audit logs" on public.audit_logs;
+drop policy if exists "Admins can insert audit logs" on public.audit_logs;
+create policy "Admins can read audit logs"
+  on public.audit_logs for select to authenticated
+  using (public.is_admin());
+create policy "Admins can insert audit logs"
+  on public.audit_logs for insert to authenticated
+  with check (public.is_admin());
+
+drop policy if exists "Admins can manage catalog snapshots" on public.catalog_change_snapshots;
+create policy "Admins can manage catalog snapshots"
+  on public.catalog_change_snapshots for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+create index if not exists idx_catalog_change_snapshots_product_id
+  on public.catalog_change_snapshots(product_id);
+create index if not exists idx_order_items_order_id
+  on public.order_items(order_id);
+create index if not exists idx_order_items_product_id
+  on public.order_items(product_id);
+create index if not exists idx_order_items_variant_id
+  on public.order_items(variant_id);
+
+drop index if exists public.product_variants_product_name_uq;
+
+
+-- DELI SALGADOS — V3.5 PRIVATE AUTH HELPER
+-- Move security-definer admin helper out of the exposed public API schema.
+
+create schema if not exists private;
+revoke all on schema private from public;
+grant usage on schema private to authenticated;
+
+create or replace function private.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1
+    from public.admin_profiles
+    where id = (select auth.uid())
+      and coalesce(is_active, true) = true
+  );
+$$;
+
+revoke all on function private.is_admin() from public;
+grant execute on function private.is_admin() to authenticated;
+
+drop policy if exists "Admins have full access to categories" on public.categories;
+create policy "Admins have full access to categories"
+  on public.categories for all to authenticated
+  using (private.is_admin())
+  with check (private.is_admin());
+
+drop policy if exists "Admins have full access to products" on public.products;
+create policy "Admins have full access to products"
+  on public.products for all to authenticated
+  using (private.is_admin())
+  with check (private.is_admin());
+
+drop policy if exists "Admins have full access to product variants" on public.product_variants;
+create policy "Admins have full access to product variants"
+  on public.product_variants for all to authenticated
+  using (private.is_admin())
+  with check (private.is_admin());
+
+drop policy if exists "Admins can manage settings" on public.settings;
+create policy "Admins can manage settings"
+  on public.settings for all to authenticated
+  using (private.is_admin())
+  with check (private.is_admin());
+
+drop policy if exists "Admins can manage notices" on public.catalog_notices;
+create policy "Admins can manage notices"
+  on public.catalog_notices for all to authenticated
+  using (private.is_admin())
+  with check (private.is_admin());
+
+drop policy if exists "Admins can manage orders" on public.orders;
+create policy "Admins can manage orders"
+  on public.orders for all to authenticated
+  using (private.is_admin())
+  with check (private.is_admin());
+
+drop policy if exists "Admins can manage order items" on public.order_items;
+create policy "Admins can manage order items"
+  on public.order_items for all to authenticated
+  using (private.is_admin())
+  with check (private.is_admin());
+
+drop policy if exists "Admins can read own profile or admin profiles" on public.admin_profiles;
+create policy "Admins can read own profile or admin profiles"
+  on public.admin_profiles for select to authenticated
+  using (((select auth.uid()) = id) or private.is_admin());
+
+drop policy if exists "Admins can read audit logs" on public.audit_logs;
+drop policy if exists "Admins can insert audit logs" on public.audit_logs;
+create policy "Admins can read audit logs"
+  on public.audit_logs for select to authenticated
+  using (private.is_admin());
+create policy "Admins can insert audit logs"
+  on public.audit_logs for insert to authenticated
+  with check (private.is_admin());
+
+drop policy if exists "Admins can manage catalog snapshots" on public.catalog_change_snapshots;
+create policy "Admins can manage catalog snapshots"
+  on public.catalog_change_snapshots for all to authenticated
+  using (private.is_admin())
+  with check (private.is_admin());
+
+drop function if exists public.is_admin();
+
+
+-- DELI SALGADOS — V3.5 FIX ORDER RPC TYPES
+-- orders.fulfillment_type and desired_date are text columns with CHECK constraints,
+-- so the transactional RPC must not cast to a nonexistent enum type.
+
+create or replace function public.create_deli_order_v34(
+  p_order jsonb,
+  p_items jsonb,
+  p_token_hash text,
+  p_token_expires_at timestamptz
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_order_id uuid;
+  v_public_code text;
+  v_item jsonb;
+  v_result jsonb;
+begin
+  v_order_id := coalesce((p_order->>'id')::uuid, gen_random_uuid());
+  v_public_code := public.next_order_public_code();
+
+  insert into public.orders (
+    id,
+    public_code,
+    customer_name,
+    customer_phone,
+    desired_date,
+    fulfillment_type,
+    delivery_address,
+    customer_note,
+    total,
+    status,
+    whatsapp_status,
+    handoff_token_hash,
+    handoff_token_expires_at,
+    created_at,
+    updated_at
+  ) values (
+    v_order_id,
+    v_public_code,
+    p_order->>'customer_name',
+    p_order->>'customer_phone',
+    p_order->>'desired_date',
+    p_order->>'fulfillment_type',
+    nullif(p_order->>'delivery_address',''),
+    nullif(p_order->>'customer_note',''),
+    (p_order->>'total')::numeric(10,2),
+    'generated',
+    'pending',
+    p_token_hash,
+    p_token_expires_at,
+    now(),
+    now()
+  );
+
+  for v_item in select * from jsonb_array_elements(p_items)
+  loop
+    insert into public.order_items (
+      id,
+      order_id,
+      product_id,
+      variant_id,
+      product_name_snapshot,
+      variant_name_snapshot,
+      unit_label_snapshot,
+      unit_price_snapshot,
+      quantity,
+      subtotal,
+      note
+    ) values (
+      coalesce((v_item->>'id')::uuid, gen_random_uuid()),
+      v_order_id,
+      (v_item->>'product_id')::uuid,
+      case
+        when nullif(v_item->>'variant_id','') is not null
+          then (v_item->>'variant_id')::uuid
+        else null
+      end,
+      v_item->>'product_name_snapshot',
+      nullif(v_item->>'variant_name_snapshot',''),
+      v_item->>'unit_label_snapshot',
+      (v_item->>'unit_price_snapshot')::numeric(10,2),
+      (v_item->>'quantity')::integer,
+      (v_item->>'subtotal')::numeric(10,2),
+      nullif(v_item->>'note','')
+    );
+  end loop;
+
+  select jsonb_build_object(
+    'id', o.id,
+    'public_code', o.public_code,
+    'customer_name', o.customer_name,
+    'customer_phone', o.customer_phone,
+    'desired_date', o.desired_date,
+    'fulfillment_type', o.fulfillment_type,
+    'delivery_address', o.delivery_address,
+    'customer_note', o.customer_note,
+    'total', o.total,
+    'status', o.status,
+    'whatsapp_status', o.whatsapp_status,
+    'created_at', o.created_at,
+    'updated_at', o.updated_at,
+    'items', (
+      select coalesce(
+        jsonb_agg(
+          jsonb_build_object(
+            'id', oi.id,
+            'order_id', oi.order_id,
+            'product_id', oi.product_id,
+            'variant_id', oi.variant_id,
+            'product_name_snapshot', oi.product_name_snapshot,
+            'variant_name_snapshot', oi.variant_name_snapshot,
+            'unit_label_snapshot', oi.unit_label_snapshot,
+            'unit_price_snapshot', oi.unit_price_snapshot,
+            'quantity', oi.quantity,
+            'subtotal', oi.subtotal,
+            'note', oi.note
+          )
+          order by oi.created_at, oi.id
+        ),
+        '[]'::jsonb
+      )
+      from public.order_items oi
+      where oi.order_id = o.id
+    )
+  )
+  into v_result
+  from public.orders o
+  where o.id = v_order_id;
+
+  return v_result;
+end;
+$$;
+
+revoke all on function public.create_deli_order_v34(jsonb, jsonb, text, timestamptz) from public;
+revoke execute on function public.create_deli_order_v34(jsonb, jsonb, text, timestamptz) from anon;
+revoke execute on function public.create_deli_order_v34(jsonb, jsonb, text, timestamptz) from authenticated;
+grant execute on function public.create_deli_order_v34(jsonb, jsonb, text, timestamptz) to service_role;
+
+
+-- DELI SALGADOS — V3.5 RESTRICT PUBLIC CODE SEQUENCE FUNCTION
+-- Public codes are generated only inside the privileged transactional order RPC.
+
+revoke all on function public.next_order_public_code() from public;
+revoke execute on function public.next_order_public_code() from anon;
+revoke execute on function public.next_order_public_code() from authenticated;
+grant execute on function public.next_order_public_code() to service_role;
