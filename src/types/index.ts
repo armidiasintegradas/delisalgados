@@ -1,5 +1,6 @@
 export type PriceType = 'simple' | 'variants';
 export type Availability = 'available' | 'unavailable' | 'on_request';
+export type PreparationType = 'fried' | 'baked' | 'frozen' | 'ready' | 'variants';
 export type FulfillmentType = 'pickup' | 'delivery' | 'to_agree';
 export type OrderStatus = 'generated' | 'contacted' | 'confirmed' | 'preparing' | 'completed' | 'cancelled';
 
@@ -9,6 +10,7 @@ export interface Category {
   slug: string;
   sort_order: number;
   is_active: boolean;
+  preparation_type?: Exclude<PreparationType, 'variants'> | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -42,6 +44,7 @@ export interface Product {
   is_featured: boolean;
   sort_order: number;
   image_url: string | null;
+  preparation_type?: PreparationType | null;
   created_at?: string;
   updated_at?: string;
   variants?: ProductVariant[];
