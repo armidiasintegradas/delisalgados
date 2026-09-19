@@ -79,6 +79,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       onClick={() => onOpenOptions(product)}
       className="bg-[#FFF9E6] rounded-[18px] p-4 shadow-[0_2px_6px_rgba(60,31,21,0.04)] border border-[#F0DEC0] hover:border-[#E05A36]/40 transition-all cursor-pointer flex items-center justify-between gap-3 group"
     >
+      {product.image_url && (
+        <div className="w-[84px] h-[84px] sm:w-[92px] sm:h-[92px] shrink-0 rounded-[14px] overflow-hidden border border-[#E8D9CB] bg-[#FFFDF9]">
+          <img
+            src={product.image_url}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      )}
+
       <div className="flex-1 min-w-0">
         <h3 className="text-[16px] font-bold text-[#3C1F15] tracking-tight group-hover:text-[#E05A36] transition-colors leading-snug">
           {product.name}
