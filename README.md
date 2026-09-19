@@ -2,6 +2,9 @@
 
 Sistema completo de Cardápio Digital Público e Painel Administrativo da **Deli Salgados**, construído com Next.js 15, React 19, TypeScript, Tailwind CSS e Supabase (PostgreSQL), com 100% de paridade visual (16/16 telas aprovadas) com as diretrizes aprovadas de design do Stitch.
 
+🌐 **Deploy em Produção**: [https://delisalgados.vercel.app](https://delisalgados.vercel.app)  
+📦 **Release**: `v2.5` | **Status**: 100% Aprovado em todos os 24 Quality Gates
+
 ---
 
 ## 🎯 Destaques do Projeto
