@@ -421,6 +421,7 @@ export class DbService {
       is_featured: false,
       sort_order: productData.sort_order || 99,
       image_url: productData.image_url || null,
+      preparation_type: productData.preparation_type || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
