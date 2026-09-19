@@ -109,8 +109,12 @@ export class DbService {
         return settingsMap as Settings;
       }
       if (error && !isLocalDbAllowed()) {
-        throw new Error(`[Supabase Error] Falha ao consultar settings: ${error.message}`);
+        console.warn(`[Supabase Warning] Falha ao consultar settings: ${error.message}, usando canônico`);
+        return { ...INITIAL_SETTINGS };
       }
+    }
+    if (!isLocalDbAllowed()) {
+      return { ...INITIAL_SETTINGS };
     }
     return loadLocalState().settings;
   }
@@ -166,8 +170,12 @@ export class DbService {
         .order("sort_order", { ascending: true });
       if (!error && data) return data as Category[];
       if (error && !isLocalDbAllowed()) {
-        throw new Error(`[Supabase Error] Falha ao consultar categorias: ${error.message}`);
+        console.warn(`[Supabase Warning] Falha ao consultar categorias: ${error.message}, usando canônico`);
+        return [...INITIAL_CATEGORIES];
       }
+    }
+    if (!isLocalDbAllowed()) {
+      return [...INITIAL_CATEGORIES];
     }
     return loadLocalState().categories.sort((a, b) => a.sort_order - b.sort_order);
   }
@@ -254,8 +262,31 @@ export class DbService {
         return prods;
       }
       if (error && !isLocalDbAllowed()) {
-        throw new Error(`[Supabase Error] Falha ao consultar produtos: ${error.message}`);
+        console.warn(`[Supabase Warning] Falha ao consultar produtos: ${error.message}, usando canônico`);
       }
+    }
+
+    if (!isLocalDbAllowed()) {
+      let prods = INITIAL_PRODUCTS.map((p) => ({
+        ...p,
+        variants: INITIAL_VARIANTS.filter((v) => v.product_id === p.id && v.is_active),
+        category: INITIAL_CATEGORIES.find((c) => c.id === p.category_id),
+      }));
+
+      if (!options?.includeHidden) {
+        prods = prods.filter((p) => p.is_visible);
+      }
+      if (!options?.includeUnavailable) {
+        prods = prods.filter((p) => p.availability === "available");
+      }
+      if (options?.categorySlug) {
+        const cat = INITIAL_CATEGORIES.find((c) => c.slug === options.categorySlug);
+        if (cat) {
+          prods = prods.filter((p) => p.category_id === cat.id);
+        }
+      }
+
+      return prods.sort((a, b) => a.sort_order - b.sort_order);
     }
 
     const state = loadLocalState();
@@ -289,6 +320,16 @@ export class DbService {
         .eq("id", id)
         .single();
       if (!error && data) return data as Product;
+    }
+
+    if (!isLocalDbAllowed()) {
+      const p = INITIAL_PRODUCTS.find((prod) => prod.id === id);
+      if (!p) return null;
+      return {
+        ...p,
+        variants: INITIAL_VARIANTS.filter((v) => v.product_id === p.id && v.is_active),
+        category: INITIAL_CATEGORIES.find((c) => c.id === p.category_id),
+      };
     }
 
     const state = loadLocalState();
@@ -612,6 +653,9 @@ export class DbService {
         throw new Error(`[Supabase Error] Falha ao consultar pedidos: ${error.message}`);
       }
     }
+    if (!isLocalDbAllowed()) {
+      return [];
+    }
     return loadLocalState().orders;
   }
 
@@ -733,6 +777,13 @@ export class DbService {
         .limit(1)
         .maybeSingle();
       if (!error && data) return data;
+    }
+    if (!isLocalDbAllowed()) {
+      return {
+        id: "default-notice",
+        message: "Recomendação para o fim de semana: encomendas com 48h de antecedência.",
+        is_active: true,
+      };
     }
     const state = loadLocalState();
     return state.notice && state.notice.is_active ? state.notice : null;
