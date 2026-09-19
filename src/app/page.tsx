@@ -9,11 +9,37 @@ import { FloatingCartBar } from "@/components/public/FloatingCartBar";
 import { BottomNav } from "@/components/public/BottomNav";
 import { SplashScreen } from "@/components/public/SplashScreen";
 import { Category, Product, Settings } from "@/types";
-import { Sparkles, MessageCircle } from "lucide-react";
+import { useCart } from "@/lib/cartContext";
+import { formatCurrency } from "@/lib/formatters";
+import { Instagram, ShoppingBag, ArrowRight, Trash2 } from "lucide-react";
 import Link from "next/link";
 
+function getCategoryBadge(items: Product[]): string | null {
+  if (!items || items.length === 0) return null;
+
+  // Inspect all visible products in the category
+  const rules = items.map(
+    (p) => `${p.minimum_quantity}::${(p.unit_label || "").trim().toUpperCase()}`
+  );
+
+  const allSame = rules.every((r) => r === rules[0]);
+  if (!allSame) return null;
+
+  const first = items[0];
+  if (first.minimum_quantity >= 100) {
+    return `A PARTIR DE ${first.minimum_quantity} UN.`;
+  }
+  if (first.unit_label?.toLowerCase().includes("kg")) {
+    return "PORÇÃO 1 KG";
+  }
+  if (first.minimum_quantity > 1) {
+    return `MÍNIMO ${first.minimum_quantity} UN.`;
+  }
+  return "POR UNIDADE";
+}
+
 export default function CatalogPage() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -23,15 +49,22 @@ export default function CatalogPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
+  const { items: cartItems, totalAmount, removeItem } = useCart();
+
   // Check if splash was already viewed in this session or skipped via URL
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.search.includes("nosplash=1")) {
-      setShowSplash(false);
-      return;
-    }
-    const hasViewedSplash = sessionStorage.getItem("deli_splash_viewed");
-    if (hasViewedSplash) {
-      setShowSplash(false);
+    if (typeof window !== "undefined") {
+      if (window.location.search.includes("nosplash=1")) {
+        return;
+      }
+      if (window.location.search.includes("splash_lock=1")) {
+        setShowSplash(true);
+        return;
+      }
+      const hasViewedSplash = sessionStorage.getItem("deli_splash_viewed");
+      if (!hasViewedSplash) {
+        setShowSplash(true);
+      }
     }
   }, []);
 
@@ -51,7 +84,9 @@ export default function CatalogPage() {
       if (data.products) {
         setProducts(data.products);
         const params = new URLSearchParams(window.location.search);
-        const openSlug = params.get("open_product") || (params.get("screen") === "03" ? "camarao-empanado-1kg" : null);
+        const openSlug =
+          params.get("open_product") ||
+          (params.get("screen") === "03" ? "camarao-empanado-1kg" : null);
         if (openSlug) {
           const prod = data.products.find((p: any) => p.slug === openSlug);
           if (prod) setSelectedProduct(prod);
@@ -103,7 +138,7 @@ export default function CatalogPage() {
   }, [categories, filteredProducts]);
 
   return (
-    <div className="w-full max-w-[440px] mx-auto min-h-screen catalog-bg-pattern flex flex-col pb-36 overflow-x-hidden relative bg-[#FFFDF9] shadow-2xl">
+    <div className="w-full max-w-[440px] lg:max-w-none mx-auto min-h-screen catalog-bg-pattern flex flex-col pb-36 lg:pb-16 overflow-x-hidden relative bg-[#FFFDF9] shadow-2xl lg:shadow-none">
       {/* 01 — Splash Screen */}
       {showSplash && <SplashScreen onFinish={handleFinishSplash} />}
 
@@ -122,92 +157,221 @@ export default function CatalogPage() {
         />
       </div>
 
-      {/* Main Content Area */}
-      <main className="w-full max-w-full min-w-0 px-4 pt-2 flex-1 overflow-x-hidden">
+      {/* Main Workspace: Centered, max-w-[1280px] on desktop */}
+      <div className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-4 lg:px-8 pt-3 flex-1 flex flex-col lg:flex-row lg:items-start lg:gap-8">
+        {/* Left: Main Content Area (~880px on desktop) */}
+        <main className="w-full lg:flex-1 lg:max-w-[880px] min-w-0">
+          {isLoading ? (
+            <div className="py-12 text-center text-[#8C7367]">
+              <div className="w-8 h-8 border-3 border-[#E05A36] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-xs font-semibold">Carregando cardápio...</p>
+            </div>
+          ) : loadError ? (
+            <div className="py-16 text-center text-[#8C7367]">
+              <p className="text-sm font-bold text-[#3C1F15]">
+                Não foi possível carregar o cardápio
+              </p>
+              <p className="text-xs mt-1 text-[#8C7367]">
+                Ocorreu uma instabilidade temporária. Tente carregar novamente.
+              </p>
+              <button
+                onClick={loadCatalog}
+                className="mt-4 px-4 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold shadow hover:bg-[#27120A] transition"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="py-16 text-center text-[#8C7367]">
+              <p className="text-sm font-bold text-[#3C1F15]">Nenhum produto encontrado</p>
+              <p className="text-xs mt-1 text-[#8C7367]">
+                Tente buscar por outro termo ou selecione outra categoria.
+              </p>
+              <button
+                onClick={() => {
+                  setSelectedCategorySlug(null);
+                  setSearchQuery("");
+                }}
+                className="mt-4 px-4 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold shadow hover:bg-[#27120A] transition"
+              >
+                Ver todos os salgados
+              </button>
+            </div>
+          ) : selectedCategorySlug || searchQuery ? (
+            // Flat list for filtered or single category
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 pt-2">
+              {filteredProducts.map((prod) => (
+                <ProductCard
+                  key={prod.id}
+                  product={prod}
+                  onOpenOptions={setSelectedProduct}
+                  showPrices={settings?.catalog_show_prices ?? true}
+                />
+              ))}
+            </div>
+          ) : (
+            // Grouped by canonical category
+            <div className="space-y-6 pt-1">
+              {categoriesWithProducts.map(({ category, displayName, items }) => {
+                const badge = getCategoryBadge(items);
+                return (
+                  <section key={category.id} className="space-y-3">
+                    <div className="flex items-center justify-between pt-2 pb-1 gap-2">
+                      <h2 className="text-[20px] lg:text-[22px] font-extrabold text-[#3C1F15] tracking-tight shrink-0">
+                        {displayName}
+                      </h2>
+                      {badge && (
+                        <span className="shrink-0 text-[10px] font-extrabold text-[#E05A36] bg-[#FFF0E2] border border-[#F8D3BE] px-2.5 py-1 rounded-full uppercase tracking-wider">
+                          {badge}
+                        </span>
+                      )}
+                    </div>
 
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+                      {items.map((prod) => (
+                        <ProductCard
+                          key={prod.id}
+                          product={prod}
+                          onOpenOptions={setSelectedProduct}
+                          showPrices={settings?.catalog_show_prices ?? true}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          )}
 
-        {isLoading ? (
-          <div className="py-12 text-center text-[#8C7367]">
-            <div className="w-8 h-8 border-3 border-[#E05A36] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-xs font-semibold">Carregando cardápio...</p>
-          </div>
-        ) : loadError ? (
-          <div className="py-16 text-center text-[#8C7367]">
-            <p className="text-sm font-bold text-[#3C1F15]">Não foi possível carregar o cardápio</p>
-            <p className="text-xs mt-1 text-[#8C7367]">
-              Ocorreu uma instabilidade temporária. Tente carregar novamente.
-            </p>
-            <button
-              onClick={loadCatalog}
-              className="mt-4 px-4 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold shadow hover:bg-[#27120A] transition"
-            >
-              Tentar novamente
-            </button>
-          </div>
-        ) : filteredProducts.length === 0 ? (
-          <div className="py-16 text-center text-[#8C7367]">
-            <p className="text-sm font-bold text-[#3C1F15]">Nenhum produto encontrado</p>
-            <p className="text-xs mt-1 text-[#8C7367]">
-              Tente buscar por outro termo ou selecione outra categoria.
-            </p>
-            <button
-              onClick={() => {
-                setSelectedCategorySlug(null);
-                setSearchQuery("");
-              }}
-              className="mt-4 px-4 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold shadow hover:bg-[#27120A] transition"
-            >
-              Ver todos os salgados
-            </button>
-          </div>
-        ) : selectedCategorySlug || searchQuery ? (
-          // Flat list for filtered or single category
-          <div className="space-y-3 pt-2">
-            {filteredProducts.map((prod) => (
-              <ProductCard
-                key={prod.id}
-                product={prod}
-                onOpenOptions={setSelectedProduct}
-                showPrices={settings?.catalog_show_prices ?? true}
-              />
-            ))}
-          </div>
-        ) : (
-          // Grouped by canonical category
-          <div className="space-y-6 pt-1">
-            {categoriesWithProducts.map(({ category, displayName, items }) => (
-              <section key={category.id} className="space-y-3">
-                <div className="flex items-center justify-between pt-2 pb-1 gap-2">
-                  <h2 className="text-[20px] font-extrabold text-[#3C1F15] tracking-tight shrink-0">
-                    {displayName}
-                  </h2>
-                  <span className="shrink-0 text-[10px] font-extrabold text-[#E05A36] bg-[#FFF0E2] border border-[#F8D3BE] px-2.5 py-1 rounded-full uppercase tracking-wider">
-                    {items[0]?.minimum_quantity >= 100
-                      ? `A PARTIR DE ${items[0]?.minimum_quantity} UN.`
-                      : items[0]?.unit_label?.toLowerCase().includes("kg")
-                      ? "PORÇÃO 1 KG"
-                      : items[0]?.minimum_quantity > 1
-                      ? `MÍNIMO ${items[0]?.minimum_quantity} UN.`
-                      : "POR UNIDADE"}
+          {/* Section 9: Mobile Instagram Follow CTA */}
+          {settings?.instagram_url && (
+            <div className="lg:hidden mt-8 mb-4 p-5 rounded-3xl bg-gradient-to-br from-[#FFF4E8] to-[#FDE8D4] border border-[#F0D5BE] text-center space-y-2.5 shadow-xs">
+              <div className="w-10 h-10 rounded-full bg-[#E05A36] text-white flex items-center justify-center mx-auto shadow-xs">
+                <Instagram size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-[#3C1F15]">Siga a Deli</h3>
+                <p className="text-xs text-[#7A6357] max-w-xs mx-auto mt-0.5">
+                  Acompanhe novidades e encomendas no Instagram.
+                </p>
+              </div>
+              <div>
+                <a
+                  href={settings.instagram_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-[#E05A36] hover:bg-[#C94724] text-white text-xs font-extrabold tracking-wide shadow-xs transition active:scale-95"
+                >
+                  <Instagram size={15} />
+                  <span>SEGUIR NO INSTAGRAM</span>
+                </a>
+              </div>
+              <div className="text-[11px] font-bold text-[#8C5237]">@deli.salgados</div>
+            </div>
+          )}
+        </main>
+
+        {/* Section 5: Desktop Right Order Rail (~340px) */}
+        <aside className="hidden lg:flex lg:flex-col lg:w-[340px] shrink-0 sticky top-36 space-y-4">
+          {/* Order Summary Box */}
+          <div className="bg-[#FFFDF6] border border-[#EAD8C7] rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-[#F0E2D4] pb-3">
+              <div className="flex items-center gap-2">
+                <ShoppingBag size={18} className="text-[#E05A36]" />
+                <h2 className="text-base font-extrabold text-[#3C1F15]">Seu pedido</h2>
+              </div>
+              {cartItems.length > 0 && (
+                <span className="bg-[#FFE8E0] text-[#E05A36] text-xs px-2.5 py-0.5 rounded-full font-extrabold">
+                  {cartItems.length} {cartItems.length === 1 ? "item" : "itens"}
+                </span>
+              )}
+            </div>
+
+            {cartItems.length === 0 ? (
+              <div className="py-6 text-center text-[#8C7367] space-y-2">
+                <div className="w-12 h-12 rounded-full bg-[#FFF4E8] text-[#E05A36] flex items-center justify-center mx-auto shadow-inner">
+                  <ShoppingBag size={20} />
+                </div>
+                <p className="text-xs font-semibold text-[#7A6357]">
+                  Adicione itens do cardápio para começar.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="max-h-[300px] overflow-y-auto space-y-2.5 pr-1 no-scrollbar">
+                  {cartItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-[#FFF9E6] p-3 rounded-2xl border border-[#EFE5D5] flex items-start justify-between gap-2 text-xs"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-[#3C1F15] truncate">
+                          {item.quantity}× {item.productName}
+                        </div>
+                        {item.variantName && (
+                          <div className="text-[10px] font-bold text-[#E05A36] uppercase">
+                            {item.variantName}
+                          </div>
+                        )}
+                        <div className="text-[11px] font-extrabold text-[#7A6357] mt-0.5">
+                          {formatCurrency(item.subtotal)}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="text-stone-400 hover:text-[#C04220] p-1 transition"
+                        aria-label="Remover item"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-t border-[#F0E2D4] pt-3 flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#7A6357]">Total:</span>
+                  <span className="text-lg font-extrabold text-[#E05A36]">
+                    {formatCurrency(totalAmount)}
                   </span>
                 </div>
 
-                <div className="space-y-3">
-                  {items.map((prod) => (
-                    <ProductCard
-                      key={prod.id}
-                      product={prod}
-                      onOpenOptions={setSelectedProduct}
-                      showPrices={settings?.catalog_show_prices ?? true}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))}
+                <Link
+                  href="/pedido"
+                  className="w-full py-3.5 px-4 rounded-2xl bg-[#3C1F15] hover:bg-[#27120A] text-white font-extrabold text-xs tracking-wider uppercase shadow flex items-center justify-center gap-2 transition active:scale-[0.98]"
+                >
+                  <span>Ver Pedido</span>
+                  <ArrowRight size={15} />
+                </Link>
+              </div>
+            )}
           </div>
-        )}
-      </main>
 
+          {/* Section 9: Desktop Instagram Follow Box */}
+          {settings?.instagram_url && (
+            <div className="bg-gradient-to-br from-[#FFF4E8] to-[#FDE8D4] border border-[#F0D5BE] rounded-3xl p-5 text-center space-y-2.5 shadow-xs">
+              <div className="w-9 h-9 rounded-full bg-[#E05A36] text-white flex items-center justify-center mx-auto shadow-xs">
+                <Instagram size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-[#3C1F15]">Siga a Deli</h3>
+                <p className="text-[11px] text-[#7A6357] mt-0.5">
+                  Acompanhe novidades e encomendas no Instagram.
+                </p>
+              </div>
+              <a
+                href={settings.instagram_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-xl bg-[#E05A36] hover:bg-[#C94724] text-white text-xs font-extrabold tracking-wide shadow-xs transition"
+              >
+                <Instagram size={14} />
+                <span>SEGUIR NO INSTAGRAM</span>
+              </a>
+              <div className="text-[10px] font-bold text-[#8C5237]">@deli.salgados</div>
+            </div>
+          )}
+        </aside>
+      </div>
 
       {/* 03 — Product Options Modal */}
       <ProductModal
@@ -216,10 +380,10 @@ export default function CatalogPage() {
         onClose={() => setSelectedProduct(null)}
       />
 
-      {/* Floating Cart Bar */}
+      {/* Floating Cart Bar (Mobile only) */}
       <FloatingCartBar />
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation (Mobile only) */}
       <BottomNav />
     </div>
   );

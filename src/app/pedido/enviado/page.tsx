@@ -76,9 +76,9 @@ function EnviadoContent() {
   const whatsappUrl = whatsappNumber ? buildWhatsAppLink(whatsappNumber, whatsappMessage) : "";
 
   return (
-    <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] mx-auto shadow-2xl justify-between relative">
+    <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] lg:max-w-[720px] mx-auto shadow-2xl lg:my-8 lg:rounded-3xl lg:border lg:border-[#EAD8C7] lg:overflow-hidden justify-between relative">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-[#DF5F45] text-white px-4 py-3.5 shadow-md flex items-center justify-between">
+      <header className="sticky top-0 z-20 bg-[#DF5F45] text-white px-4 lg:px-6 py-3.5 shadow-md flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
             href="/"
@@ -101,7 +101,7 @@ function EnviadoContent() {
       </header>
 
       {/* Main Content */}
-      <main className="p-4 flex-1 flex flex-col justify-between space-y-4">
+      <main className="p-4 lg:p-6 flex-1 flex flex-col justify-between space-y-4">
         <div className="space-y-3.5 pt-1">
           {/* Top Status Icon & Headline */}
           <div className="text-center space-y-2">
@@ -183,8 +183,8 @@ function EnviadoContent() {
               <span>Abrir WhatsApp</span>
             </a>
           ) : (
-            <div className="w-full p-3.5 rounded-2xl bg-[#FFF4D9] border border-[#E8D9CB] text-center text-[#7A6357] text-xs font-semibold">
-              WhatsApp da loja não configurado no sistema.
+            <div className="w-full p-3.5 rounded-2xl bg-[#FFF4E8] border border-[#E8D9CB] text-center text-[#7A6357] text-xs font-semibold">
+              Contato temporariamente indisponível
             </div>
           )}
 

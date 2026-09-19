@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Sparkles, MessageCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Sparkles, MessageCircle, Instagram } from "lucide-react";
 import { BottomNav } from "@/components/public/BottomNav";
 import { Settings } from "@/types";
 import { buildWhatsAppLink } from "@/lib/formatters";
@@ -18,82 +18,97 @@ export default function FestaPage() {
       });
   }, []);
 
-  const whatsappMsg = "Olá, Deli Salgados! Gostaria de fazer um orçamento personalizado para um evento/festa:";
-  const whatsappUrl = buildWhatsAppLink(settings?.whatsapp_number || "", whatsappMsg);
+  const whatsappMsg =
+    "Olá, Deli Salgados! Gostaria de fazer um orçamento personalizado para um evento/festa:";
+  const whatsappUrl = settings?.whatsapp_number
+    ? buildWhatsAppLink(settings.whatsapp_number, whatsappMsg)
+    : "";
 
   return (
-    <div className="w-full max-w-[440px] mx-auto min-h-screen bg-[#FFFDF9] shadow-2xl flex flex-col pb-24 relative">
+    <div className="w-full max-w-[440px] lg:max-w-none mx-auto min-h-screen bg-[#FFFDF9] shadow-2xl lg:shadow-none flex flex-col pb-24 lg:pb-16 relative">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-gradient-to-b from-[#E25C37] via-[#DF532E] to-[#D5451F] text-white px-4 py-3.5 shadow-md flex items-center gap-2.5">
-        <Link
-          href="/"
-          className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition"
-        >
-          <ArrowLeft size={18} />
-        </Link>
-        <div>
-          <h1 className="text-base font-bold leading-tight">Festas & Eventos</h1>
-          <span className="text-[10px] text-[#FCE9D8] tracking-wide block">
-            Encomendas especiais para celebrações
-          </span>
+      <header className="sticky top-0 z-20 bg-gradient-to-b from-[#E25C37] via-[#DF532E] to-[#D5451F] text-white shadow-md">
+        <div className="w-full max-w-[1000px] mx-auto px-4 lg:px-8 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition"
+            >
+              <ArrowLeft size={18} />
+            </Link>
+            <img
+              src="/deli-logo-cream-official.png"
+              alt="Deli Salgados"
+              className="h-9 w-auto object-contain select-none"
+            />
+            <div>
+              <h1 className="text-base lg:text-lg font-bold leading-tight">Festas & Eventos</h1>
+              <span className="text-[10px] text-[#FCE9D8] tracking-wide block">
+                Encomendas especiais para celebrações
+              </span>
+            </div>
+          </div>
+
+          <Link
+            href="/"
+            className="hidden lg:inline-flex px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition"
+          >
+            Voltar ao Cardápio
+          </Link>
         </div>
       </header>
 
-      <main className="p-4 space-y-4">
-        {/* Banner */}
-        <div className="bg-gradient-to-br from-[#FFF4E8] to-[#FDE8D4] p-5 rounded-3xl border border-[#F0D5BE] shadow-xs text-center">
-          <div className="w-12 h-12 rounded-full bg-[#E05A36] text-white flex items-center justify-center mx-auto mb-2 shadow-sm">
-            <Sparkles size={22} />
+      {/* Main Container */}
+      <main className="w-full max-w-[440px] lg:max-w-[800px] mx-auto p-4 lg:p-8 space-y-5 flex-1 flex flex-col justify-center">
+        {/* Safe Copy Content Box */}
+        <div className="bg-gradient-to-br from-[#FFF4E8] to-[#FDE8D4] p-6 lg:p-10 rounded-3xl border border-[#F0D5BE] shadow-xs text-center space-y-4">
+          <div className="w-14 h-14 rounded-full bg-[#E05A36] text-white flex items-center justify-center mx-auto shadow-sm">
+            <Sparkles size={26} />
           </div>
-          <h2 className="text-lg font-bold text-[#3C1F15]">
-            Salgados Finos & Tradicionais
+          <h2 className="font-display text-xl lg:text-2xl font-extrabold text-[#3C1F15]">
+            Festas & Eventos
           </h2>
-          <p className="text-xs text-[#7A6357] mt-1.5 leading-relaxed">
-            Personalize quantidades, mescle sabores nobres como Camarão, Bacalhau e Queijo do Reino, ou solicite suporte para calcular o volume ideal para seus convidados.
+          <p className="text-sm text-[#7A6357] leading-relaxed max-w-lg mx-auto">
+            Precisa de um cardápio especial para sua festa, casamento, aniversário ou confraternização? Fale com a Deli para montar sua encomenda.
           </p>
         </div>
 
-        {/* Highlights */}
-        <div className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[#8C5237]">
-            Diferenciais Deli Salgados
-          </h3>
-          <ul className="space-y-2.5 text-xs text-[#614439]">
-            <li className="flex items-start gap-2">
-              <CheckCircle2 size={16} className="text-[#1FAA52] shrink-0 mt-0.5" />
-              <span>Receitas artesanais com ingredientes selecionados e massa finíssima.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 size={16} className="text-[#1FAA52] shrink-0 mt-0.5" />
-              <span>Opção de entrega em bandejas organizadas ou congelados prontos para fritar.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 size={16} className="text-[#1FAA52] shrink-0 mt-0.5" />
-              <span>Linha folhada e mini quiches ideais para coquetéis e recepções corporativas.</span>
-            </li>
-          </ul>
-        </div>
-
-        {/* CTA */}
-        <div className="pt-2">
+        {/* CTAs */}
+        <div className="space-y-3 pt-2">
           {whatsappUrl ? (
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-4 px-4 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-sm font-extrabold shadow-lg flex items-center justify-center gap-2.5 transition active:scale-[0.98]"
+              className="w-full py-4 px-6 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-sm font-extrabold uppercase tracking-wide shadow-lg flex items-center justify-center gap-2.5 transition active:scale-[0.98]"
             >
-              <MessageCircle size={18} className="fill-white stroke-none" />
+              <MessageCircle size={20} className="fill-white stroke-none" />
               <span>Solicitar Orçamento no WhatsApp</span>
             </a>
           ) : (
-            <Link
-              href="/"
-              className="w-full py-4 px-4 rounded-2xl bg-[#3C1F15] text-white text-sm font-extrabold text-center block shadow"
-            >
-              Ver Todos os Itens do Cardápio
-            </Link>
+            <div className="w-full p-4 rounded-2xl bg-[#FFF4E8] border border-[#E8D9CB] text-center text-[#7A6357] text-xs font-semibold">
+              Contato temporariamente indisponível
+            </div>
           )}
+
+          {settings?.instagram_url && (
+            <a
+              href={settings.instagram_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3.5 px-6 rounded-2xl bg-[#3C1F15] hover:bg-[#27120A] text-[#FFFDF9] text-xs font-extrabold uppercase tracking-wide shadow-md flex items-center justify-center gap-2 transition active:scale-[0.98] border border-[#EAD8C7]"
+            >
+              <Instagram size={17} className="text-[#E05A36]" />
+              <span>Seguir no Instagram (@deli.salgados)</span>
+            </a>
+          )}
+
+          <Link
+            href="/"
+            className="w-full py-3 rounded-2xl bg-white hover:bg-[#FFF9E6] border border-[#EAD8C7] text-[#3C1F15] text-xs font-bold uppercase tracking-wide text-center block transition"
+          >
+            Ver Cardápio Completo
+          </Link>
         </div>
       </main>
 

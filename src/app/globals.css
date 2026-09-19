@@ -28,10 +28,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   font-family: 'Fredoka', 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
-/* Official Deli Salgados watermark background using canonical pattern */
+/* Official Deli Salgados watermark background using canonical pattern (optimized derivative) */
 .catalog-bg-pattern {
   background-color: #FFF0D1;
-  background-image: url('/deli-pattern-official.png');
+  background-image: url('/deli-pattern-web.webp');
   background-repeat: repeat;
   background-size: 500px auto;
 }

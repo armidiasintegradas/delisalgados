@@ -23,8 +23,8 @@ export const CategoryRail: React.FC<CategoryRailProps> = ({
   const orderedCategories = [...categories].sort((a, b) => a.sort_order - b.sort_order);
 
   return (
-    <div className="bg-[#FFF0D1]/95 backdrop-blur-md py-2.5 px-4 w-full overflow-hidden min-w-0 border-b border-[#F0DEC0]/60">
-      <div className="w-full flex items-center gap-2.5 overflow-x-auto no-scrollbar py-0.5 min-w-0">
+    <div className="bg-[#FFF0D1]/95 backdrop-blur-md py-2.5 px-4 lg:px-8 w-full overflow-hidden min-w-0 border-b border-[#F0DEC0]/60">
+      <div className="w-full max-w-[1280px] mx-auto flex items-center gap-2.5 overflow-x-auto no-scrollbar py-0.5 min-w-0">
 
         <button
           onClick={() => onSelectCategory(null)}

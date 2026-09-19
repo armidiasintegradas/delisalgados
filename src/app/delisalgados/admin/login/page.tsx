@@ -60,7 +60,7 @@ export default function DeliSalgadosAdminLoginPage() {
         {/* Brand Logo in prominent circle */}
         <div className="relative mx-auto w-24 h-24 rounded-3xl bg-[#FFF5EC] border-2 border-[#F6D0C2] p-2.5 flex items-center justify-center shadow-xs">
           <img
-            src="/logo-coral.png"
+            src="/deli-logo-coral-official.png"
             alt="Deli Salgados"
             className="w-full h-full object-contain drop-shadow-xs"
           />

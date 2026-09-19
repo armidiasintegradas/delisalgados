@@ -94,32 +94,44 @@ export default function CheckoutPage() {
     }
   };
 
+  const todayDate = new Date().toISOString().split("T")[0];
+
   return (
-    <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] mx-auto shadow-2xl relative">
+    <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] lg:max-w-none mx-auto shadow-2xl lg:shadow-none relative">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-[#DF5F45] text-white px-4 py-3.5 shadow-md flex items-center gap-3">
-        <Link
-          href="/pedido"
-          className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"
-        >
-          <ArrowLeft size={18} />
-        </Link>
-        <div>
-          <h1 className="text-base font-bold leading-tight">Finalizar pedido</h1>
-          <span className="text-[10px] text-[#FCE9D8] tracking-wide block">
-            Informações para contato e entrega
-          </span>
+      <header className="sticky top-0 z-20 bg-[#DF5F45] text-white shadow-md">
+        <div className="w-full max-w-[1280px] mx-auto px-4 lg:px-8 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/pedido"
+              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"
+            >
+              <ArrowLeft size={18} />
+            </Link>
+            <img
+              src="/deli-logo-cream-official.png"
+              alt="Deli Salgados"
+              className="h-9 w-auto object-contain select-none"
+            />
+            <div>
+              <h1 className="text-base lg:text-lg font-bold leading-tight">Finalizar pedido</h1>
+              <span className="text-[10px] text-[#FCE9D8] tracking-wide block">
+                Informações para contato e entrega
+              </span>
+            </div>
+          </div>
         </div>
       </header>
 
       {/* Form Content */}
-      <main className="p-4 flex-1 flex flex-col justify-between">
-        <form onSubmit={handleSubmit} className="space-y-3.5 flex-1 flex flex-col justify-between">
-          <div className="space-y-3.5">
-            {/* Order Summary Mini Card */}
+      <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto p-4 lg:p-8 flex-1 flex flex-col">
+        <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[1fr_380px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between">
+          {/* Left Column: Form Fields */}
+          <div className="space-y-3.5 bg-[#FFFDF6] lg:p-6 lg:rounded-3xl lg:border lg:border-[#EAD8C7] lg:shadow-xs">
+            {/* Mobile Order Summary Mini Card */}
             <Link
               href="/pedido"
-              className="bg-[#FFFDF6] rounded-[18px] p-3.5 border border-[#EAD8C7] shadow-xs flex items-center justify-between hover:bg-[#FFF9E6] transition"
+              className="lg:hidden bg-[#FFFDF6] rounded-[18px] p-3.5 border border-[#EAD8C7] shadow-xs flex items-center justify-between hover:bg-[#FFF9E6] transition"
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-[#FFE8E0] text-[#E05A36] flex items-center justify-center shrink-0">
@@ -165,7 +177,7 @@ export default function CheckoutPage() {
 
             {/* Date and Phone Row (Two Columns) */}
             <div className="grid grid-cols-2 gap-2.5">
-              {/* Desired Date */}
+              {/* Desired Date - Section 11: Dynamic min date, starts empty unless persisted */}
               <div>
                 <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1">
                   DATA DA ENTREGA *
@@ -173,7 +185,8 @@ export default function CheckoutPage() {
                 <input
                   type="date"
                   required
-                  value={customerData.desiredDate || "2026-09-25"}
+                  min={todayDate}
+                  value={customerData.desiredDate || ""}
                   onChange={(e) =>
                     setCustomerData((prev) => ({ ...prev, desiredDate: e.target.value }))
                   }
@@ -279,23 +292,85 @@ export default function CheckoutPage() {
                 className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl p-2.5 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
               />
             </div>
+
+            {/* Mobile Submit Button inside left flow */}
+            <div className="pt-3 pb-2 space-y-1.5 lg:hidden">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-2xl bg-[#3C1F15] hover:bg-[#27120A] text-white text-xs font-extrabold uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 transition active:scale-[0.98] disabled:opacity-60"
+              >
+                <div className="w-5 h-5 rounded-full bg-[#25D366] flex items-center justify-center text-white">
+                  <Send size={11} className="ml-0.5" />
+                </div>
+                <span>{isSubmitting ? "Criando solicitação..." : "Enviar pedido pelo WhatsApp"}</span>
+              </button>
+              <p className="text-[10px] text-center text-[#7A6357]">
+                Você será redirecionado para o WhatsApp com a mensagem pronta.
+              </p>
+            </div>
           </div>
 
-          {/* Sticky Submit Button */}
-          <div className="pt-3 pb-4 space-y-1.5 mt-auto">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-4 rounded-2xl bg-[#3C1F15] hover:bg-[#27120A] text-white text-xs font-extrabold uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 transition active:scale-[0.98] disabled:opacity-60"
-            >
-              <div className="w-5 h-5 rounded-full bg-[#25D366] flex items-center justify-center text-white">
-                <Send size={11} className="ml-0.5" />
+          {/* Right Column: Desktop Compact Order Summary & Sticky Submit */}
+          <div className="hidden lg:flex lg:flex-col lg:sticky lg:top-24 bg-[#FFFDF6] rounded-3xl p-5 border border-[#EAD8C7] shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-[#F0E2D4] pb-3">
+              <div className="flex items-center gap-2">
+                <ShoppingBag size={18} className="text-[#E05A36]" />
+                <h3 className="text-sm font-extrabold text-[#3C1F15]">Resumo do Pedido</h3>
               </div>
-              <span>{isSubmitting ? "Criando solicitação..." : "Enviar pedido pelo WhatsApp"}</span>
-            </button>
-            <p className="text-[10px] text-center text-[#7A6357]">
-              Você será redirecionado para o WhatsApp com a mensagem pronta.
-            </p>
+              <span className="bg-[#FFE8E0] text-[#E05A36] text-[11px] px-2.5 py-0.5 rounded-full font-extrabold">
+                {items.length} {items.length === 1 ? "item" : "itens"}
+              </span>
+            </div>
+
+            <div className="max-h-[260px] overflow-y-auto space-y-2 pr-1 no-scrollbar text-xs">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-[#FFF9E6] p-2.5 rounded-xl border border-[#EFE5D5] flex items-start justify-between gap-2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-[#3C1F15] truncate">
+                      {item.quantity}× {item.productName}
+                    </div>
+                    {item.variantName && (
+                      <div className="text-[9px] font-bold text-[#E05A36] uppercase">
+                        {item.variantName}
+                      </div>
+                    )}
+                  </div>
+                  <span className="font-extrabold text-[#7A6357] shrink-0">
+                    {formatCurrency(item.subtotal)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-[#F0E2D4] pt-3 flex items-center justify-between">
+              <span className="text-xs font-bold text-[#7A6357]">Total estimado:</span>
+              <span className="text-xl font-extrabold text-[#E05A36]">
+                {formatCurrency(totalAmount)}
+              </span>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-2xl bg-[#3C1F15] hover:bg-[#27120A] text-white text-xs font-extrabold uppercase tracking-wide shadow-md flex items-center justify-center gap-2 transition active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded-full bg-[#25D366] flex items-center justify-center text-white">
+                  <Send size={11} className="ml-0.5" />
+                </div>
+                <span>{isSubmitting ? "Criando solicitação..." : "Enviar pelo WhatsApp"}</span>
+              </button>
+              <Link
+                href="/pedido"
+                className="w-full py-2.5 rounded-xl bg-white hover:bg-[#FFF9E6] border border-[#EAD8C7] text-[#3C1F15] text-[11px] font-bold text-center block uppercase transition"
+              >
+                Alterar itens do pedido
+              </Link>
+            </div>
           </div>
         </form>
       </main>

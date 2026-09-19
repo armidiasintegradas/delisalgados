@@ -73,15 +73,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   return (
     <div
-      className="fixed inset-y-0 inset-x-0 mx-auto max-w-[440px] w-full z-50 flex items-end justify-center bg-black/50 backdrop-blur-xs p-0 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end lg:items-center justify-center bg-black/50 backdrop-blur-xs p-0 lg:p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="w-full bg-[#FFFDF6] rounded-t-[32px] shadow-2xl border-t border-[#EAD8C7] flex flex-col overflow-hidden pb-5 animate-in slide-in-from-bottom-6 duration-300 relative"
+        className="w-full max-w-[440px] lg:max-w-[560px] bg-[#FFFDF6] rounded-t-[32px] lg:rounded-[32px] shadow-2xl border-t lg:border border-[#EAD8C7] flex flex-col overflow-hidden pb-5 max-h-[92vh] lg:max-h-[85vh] animate-in slide-in-from-bottom-6 lg:zoom-in-95 duration-300 relative"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Handle */}
-        <div className="pt-3 pb-1.5 flex justify-center">
+        {/* Top Handle - Mobile only */}
+        <div className="pt-3 pb-1.5 flex justify-center lg:hidden">
           <div className="w-12 h-1.5 bg-[#D6C4B4] rounded-full" />
         </div>
 
@@ -200,19 +200,19 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
           <div className="h-px bg-[#EAD8C7] my-0.5" />
 
-          {/* Customer Note */}
-          <div>
-            <label className="text-xs font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1.5">
-              Observações (opcional):
-            </label>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Ex: Entregar bem sequinho, molho à parte..."
-              rows={2}
-              className="w-full bg-[#FFF9E6] border border-[#EAD9C3] rounded-2xl p-2.5 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition"
-            />
-          </div>
+            {/* Customer Note */}
+            <div>
+              <label className="text-xs font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1.5">
+                Observações (opcional):
+              </label>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Alguma observação para este item?"
+                rows={2}
+                className="w-full bg-[#FFF9E6] border border-[#EAD9C3] rounded-2xl p-2.5 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition"
+              />
+            </div>
         </div>
 
         {/* Footer */}

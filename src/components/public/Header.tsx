@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Search, ShoppingBag, User, X } from "lucide-react";
-import { Logo } from "./Logo";
+import { usePathname } from "next/navigation";
+import { Search, ShoppingBag, User, X, BookOpen, Calendar, ClipboardList } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 
 interface HeaderProps {
@@ -17,47 +17,153 @@ export const Header: React.FC<HeaderProps> = ({
   onSearchChange,
   showSearch = true,
 }) => {
+  const pathname = usePathname();
   const { totalUnits, items } = useCart();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Use items.length or totalUnits
   const itemCount = items.length > 0 ? items.length : totalUnits;
 
+  const navLinks = [
+    { label: "CARDÁPIO", href: "/" },
+    { label: "FESTA", href: "/festa" },
+    { label: "PEDIDOS", href: "/meus-pedidos" },
+    { label: "PERFIL", href: "/perfil" },
+  ];
+
   return (
     <header className="sticky top-0 z-30 bg-gradient-to-b from-[#F56649] via-[#F46447] to-[#EF6E54] text-white shadow-xs w-full">
-      <div className="w-full px-4 pt-3 pb-4">
+      <div className="w-full max-w-[1280px] mx-auto px-4 pt-3 pb-3 lg:px-8 lg:py-3.5">
+        {/* Mobile View (< lg) */}
+        <div className="lg:hidden flex flex-col">
+          {/* Top row: 200% Logo (88px) + Action buttons */}
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center shrink-0">
+              <img
+                src="/deli-logo-cream-official.png"
+                alt="Deli Salgados"
+                className="h-[88px] w-auto object-contain shrink-0 select-none drop-shadow-xs"
+              />
+            </Link>
 
+            <div className="flex items-center gap-2.5 shrink-0">
+              {showSearch && (
+                <button
+                  onClick={() => setIsSearchOpen(!isSearchOpen)}
+                  aria-label="Buscar produtos"
+                  className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition active:scale-95"
+                >
+                  {isSearchOpen ? <X size={20} /> : <Search size={20} />}
+                </button>
+              )}
 
-        {/* Top bar: Logo, Search, Cart, Profile */}
-        <div className="flex items-center justify-between">
+              <Link
+                href="/pedido"
+                aria-label="Ver carrinho"
+                className="relative w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition active:scale-95"
+              >
+                <ShoppingBag size={20} />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#3C1F15] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-extrabold shadow-xs">
+                    {itemCount > 9 ? "9+" : itemCount}
+                  </span>
+                )}
+              </Link>
+
+              <Link
+                href="/perfil"
+                aria-label="Perfil do cliente"
+                className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition active:scale-95"
+              >
+                <User size={20} />
+              </Link>
+            </div>
+          </div>
+
+          {/* Center: Large Cardápio Title */}
+          <div className="text-center pt-1.5 pb-0.5">
+            <h1
+              className="font-display text-[32px] font-bold text-white tracking-normal leading-none"
+              style={{
+                textShadow: "0 3px 6px rgba(74, 48, 34, 0.4), 0 1px 2px rgba(74, 48, 34, 0.6)",
+              }}
+            >
+              Cardápio
+            </h1>
+          </div>
+        </div>
+
+        {/* Desktop View (>= lg) */}
+        <div className="hidden lg:flex items-center justify-between gap-8">
+          {/* Left: Official Deli Logo (>= 88px) */}
           <Link href="/" className="flex items-center shrink-0">
             <img
               src="/deli-logo-cream-official.png"
               alt="Deli Salgados"
-              className="h-11 w-auto object-contain shrink-0 select-none drop-shadow-xs"
+              className="h-[92px] w-auto object-contain shrink-0 select-none drop-shadow-sm hover:opacity-95 transition"
             />
           </Link>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          {/* Center: Navigation Links */}
+          <nav className="flex items-center gap-1 xl:gap-2">
+            {navLinks.map((link) => {
+              const isActive =
+                link.href === "/"
+                  ? pathname === "/" || pathname.startsWith("/pedido")
+                  : pathname === link.href;
+
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className={`px-4 py-2 rounded-xl text-xs font-extrabold tracking-wider transition ${
+                    isActive
+                      ? "bg-[#3C1F15] text-white shadow-xs"
+                      : "text-white/90 hover:text-white hover:bg-white/15"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Right: Search / Cart / Profile */}
+          <div className="flex items-center gap-3 shrink-0">
             {showSearch && (
-              <button
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                aria-label="Buscar produtos"
-                className="w-8 h-8 flex items-center justify-center text-white hover:opacity-80 transition"
-              >
-                {isSearchOpen ? <X size={20} /> : <Search size={20} />}
-              </button>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  placeholder="Buscar no cardápio..."
+                  className="w-56 xl:w-64 bg-white/95 text-[#3C1F15] placeholder:text-stone-400 text-xs rounded-xl pl-8 pr-7 py-2 focus:outline-none focus:ring-2 focus:ring-white shadow-xs transition"
+                />
+                <Search
+                  size={15}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => onSearchChange("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
             )}
 
             <Link
               href="/pedido"
               aria-label="Ver carrinho"
-              className="relative w-8 h-8 flex items-center justify-center text-white hover:opacity-80 transition"
+              className="relative px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 flex items-center gap-2 text-white transition"
             >
-              <ShoppingBag size={20} />
+              <ShoppingBag size={18} />
+              <span className="text-xs font-bold">Pedido</span>
               {itemCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-[#3C1F15] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-extrabold shadow-xs">
-                  {itemCount > 9 ? "9+" : itemCount}
+                <span className="bg-[#3C1F15] text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
+                  {itemCount}
                 </span>
               )}
             </Link>
@@ -65,30 +171,16 @@ export const Header: React.FC<HeaderProps> = ({
             <Link
               href="/perfil"
               aria-label="Perfil do cliente"
-              className="w-8 h-8 flex items-center justify-center text-white hover:opacity-80 transition"
+              className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition"
             >
-              <User size={20} />
+              <User size={18} />
             </Link>
           </div>
         </div>
 
-
-        {/* Center: Large Cardápio Title */}
-        <div className="text-center pt-2 pb-1">
-          <h1
-            className="font-display text-[34px] font-bold text-white tracking-normal leading-none"
-            style={{
-              textShadow: "0 3px 6px rgba(74, 48, 34, 0.4), 0 1px 2px rgba(74, 48, 34, 0.6)",
-            }}
-          >
-            Cardápio
-          </h1>
-        </div>
-
-
-        {/* Expandable Search Input */}
+        {/* Mobile Expandable Search Input */}
         {showSearch && isSearchOpen && (
-          <div className="mt-2 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="lg:hidden mt-2 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="relative">
               <input
                 type="text"

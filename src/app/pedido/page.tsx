@@ -11,48 +11,50 @@ export default function CartPage() {
   const totalItemCount = items.length;
 
   return (
-    <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] mx-auto shadow-2xl relative">
+    <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] lg:max-w-none mx-auto shadow-2xl lg:shadow-none relative">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-[#DF5F45] text-white px-4 py-3 shadow-md flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"
-          >
-            <ArrowLeft size={18} />
-          </Link>
-          <img
-            src="/deli-logo-cream-official.png"
-            alt="Deli Salgados"
-            className="h-8 w-auto object-contain select-none"
-          />
-          <div>
-            <h1 className="text-base font-bold leading-tight">Seu pedido</h1>
-            <span className="text-[10px] text-[#FCE9D8] tracking-wide block">
-              {totalItemCount} {totalItemCount === 1 ? "item selecionado" : "itens selecionados"}
-            </span>
+      <header className="sticky top-0 z-20 bg-[#DF5F45] text-white shadow-md">
+        <div className="w-full max-w-[1280px] mx-auto px-4 lg:px-8 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"
+            >
+              <ArrowLeft size={18} />
+            </Link>
+            <img
+              src="/deli-logo-cream-official.png"
+              alt="Deli Salgados"
+              className="h-9 w-auto object-contain select-none"
+            />
+            <div>
+              <h1 className="text-base lg:text-lg font-bold leading-tight">Seu pedido</h1>
+              <span className="text-[10px] text-[#FCE9D8] tracking-wide block">
+                {totalItemCount} {totalItemCount === 1 ? "item selecionado" : "itens selecionados"}
+              </span>
+            </div>
           </div>
-        </div>
 
-        {items.length > 0 && (
-          <button
-            onClick={clearCart}
-            className="text-[11px] font-semibold text-[#FCE9D8] hover:text-white underline"
-          >
-            Limpar
-          </button>
-        )}
+          {items.length > 0 && (
+            <button
+              onClick={clearCart}
+              className="text-xs font-semibold text-[#FCE9D8] hover:text-white underline cursor-pointer"
+            >
+              Limpar
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Main Content */}
-      <main className="p-4 flex-1 flex flex-col">
+      <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto p-4 lg:p-8 flex-1 flex flex-col">
         {items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
             <div className="w-16 h-16 rounded-full bg-[#FFF4E8] text-[#E05A36] flex items-center justify-center mb-4 shadow-inner">
               <ShoppingBag size={28} />
             </div>
-            <h2 className="text-base font-bold text-[#3C1F15]">Seu pedido está vazio</h2>
-            <p className="text-xs text-[#7A6357] mt-1 max-w-xs leading-relaxed">
+            <h2 className="text-base lg:text-lg font-bold text-[#3C1F15]">Seu pedido está vazio</h2>
+            <p className="text-xs lg:text-sm text-[#7A6357] mt-1 max-w-xs leading-relaxed">
               Explore o nosso cardápio e monte a sua encomenda!
             </p>
             <Link
@@ -63,18 +65,18 @@ export default function CartPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-3.5 flex-1 flex flex-col justify-between">
-            {/* Items list */}
+          <div className="space-y-3.5 lg:space-y-0 lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between">
+            {/* Left: Items list */}
             <div className="space-y-3">
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-[#FFFDF6] rounded-[18px] p-4 border border-[#EAD8C7] shadow-xs flex flex-col gap-2.5"
+                  className="bg-[#FFFDF6] rounded-[18px] lg:rounded-2xl p-4 border border-[#EAD8C7] shadow-xs flex flex-col gap-2.5"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-display text-sm font-bold text-[#3C1F15] leading-snug">
+                        <h3 className="font-display text-sm lg:text-base font-bold text-[#3C1F15] leading-snug">
                           {item.productName}
                         </h3>
                         {item.variantName && (
@@ -98,7 +100,7 @@ export default function CartPage() {
                       className="text-[#B09988] hover:text-[#C04220] p-1 transition"
                       aria-label="Remover item"
                     >
-                      <Trash2 size={15} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
 
@@ -131,7 +133,7 @@ export default function CartPage() {
                       <span className="text-[10px] text-[#7A6357] block uppercase font-bold">
                         Subtotal
                       </span>
-                      <span className="text-sm font-extrabold text-[#3C1F15] whitespace-nowrap">
+                      <span className="text-sm lg:text-base font-extrabold text-[#3C1F15] whitespace-nowrap">
                         {formatCurrency(item.subtotal)}
                       </span>
                     </div>
@@ -140,8 +142,8 @@ export default function CartPage() {
               ))}
             </div>
 
-            {/* Total Card */}
-            <div className="bg-[#FFFDF6] rounded-[18px] p-4 border border-[#EAD8C7] shadow-xs space-y-2 mt-auto">
+            {/* Right: Sticky Summary Card on Desktop */}
+            <div className="bg-[#FFFDF6] rounded-[18px] lg:rounded-3xl p-5 border border-[#EAD8C7] shadow-xs space-y-4 lg:sticky lg:top-24">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-[#3C1F15]">
                   Resumo do Pedido
@@ -150,11 +152,11 @@ export default function CartPage() {
                   {totalItemCount} {totalItemCount === 1 ? "item" : "itens"}
                 </span>
               </div>
-              <div className="pt-2 border-t border-[#F2E5D6] flex items-center justify-between">
+              <div className="pt-3 border-t border-[#F2E5D6] flex items-center justify-between">
                 <span className="text-xs font-bold text-[#7A6357]">
                   Total estimado:
                 </span>
-                <span className="text-xl font-extrabold text-[#E05A36]">
+                <span className="text-xl lg:text-2xl font-extrabold text-[#E05A36]">
                   {formatCurrency(totalAmount)}
                 </span>
               </div>

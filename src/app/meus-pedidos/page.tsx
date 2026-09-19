@@ -47,24 +47,40 @@ export default function MeusPedidosPage() {
   };
 
   return (
-    <div className="w-full max-w-[440px] mx-auto min-h-screen bg-[#FFFDF9] shadow-2xl flex flex-col pb-24 relative">
+    <div className="w-full max-w-[440px] lg:max-w-none mx-auto min-h-screen bg-[#FFFDF9] shadow-2xl lg:shadow-none flex flex-col pb-24 lg:pb-16 relative">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-gradient-to-b from-[#E25C37] via-[#DF532E] to-[#D5451F] text-white px-4 py-3.5 shadow-md flex items-center gap-2.5">
-        <Link
-          href="/"
-          className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition"
-        >
-          <ArrowLeft size={18} />
-        </Link>
-        <div>
-          <h1 className="text-base font-bold leading-tight">Consultar Pedido</h1>
-          <span className="text-[10px] text-[#FCE9D8] tracking-wide block">
-            Acompanhe o status pelo código DL-XXXX
-          </span>
+      <header className="sticky top-0 z-20 bg-gradient-to-b from-[#E25C37] via-[#DF532E] to-[#D5451F] text-white shadow-md">
+        <div className="w-full max-w-[1000px] mx-auto px-4 lg:px-8 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition"
+            >
+              <ArrowLeft size={18} />
+            </Link>
+            <img
+              src="/deli-logo-cream-official.png"
+              alt="Deli Salgados"
+              className="h-9 w-auto object-contain select-none"
+            />
+            <div>
+              <h1 className="text-base lg:text-lg font-bold leading-tight">Consultar Pedido</h1>
+              <span className="text-[10px] text-[#FCE9D8] tracking-wide block">
+                Acompanhe o status pelo código DL-XXXX
+              </span>
+            </div>
+          </div>
+
+          <Link
+            href="/"
+            className="hidden lg:inline-flex px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition"
+          >
+            Voltar ao Cardápio
+          </Link>
         </div>
       </header>
 
-      <main className="p-4 space-y-4">
+      <main className="w-full max-w-[440px] lg:max-w-[720px] mx-auto p-4 lg:p-8 space-y-4 flex-1">
         {/* Search input */}
         <form onSubmit={handleSearch} className="flex gap-2">
           <input
