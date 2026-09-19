@@ -296,11 +296,7 @@ export default function AdminProductsPage() {
             const isUnavailable = p.availability === "unavailable";
             const isSobEncomenda = p.availability === "on_request";
             
-            let thumb = "/products/coxinha.jpg";
-            if (p.slug.includes("camarao")) thumb = "/products/camarao.jpg";
-            else if (p.slug.includes("burger")) thumb = "/products/bolinho-queijo.jpg";
-            else if (p.slug.includes("torta")) thumb = "/products/torta-frango.jpg";
-            else if (p.slug.includes("empada")) thumb = "/products/empada-frango.jpg";
+            const thumb = p.image_url || null;
 
             let badgeText = "✓ Disponível";
             let badgeClass = "bg-[#EAF7EE] text-[#1FAA52]";
@@ -318,14 +314,18 @@ export default function AdminProductsPage() {
                 className="bg-white rounded-2xl p-3 border border-[#F0E2D2] shadow-2xs space-y-2.5"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-14 h-14 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] overflow-hidden shrink-0 relative">
-                    <Image
-                      src={thumb}
-                      alt={p.name}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
+                  <div className="w-14 h-14 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] overflow-hidden shrink-0 relative flex items-center justify-center">
+                    {thumb ? (
+                      <Image
+                        src={thumb}
+                        alt={p.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <UtensilsCrossed size={18} className="text-[#C9AFA1]" />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
