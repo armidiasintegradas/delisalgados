@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Check } from "lucide-react";
-import { Product } from "@/types";
+import { Product, PreparationType } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import { useCart } from "@/lib/cartContext";
 
@@ -37,6 +37,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   // Canonical description strictly from product database
   const description = product.description || "";
 
+  const preparationLabel: Record<PreparationType, string> = {
+    fried: "FRITO",
+    baked: "ASSADO",
+    frozen: "CONGELADO",
+    ready: "PRONTO",
+    variants: "OPÇÕES DE PREPARO",
+  };
+
+  const preparationText =
+    product.preparation_type === "variants"
+      ? Array.from(
+          new Set(
+            activeVariants
+              .map((variant) => variant.preparation_type)
+              .filter(Boolean)
+              .map((type) => preparationLabel[type as Exclude<PreparationType, "variants">])
+          )
+        ).join(" / ") || preparationLabel.variants
+      : product.preparation_type
+        ? preparationLabel[product.preparation_type]
+        : "";
+
   // Check if item is already in cart
   const cartItem = items.find((i) => i.productId === product.id);
 
@@ -69,6 +91,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+          {preparationText && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#FDEAE4] text-[#C84B32] text-[10px] font-extrabold uppercase tracking-wide">
+              {preparationText}
+            </span>
+          )}
           {showPrices && priceDisplay && (
             <span className="text-[15px] font-extrabold text-[#3C1F15] tracking-tight">
               {priceDisplay}
