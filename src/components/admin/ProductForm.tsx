@@ -832,17 +832,42 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                           <span className="text-xs font-bold text-[#3C1F15]">
                             {v.name}
                           </span>
-                          <span className="px-1.5 py-0.2 rounded-full bg-[#E5F7EB] text-[#1FAA52] text-[9px] font-bold">
-                            {idx === 0 ? "Pronta-Entrega" : "Consumo Imediato"}
-                          </span>
+                          {v.preparation_type && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-[#FDEAE4] text-[#C84B32] text-[9px] font-bold uppercase">
+                              {v.preparation_type === "fried"
+                                ? "Frito"
+                                : v.preparation_type === "baked"
+                                  ? "Assado"
+                                  : v.preparation_type === "frozen"
+                                    ? "Congelado"
+                                    : "Pronto"}
+                            </span>
+                          )}
                         </div>
                         <p className="text-[10px] text-[#9E8679]">
-                          Unidade Base: {v.unit_label} • Rendimento: aprox. 35 unidades
+                          Unidade Base: {v.unit_label} • Mínimo: {v.minimum_quantity}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
+                      <select
+                        value={v.preparation_type || ""}
+                        onChange={(e) =>
+                          handleVariantChange(
+                            idx,
+                            "preparation_type",
+                            (e.target.value || null) as ProductVariant["preparation_type"]
+                          )
+                        }
+                        className="bg-white border border-[#E8D9CB] rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#3C1F15]"
+                      >
+                        <option value="">Preparo...</option>
+                        <option value="fried">Frito</option>
+                        <option value="baked">Assado</option>
+                        <option value="frozen">Congelado</option>
+                        <option value="ready">Pronto</option>
+                      </select>
                       <div className="text-right">
                         <span className="text-[9px] uppercase font-bold text-[#9E8679] block">
                           Preço de Venda
@@ -935,50 +960,65 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </span>
                 <span className="text-[9px] text-[#DF5F45] font-bold">WebP HD 16:9</span>
               </div>
-              <div className="relative rounded-2xl overflow-hidden aspect-video bg-[#FFF8EE] border border-[#F0E2D2]">
-                <Image
-                  src="/products/camarao.jpg"
-                  alt="Camarão Empanado"
-                  fill
-                  className="object-cover"
-                  unoptimized
+              {imageUrl ? (
+                <div className="relative rounded-2xl overflow-hidden aspect-video bg-[#FFF8EE] border border-[#F0E2D2]">
+                  <img
+                    src={imageUrl}
+                    alt={name || "Produto Deli"}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-[#E8D9CB] aspect-video bg-[#FFF8EE] flex items-center justify-center">
+                  <div className="text-center">
+                    <Camera size={22} className="mx-auto text-[#C9AFA1] mb-1" />
+                    <span className="text-[10px] font-bold text-[#8C7367]">Sem foto cadastrada</span>
+                  </div>
+                </div>
+              )}
+              <label className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold cursor-pointer">
+                <Camera size={13} />
+                <span>{isUploadingImage ? "Enviando..." : "Enviar / trocar foto"}</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={isUploadingImage}
+                  onChange={(e) => handleImageUpload(e.target.files?.[0])}
+                  className="hidden"
                 />
-              </div>
+              </label>
               <span className="text-[10px] text-[#9E8679] block text-center">
-                Use fotos em alta resolução na proporção 16:9 para destaque no cardápio online.
+                JPG, PNG ou WebP, até 5 MB. Arquivo salvo no Supabase Storage.
               </span>
             </div>
 
-            {/* Mix de Vendas por Opção */}
+            {/* Resumo das opções cadastradas */}
             <div className="bg-white p-4 rounded-3xl border border-[#F0E2D2] shadow-2xs space-y-3">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#3C1F15] block pb-1 border-b border-[#F4E8DB]">
-                Mix de Vendas por Opção
+                Preparos cadastrados
               </span>
-              <div className="space-y-2 text-xs">
-                <div>
-                  <div className="flex justify-between text-[11px] font-bold mb-1">
-                    <span>Congelado (1 kg)</span>
-                    <span className="text-[#DF5F45]">68% dos pedidos</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-[#FFF4E8] overflow-hidden">
-                    <div className="h-full bg-[#DF5F45] rounded-full w-[68%]" />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-[11px] font-bold mb-1">
-                    <span>Frito Pronto (1 kg)</span>
-                    <span className="text-[#7A6357]">32% dos pedidos</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-[#FFF4E8] overflow-hidden">
-                    <div className="h-full bg-[#7A6357] rounded-full w-[32%]" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-2 rounded-xl bg-[#FFF8EE] text-[10px] text-[#8C5237] font-medium flex items-center gap-1.5">
-                <span>🔥</span>
-                <span>Mais vendido no segmento home no último mês</span>
+              <div className="flex flex-wrap gap-2">
+                {variants.length === 0 ? (
+                  <span className="text-[10px] text-[#9E8679]">Nenhuma variante cadastrada.</span>
+                ) : (
+                  variants.map((variant) => (
+                    <span
+                      key={variant.id}
+                      className="px-2 py-1 rounded-full bg-[#FFF4E8] text-[#7A6357] text-[10px] font-bold"
+                    >
+                      {variant.name}
+                      {variant.preparation_type
+                        ? ` • ${variant.preparation_type === "fried"
+                            ? "Frito"
+                            : variant.preparation_type === "baked"
+                              ? "Assado"
+                              : variant.preparation_type === "frozen"
+                                ? "Congelado"
+                                : "Pronto"}`
+                        : ""}
+                    </span>
+                  ))
+                )}
               </div>
             </div>
 
