@@ -122,6 +122,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
         {/* Scrollable Content */}
         <div className="px-5 py-1 overflow-y-auto space-y-3.5 flex-1">
+          {product.image_url && (
+            <div className="w-full max-w-[320px] aspect-square mx-auto rounded-[22px] overflow-hidden border border-[#EAD8C7] bg-[#FFF9E6]">
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
           {/* Variants selector */}
           {isVariants && activeVariants.length > 0 && (
             <div>
