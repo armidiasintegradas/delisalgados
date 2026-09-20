@@ -526,8 +526,6 @@ export default function AdminOrdersPage() {
                 </select>
               </div>
 
-                </div>
-
                 <button
                   type="button"
                   onClick={() => handleDeleteOrder(selectedOrder)}
