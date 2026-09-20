@@ -66,7 +66,7 @@ export default function CheckoutPage() {
   if (!mounted || !isInitialized) {
     return (
       <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex items-center justify-center p-4">
-        <div className="w-full max-w-[440px] lg:max-w-[720px] bg-[#FFFDF6] rounded-3xl border border-[#EAD8C7] p-8 text-center shadow-xl">
+        <div className="w-full max-w-[440px] lg:max-w-[720px] deli-surface rounded-3xl border p-8 text-center shadow-xl">
           <div className="w-9 h-9 border-3 border-[#DF5F45] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs font-bold text-[#7A6357] mt-3">Carregando seu pedido...</p>
         </div>
@@ -77,7 +77,7 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex items-center justify-center p-4 lg:p-8">
-        <div className="w-full max-w-[440px] lg:max-w-[760px] bg-[#FFFDF6] rounded-3xl border border-[#EAD8C7] shadow-xl p-7 lg:p-12 text-center">
+        <div className="w-full max-w-[440px] lg:max-w-[760px] deli-surface rounded-3xl border shadow-xl p-7 lg:p-12 text-center">
           <div className="w-14 h-14 rounded-full bg-[#FFF4E8] text-[#E05A36] flex items-center justify-center mx-auto mb-4">
             <ShoppingBag size={24} />
           </div>
@@ -307,12 +307,12 @@ export default function CheckoutPage() {
       <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-3 py-4 sm:px-4 lg:p-8 flex-1 flex flex-col overflow-x-hidden landscape-full-width">
         <form noValidate onSubmit={handleSubmit} className="w-full min-w-0 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between landscape-order-layout">
           {/* Left Column: Form Fields */}
-          <div className="w-full min-w-0 space-y-3.5 bg-transparent lg:bg-[#FFFDF6] lg:p-6 lg:rounded-3xl lg:border lg:border-[#EAD8C7] lg:shadow-xs">
+          <div className="w-full min-w-0 space-y-3.5 bg-transparent lg:deli-surface lg:p-6 lg:rounded-3xl lg:border">
             {/* Mobile Order Summary Mini Card */}
             <Link
               href="/pedido"
               id="checkout-summary"
-              className="lg:hidden landscape-hide bg-[#FFFDF6] rounded-[18px] p-3.5 border border-[#EAD8C7] shadow-xs flex items-center justify-between hover:bg-[#FFF9E6] transition"
+              className="lg:hidden landscape-hide deli-surface rounded-[18px] p-3.5 border flex items-center justify-between hover:deli-surface-soft transition"
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-[#FFE8E0] text-[#E05A36] flex items-center justify-center shrink-0">
@@ -333,7 +333,7 @@ export default function CheckoutPage() {
             </Link>
 
             {!isAuthenticated ? (
-              <div id="existing-customer-login" className="rounded-2xl border border-[#F0D5BE] bg-[#FFF4E8] p-4 space-y-3">
+              <div id="existing-customer-login" className="deli-surface-soft rounded-2xl border p-4 space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-white border border-[#F0D5BE] flex items-center justify-center text-[#E05A36] shrink-0">
                     <LogIn size={17} />
@@ -474,7 +474,7 @@ export default function CheckoutPage() {
                   setCustomerData((prev) => ({ ...prev, customerName: e.target.value }))
                 }
                 placeholder="Ex: Maria Silva"
-                className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl p-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
+                className="w-full deli-field border rounded-2xl p-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
               />
             </div>
 
@@ -494,7 +494,7 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setCustomerData((prev) => ({ ...prev, desiredDate: e.target.value }))
                   }
-                  className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl p-3 text-xs text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
+                  className="w-full deli-field border rounded-2xl p-3 text-xs text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
                 />
               </div>
 
@@ -512,7 +512,7 @@ export default function CheckoutPage() {
                     setCustomerData((prev) => ({ ...prev, customerPhone: e.target.value }))
                   }
                   placeholder="(81) 98765-4321"
-                  className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl p-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
+                  className="w-full deli-field border rounded-2xl p-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
                 />
               </div>
             </div>
@@ -533,7 +533,7 @@ export default function CheckoutPage() {
                     setCustomerData((prev) => ({ ...prev, customerEmail: e.target.value }))
                   }
                   placeholder="seuemail@exemplo.com"
-                  className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl pl-9 pr-3 py-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs read-only:bg-[#F7F1EA] read-only:text-[#7A6357]"
+                  className="w-full deli-field border rounded-2xl pl-9 pr-3 py-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs read-only:bg-[#F7F1EA] read-only:text-[#7A6357]"
                 />
               </div>
               <p className="text-[10px] text-[#7A6357] mt-1">
@@ -548,7 +548,7 @@ export default function CheckoutPage() {
               <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1.5">
                 MODALIDADE DE ATENDIMENTO *
               </label>
-              <div className="grid grid-cols-3 gap-2 bg-[#FFFDF6] p-1 rounded-2xl border border-[#EAD8C7]">
+              <div className="deli-surface-soft grid grid-cols-3 gap-2 p-1 rounded-2xl border">
                 {[
                   { id: "pickup", label: "Retirada" },
                   { id: "delivery", label: "Entrega" },
@@ -586,7 +586,7 @@ export default function CheckoutPage() {
               </p>
 
               {customerData.fulfillmentType === "pickup" && pickupAddress && (
-                <div className="mt-3 p-4 rounded-2xl bg-[#FFF4E8] border border-[#F0D5BE] space-y-3">
+                <div className="deli-surface-soft mt-3 p-4 rounded-2xl border space-y-3">
                   <div className="flex items-start gap-2.5">
                     <div className="w-8 h-8 rounded-full bg-white border border-[#F0D5BE] text-[#E05A36] flex items-center justify-center shrink-0">
                       <MapPin size={16} />
@@ -643,7 +643,7 @@ export default function CheckoutPage() {
                     }))
                   }
                   placeholder="Rua, número, complemento, bairro, cidade e CEP"
-                  className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl p-2.5 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
+                  className="w-full deli-field border rounded-2xl p-2.5 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
                 />
               </div>
 
@@ -663,13 +663,13 @@ export default function CheckoutPage() {
                     }))
                   }
                   placeholder="Ex: ao lado da farmácia, portão azul..."
-                  className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl p-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
+                  className="w-full deli-field border rounded-2xl p-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
                 />
               </div>
             </div>
 
             {customerData.fulfillmentType === "delivery" && (
-              <div className="bg-[#FFF8EE] rounded-3xl border border-[#F0D5BE] p-4 space-y-3 shadow-xs">
+              <div className="deli-surface rounded-3xl border p-4 space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-white border border-[#F0D5BE] text-[#E05A36] flex items-center justify-center shrink-0">
                     <MessageSquare size={17} />
@@ -682,7 +682,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white border border-[#EAD8C7] p-3 space-y-2 text-[11px] text-[#614439]">
+                <div className="deli-surface-soft rounded-2xl border p-3 space-y-2 text-[11px] text-[#614439]">
                   <div className="flex gap-2">
                     <span className="font-black text-[#E05A36]">1.</span>
                     <span>Você finaliza e paga apenas os produtos conforme a opção de pagamento escolhida.</span>
@@ -708,7 +708,7 @@ export default function CheckoutPage() {
             )}
 
             {/* Payment plan */}
-            <div className="bg-white rounded-3xl border border-[#EAD8C7] p-4 space-y-3 shadow-xs">
+            <div className="deli-surface rounded-3xl border p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-[#FFF0E2] text-[#E05A36] flex items-center justify-center">
                   <BadgeDollarSign size={17} />
@@ -746,7 +746,7 @@ export default function CheckoutPage() {
                 onClick={() => setPaymentPlan("full")}
                 className={`w-full p-3.5 rounded-2xl border text-left transition ${
                   paymentPlan === "full"
-                    ? "border-[#3C1F15] bg-[#FFF9E6] ring-2 ring-[#3C1F15]/10"
+                    ? "border-[#3C1F15] deli-surface-soft ring-2 ring-[#3C1F15]/10"
                     : "border-[#EAD8C7] bg-[#FFFDF9]"
                 }`}
               >
@@ -782,7 +782,7 @@ export default function CheckoutPage() {
                   setCustomerData((prev) => ({ ...prev, customerNote: e.target.value }))
                 }
                 placeholder="Alguma informação importante sobre seu pedido? (horário previsto, separar em caixas...)"
-                className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl p-2.5 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
+                className="w-full deli-field border rounded-2xl p-2.5 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
               />
             </div>
 
@@ -805,7 +805,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Right Column: Desktop Compact Order Summary & Sticky Submit */}
-          <div className="hidden lg:flex landscape-show-flex lg:flex-col lg:sticky lg:top-24 bg-[#FFFDF6] rounded-3xl p-5 border border-[#EAD8C7] shadow-sm space-y-4">
+          <div className="deli-surface hidden lg:flex landscape-show-flex lg:flex-col lg:sticky lg:top-24 rounded-3xl p-5 border space-y-4">
             <div className="flex items-center justify-between border-b border-[#F0E2D4] pb-3">
               <div className="flex items-center gap-2">
                 <ShoppingBag size={18} className="text-[#E05A36]" />
@@ -820,7 +820,7 @@ export default function CheckoutPage() {
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-[#FFF9E6] p-2.5 rounded-xl border border-[#EFE5D5] flex items-start justify-between gap-2"
+                  className="deli-surface-soft p-2.5 rounded-xl border border-[#EFE5D5] flex items-start justify-between gap-2"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="font-bold text-[#3C1F15] truncate">
@@ -870,7 +870,7 @@ export default function CheckoutPage() {
               </button>
               <Link
                 href="/pedido"
-                className="w-full py-2.5 rounded-xl bg-white hover:bg-[#FFF9E6] border border-[#EAD8C7] text-[#3C1F15] text-[11px] font-bold text-center block uppercase transition"
+                className="w-full py-2.5 rounded-xl bg-white hover:deli-surface-soft border border-[#EAD8C7] text-[#3C1F15] text-[11px] font-bold text-center block uppercase transition"
               >
                 Alterar itens do pedido
               </Link>
