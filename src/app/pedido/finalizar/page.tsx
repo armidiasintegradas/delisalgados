@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
+import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -13,6 +14,13 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  const qualifyingUnitTotal = items
+    .filter((item) => isUnitBasedMinimum(item.minimumQuantity, item.unitLabel))
+    .reduce((sum, item) => sum + item.quantity, 0);
+  const hasUnitBasedItems = items.some((item) =>
+    isUnitBasedMinimum(item.minimumQuantity, item.unitLabel)
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -44,6 +52,13 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (hasUnitBasedItems && qualifyingUnitTotal < MIN_ORDER_UNITS) {
+      setErrorMessage(
+        `O pedido mínimo é de ${MIN_ORDER_UNITS} unidades. Seu pedido possui ${qualifyingUnitTotal} unidades.`
+      );
+      return;
+    }
 
     if (!customerData.customerName.trim()) {
       setErrorMessage("Por favor, informe seu nome completo.");
