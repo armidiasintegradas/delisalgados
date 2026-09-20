@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, Phone, ReceiptText } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RedefinirSenhaPage() {
@@ -16,6 +16,12 @@ export default function RedefinirSenhaPage() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showOrderFallback, setShowOrderFallback] = useState(false);
+  const [orderCode, setOrderCode] = useState("");
+  const [phone, setPhone] = useState("");
+  const [fallbackPassword, setFallbackPassword] = useState("");
+  const [fallbackPasswordConfirm, setFallbackPasswordConfirm] = useState("");
+  const [creatingPassword, setCreatingPassword] = useState(false);
 
   useEffect(() => {
     const client = createClient();
@@ -65,6 +71,59 @@ export default function RedefinirSenhaPage() {
       setMessage(err?.message || "Não foi possível enviar o link de redefinição.");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function createPasswordFromOrder(e: React.FormEvent) {
+    e.preventDefault();
+    setMessage(null);
+    setSuccess(false);
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+      setMessage("Informe o e-mail usado no pedido.");
+      return;
+    }
+    if (phone.replace(/\D/g, "").length < 10) {
+      setMessage("Informe o WhatsApp usado no pedido.");
+      return;
+    }
+    if (!/^DL-\d{4,}$/i.test(orderCode.trim())) {
+      setMessage("Informe um código de pedido válido, como DL-0001.");
+      return;
+    }
+    if (fallbackPassword.length < 8) {
+      setMessage("A nova senha deve ter pelo menos 8 caracteres.");
+      return;
+    }
+    if (fallbackPassword !== fallbackPasswordConfirm) {
+      setMessage("As senhas não conferem.");
+      return;
+    }
+
+    setCreatingPassword(true);
+    try {
+      const res = await fetch("/api/auth/customer-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          phone,
+          orderCode: orderCode.trim().toUpperCase(),
+          password: fallbackPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Não foi possível criar sua senha.");
+
+      setSuccess(true);
+      setMessage(data.message || "Senha criada. Você já pode entrar na sua conta Deli.");
+      setFallbackPassword("");
+      setFallbackPasswordConfirm("");
+    } catch (err: any) {
+      setMessage(err?.message || "Não foi possível criar sua senha.");
+    } finally {
+      setCreatingPassword(false);
     }
   }
 
@@ -250,6 +309,87 @@ export default function RedefinirSenhaPage() {
             >
               {sending ? "ENVIANDO..." : "ENVIAR LINK PARA REDEFINIR SENHA"}
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowOrderFallback((value) => !value);
+                setMessage(null);
+                setSuccess(false);
+              }}
+              className="w-full py-3 rounded-2xl border border-[#E8D9CB] text-[#3C1F15] text-[11px] font-black"
+            >
+              {showOrderFallback ? "OCULTAR OPÇÃO ALTERNATIVA" : "NÃO RECEBI O E-MAIL — CRIAR SENHA COM MEU PEDIDO"}
+            </button>
+
+            {showOrderFallback && (
+              <form onSubmit={createPasswordFromOrder} className="deli-surface-soft border rounded-3xl p-4 space-y-3">
+                <div>
+                  <div className="text-xs font-black text-[#3C1F15]">Criar senha sem depender do e-mail</div>
+                  <div className="text-[10px] text-[#7A6357] mt-1 leading-relaxed">
+                    Confirme os dados de um pedido seu. Se os dados conferirem, você cria a senha na hora.
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <ReceiptText size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E8679]" />
+                  <input
+                    type="text"
+                    required
+                    value={orderCode}
+                    onChange={(e) => setOrderCode(e.target.value.toUpperCase())}
+                    placeholder="Código do pedido, ex: DL-0007"
+                    className="w-full pl-9 pr-3 py-3 deli-field border rounded-2xl text-sm uppercase text-[#3C1F15]"
+                  />
+                </div>
+
+                <div className="relative">
+                  <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E8679]" />
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="WhatsApp usado no pedido"
+                    className="w-full pl-9 pr-3 py-3 deli-field border rounded-2xl text-sm text-[#3C1F15]"
+                  />
+                </div>
+
+                <div className="relative">
+                  <LockKeyhole size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E8679]" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={8}
+                    value={fallbackPassword}
+                    onChange={(e) => setFallbackPassword(e.target.value)}
+                    placeholder="Crie uma senha com 8+ caracteres"
+                    className="w-full pl-9 pr-11 py-3 deli-field border rounded-2xl text-sm text-[#3C1F15]"
+                  />
+                </div>
+
+                <div className="relative">
+                  <LockKeyhole size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E8679]" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={8}
+                    value={fallbackPasswordConfirm}
+                    onChange={(e) => setFallbackPasswordConfirm(e.target.value)}
+                    placeholder="Confirme a nova senha"
+                    className="w-full pl-9 pr-3 py-3 deli-field border rounded-2xl text-sm text-[#3C1F15]"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={creatingPassword}
+                  className="w-full py-3.5 rounded-2xl bg-[#E05A36] text-white text-xs font-black disabled:opacity-60"
+                >
+                  {creatingPassword ? "CRIANDO SENHA..." : "CRIAR SENHA AGORA"}
+                </button>
+              </form>
+            )}
 
             <Link
               href="/perfil"
