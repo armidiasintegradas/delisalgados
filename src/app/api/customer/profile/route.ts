@@ -43,6 +43,7 @@ export async function GET() {
         whatsapp: "",
         address: "",
         reference_point: "",
+        avatar_url: null,
       },
     });
   }
@@ -54,6 +55,7 @@ export async function GET() {
     whatsapp: latestOrder.customer_phone || "",
     address: latestOrder.delivery_address || "",
     reference_point: latestOrder.customer_reference_point || "",
+    avatar_url: null,
     updated_at: new Date().toISOString(),
   };
 
@@ -81,6 +83,7 @@ export async function PUT(request: Request) {
     whatsapp: String(body.whatsapp || "").trim(),
     address: String(body.address || "").trim(),
     reference_point: String(body.reference_point || "").trim(),
+    avatar_url: body.avatar_url ? String(body.avatar_url).trim() : null,
     updated_at: new Date().toISOString(),
   };
 
