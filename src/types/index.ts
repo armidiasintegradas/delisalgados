@@ -46,6 +46,8 @@ export interface Product {
   availability: Availability;
   is_visible: boolean;
   is_featured: boolean;
+  is_promotion?: boolean;
+  sales_count?: number;
   sort_order: number;
   image_url: string | null;
   preparation_type?: PreparationType | null;
