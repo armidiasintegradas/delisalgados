@@ -1,5 +1,11 @@
 import { Order, Settings } from "@/types";
 
+export function getFirstName(fullName?: string | null): string {
+  const normalized = String(fullName || "").trim();
+  if (!normalized) return "Cliente";
+  return normalized.split(/\s+/)[0];
+}
+
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -16,18 +22,20 @@ export function generateWhatsAppMessage(order: Order, settings: Settings): strin
 
   const lines: string[] = [];
 
-  // Opening — personalize with the customer's first name.
-  const firstName = (order.customer_name || "").trim().split(/\s+/)[0] || "Cliente";
-  const openingTemplate =
-    settings.whatsapp_opening_message ||
-    "Olá, Deli Salgados! Gostaria de enviar uma solicitação de pedido pelo cardápio digital:";
+  // Opening — always identify the customer by first name.
+  const firstName = getFirstName(order.customer_name);
+  const defaultOpening =
+    `Olá, Deli Salgados! Meu nome é ${firstName}. Gostaria de enviar uma solicitação de pedido pelo cardápio digital.`;
 
-  const personalizedOpening = openingTemplate.includes("Olá, Deli Salgados!")
-    ? openingTemplate.replace(
-        "Olá, Deli Salgados!",
-        `Olá, Deli Salgados! Aqui é ${firstName}.`
-      )
-    : `Olá, Deli Salgados! Aqui é ${firstName}. ${openingTemplate}`;
+  const configuredOpening = String(settings.whatsapp_opening_message || "").trim();
+  const personalizedOpening = configuredOpening
+    ? configuredOpening
+        .replace(/\{primeiro_nome\}/gi, firstName)
+        .replace(
+          /^Olá, Deli Salgados![\s:]*/i,
+          `Olá, Deli Salgados! Meu nome é ${firstName}. `
+        )
+    : defaultOpening;
 
   lines.push(personalizedOpening);
   lines.push("");
@@ -82,7 +90,12 @@ export function generateWhatsAppMessage(order: Order, settings: Settings): strin
     lines.push("🚚 *Taxa de entrega:* a combinar separadamente pelo WhatsApp");
   }
   lines.push("");
-  lines.push(settings.whatsapp_closing_message || "Aguardo confirmação da disponibilidade e do pagamento. Obrigado!");
+  const configuredClosing = String(settings.whatsapp_closing_message || "").trim();
+  lines.push(
+    configuredClosing
+      ? configuredClosing.replace(/\{primeiro_nome\}/gi, firstName)
+      : `Aguardo a confirmação da disponibilidade e do pagamento. Obrigado! — ${firstName}`
+  );
 
   return lines.join("\n");
 }
