@@ -101,6 +101,30 @@ nextjs-portal,
     padding-bottom: 0.75rem !important;
   }
 
+  .landscape-order-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 38%) !important;
+    gap: 1rem !important;
+    align-items: start !important;
+  }
+
+  .landscape-show-flex {
+    display: flex !important;
+  }
+
+  .landscape-show-block {
+    display: block !important;
+  }
+
+  .landscape-hide {
+    display: none !important;
+  }
+
+  .landscape-full-width {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   /* Fixed mobile navigation must span the rotated viewport. */
   nav[class*="max-w-[440px]"] {
     max-width: 100% !important;
