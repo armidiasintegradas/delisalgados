@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, ShoppingBag, User, X, BookOpen, Calendar, ClipboardList } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
+import { CustomerAvatar } from "@/components/public/CustomerAvatar";
 
 interface HeaderProps {
   searchQuery: string;
@@ -86,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label="Perfil do cliente"
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition active:scale-95"
             >
-              <User size={18} />
+              <CustomerAvatar size="sm" className="text-white" />
             </Link>
           </div>
         </div>
@@ -171,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label="Perfil do cliente"
               className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition"
             >
-              <User size={18} />
+              <CustomerAvatar size="sm" className="text-white" />
             </Link>
           </div>
         </div>
