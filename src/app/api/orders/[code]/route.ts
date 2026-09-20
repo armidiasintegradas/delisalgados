@@ -42,6 +42,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ code:
       await DbService.updateOrderWhatsAppStatus(order.id, body.whatsapp_status);
     }
 
+    if (body.payment_status) {
+      await DbService.updateOrderPaymentStatus(order.id, body.payment_status);
+    }
+
     const updated = await DbService.getOrderByCode(code);
     return NextResponse.json({ success: true, order: updated });
   } catch (error: any) {
