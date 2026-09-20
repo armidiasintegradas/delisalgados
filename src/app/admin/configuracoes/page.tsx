@@ -330,9 +330,12 @@ export default function AdminSettingsPage() {
               type="text"
               value={pixKey}
               onChange={(e) => setPixKey(e.target.value)}
-              placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória"
+              placeholder="CPF/CNPJ, e-mail, +55DDDNUMERO ou chave aleatória"
               className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl px-3 py-2 text-xs text-[#3C1F15] focus:outline-none"
             />
+            <span className="text-[10px] text-[#9E8679] block">
+              Para chave Pix por telefone, use o formato internacional com +55. Ex.: +5581999999999.
+            </span>
           </div>
 
           <div className="space-y-1">
