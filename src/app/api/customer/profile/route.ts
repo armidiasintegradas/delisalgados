@@ -27,7 +27,7 @@ export async function GET() {
   const email = (user.email || "").toLowerCase();
   const { data: latestOrder } = await supabaseServer
     .from("orders")
-    .select("customer_name, customer_phone, customer_email, delivery_address, customer_reference_point")
+    .select("customer_name, customer_phone, customer_email, delivery_address, customer_reference_point, customer_postal_code, customer_street, customer_address_number, customer_complement, customer_neighborhood, customer_city, customer_state")
     .eq("customer_email", email)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -61,13 +61,13 @@ export async function GET() {
     full_name: latestOrder.customer_name || "",
     whatsapp: latestOrder.customer_phone || "",
     address: latestOrder.delivery_address || "",
-    postal_code: "",
-    street: "",
-    address_number: "",
-    complement: "",
-    neighborhood: "",
-    city: "",
-    state: "",
+    postal_code: latestOrder.customer_postal_code || "",
+    street: latestOrder.customer_street || "",
+    address_number: latestOrder.customer_address_number || "",
+    complement: latestOrder.customer_complement || "",
+    neighborhood: latestOrder.customer_neighborhood || "",
+    city: latestOrder.customer_city || "",
+    state: latestOrder.customer_state || "",
     reference_point: latestOrder.customer_reference_point || "",
     avatar_url: null,
     updated_at: new Date().toISOString(),
@@ -108,17 +108,29 @@ export async function PUT(request: Request) {
     updated_at: new Date().toISOString(),
   };
 
+  const structuredAddressStarted = Boolean(
+    profile.postal_code ||
+    profile.street ||
+    profile.address_number ||
+    profile.neighborhood ||
+    profile.city ||
+    profile.state
+  );
+
   if (
     !profile.full_name ||
     !profile.whatsapp ||
     !profile.address ||
     !profile.reference_point ||
-    !profile.postal_code ||
-    !profile.street ||
-    !profile.address_number ||
-    !profile.neighborhood ||
-    !profile.city ||
-    !profile.state
+    (structuredAddressStarted &&
+      (
+        !profile.postal_code ||
+        !profile.street ||
+        !profile.address_number ||
+        !profile.neighborhood ||
+        !profile.city ||
+        !profile.state
+      ))
   ) {
     return NextResponse.json({ error: "Preencha todos os dados obrigatórios." }, { status: 400 });
   }
