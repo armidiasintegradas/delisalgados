@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
+import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
 
 export const FloatingCartBar: React.FC = () => {
   const { totalUnits, totalAmount, items } = useCart();
@@ -12,6 +13,10 @@ export const FloatingCartBar: React.FC = () => {
   if (totalUnits === 0 && items.length === 0) return null;
 
   const count = items.length > 0 ? items.length : totalUnits;
+  const qualifyingUnitTotal = items
+    .filter((item) => isUnitBasedMinimum(item.minimumQuantity, item.unitLabel))
+    .reduce((sum, item) => sum + item.quantity, 0);
+  const hasUnitBasedItems = qualifyingUnitTotal > 0;
 
   return (
     <div className="lg:hidden fixed bottom-[74px] inset-x-0 mx-auto max-w-[440px] w-full z-20 px-3.5 pointer-events-none">
@@ -32,7 +37,9 @@ export const FloatingCartBar: React.FC = () => {
                 Ver pedido
               </div>
               <div className="text-xs text-[#D5C3B4] font-medium leading-tight">
-                {count} {count === 1 ? "item selecionado" : "itens selecionados"}
+                {hasUnitBasedItems
+                  ? `${qualifyingUnitTotal}/${MIN_ORDER_UNITS} un. mínimas no pedido`
+                  : `${count} ${count === 1 ? "item selecionado" : "itens selecionados"}`}
               </div>
             </div>
           </div>
