@@ -38,6 +38,61 @@ function getCategoryBadge(items: Product[]): string | null {
   return "POR UNIDADE";
 }
 
+
+type CatalogSortMode = "alphabetical" | "best_sellers" | "promotions" | "price_asc" | "price_desc";
+
+function getProductPrice(product: Product): number {
+  if (product.price_type === "variants") {
+    const prices = (product.variants || [])
+      .filter((variant) => variant.is_active)
+      .map((variant) => Number(variant.price))
+      .filter((price) => Number.isFinite(price));
+
+    return prices.length > 0 ? Math.min(...prices) : Number.POSITIVE_INFINITY;
+  }
+
+  return product.base_price !== null && product.base_price !== undefined
+    ? Number(product.base_price)
+    : Number.POSITIVE_INFINITY;
+}
+
+function sortProducts(items: Product[], mode: CatalogSortMode): Product[] {
+  const next = [...items];
+
+  if (mode === "promotions") {
+    return next
+      .filter((product) => product.is_promotion)
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }));
+  }
+
+  if (mode === "best_sellers") {
+    return next.sort((a, b) => {
+      const salesDiff = Number(b.sales_count || 0) - Number(a.sales_count || 0);
+      if (salesDiff !== 0) return salesDiff;
+      return a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" });
+    });
+  }
+
+  if (mode === "price_asc" || mode === "price_desc") {
+    return next.sort((a, b) => {
+      const diff = getProductPrice(a) - getProductPrice(b);
+      if (diff !== 0) return mode === "price_asc" ? diff : -diff;
+      return a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" });
+    });
+  }
+
+  return next.sort((a, b) =>
+    a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" })
+  );
+}
+
+function getBestSellerId(items: Product[]): string | null {
+  const ranked = [...items].sort(
+    (a, b) => Number(b.sales_count || 0) - Number(a.sales_count || 0)
+  );
+  return ranked[0] && Number(ranked[0].sales_count || 0) > 0 ? ranked[0].id : null;
+}
+
 export default function CatalogPage() {
   const [showSplash, setShowSplash] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -48,6 +103,7 @@ export default function CatalogPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [sortMode, setSortMode] = useState<CatalogSortMode>("alphabetical");
 
   const { items: cartItems, totalAmount, removeItem } = useCart();
 
@@ -117,8 +173,8 @@ export default function CatalogPage() {
     loadCatalog();
   }, []);
 
-  // Filter products by selected category and search query
-  const filteredProducts = products.filter((p) => {
+  // Filter by category/search first, then apply the requested catalog organization.
+  const baseFilteredProducts = products.filter((p) => {
     if (selectedCategorySlug) {
       const cat = categories.find((c) => c.slug === selectedCategorySlug);
       if (cat && p.category_id !== cat.id) return false;
@@ -132,22 +188,33 @@ export default function CatalogPage() {
     return true;
   });
 
-  // Group filtered products respecting canonical backend sort_order
+  const filteredProducts = React.useMemo(
+    () => sortProducts(baseFilteredProducts, sortMode),
+    [baseFilteredProducts, sortMode]
+  );
+
+  const hasPromotions = products.some((product) => product.is_promotion);
+
+  // Categories are alphabetical; products inside every section follow the selected sort mode.
   const categoriesWithProducts = React.useMemo(() => {
-    const orderedCategories = [...categories].sort((a, b) => a.sort_order - b.sort_order);
+    const orderedCategories = [...categories].sort((a, b) =>
+      a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" })
+    );
 
     return orderedCategories
       .map((cat) => {
-        let items = filteredProducts.filter((p) => p.category_id === cat.id);
-        items.sort((a, b) => a.sort_order - b.sort_order);
+        const categoryItems = baseFilteredProducts.filter((p) => p.category_id === cat.id);
         return {
           category: cat,
           displayName: cat.name,
-          items,
+          items: sortProducts(categoryItems, sortMode),
+          bestSellerId: getBestSellerId(categoryItems),
         };
       })
       .filter((group) => group.items.length > 0);
-  }, [categories, filteredProducts]);
+  }, [categories, baseFilteredProducts, sortMode]);
+
+  const flatBestSellerId = getBestSellerId(baseFilteredProducts);
 
   return (
     <div className="w-full max-w-[440px] lg:max-w-none mx-auto min-h-screen catalog-bg-pattern flex flex-col pb-36 lg:pb-16 overflow-x-hidden relative bg-[#FFFDF9] shadow-2xl lg:shadow-none">
@@ -173,6 +240,37 @@ export default function CatalogPage() {
       <div className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-4 lg:px-8 pt-3 flex-1 flex flex-col lg:flex-row lg:items-start lg:gap-8">
         {/* Left: Main Content Area (~880px on desktop) */}
         <main className="w-full lg:flex-1 lg:max-w-[880px] min-w-0">
+          <div className="mb-3 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-2 min-w-max py-1">
+              {[
+                { id: "alphabetical", label: "A–Z" },
+                { id: "best_sellers", label: "Mais vendidos" },
+                { id: "promotions", label: "Promoções" },
+                { id: "price_asc", label: "Menor preço" },
+                { id: "price_desc", label: "Maior preço" },
+              ].map((option) => {
+                const active = sortMode === option.id;
+                const promoUnavailable = option.id === "promotions" && !hasPromotions;
+
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setSortMode(option.id as CatalogSortMode)}
+                    className={`shrink-0 px-3.5 py-2 rounded-full border text-[11px] font-extrabold transition ${
+                      active
+                        ? "bg-[#3C1F15] border-[#3C1F15] text-white"
+                        : "bg-white border-[#EAD8C7] text-[#614439] hover:border-[#E05A36]/50"
+                    }`}
+                    title={promoUnavailable ? "Nenhuma promoção ativa no momento" : undefined}
+                  >
+                    {option.label}
+                    {option.id === "promotions" && !hasPromotions ? " · 0" : ""}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           {isLoading ? (
             <div className="py-12 text-center text-[#8C7367]">
               <div className="w-8 h-8 border-3 border-[#E05A36] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
@@ -197,12 +295,15 @@ export default function CatalogPage() {
             <div className="py-16 text-center text-[#8C7367]">
               <p className="text-sm font-bold text-[#3C1F15]">Nenhum produto encontrado</p>
               <p className="text-xs mt-1 text-[#8C7367]">
-                Tente buscar por outro termo ou selecione outra categoria.
+                {sortMode === "promotions"
+                  ? "Não há promoções ativas no momento."
+                  : "Tente buscar por outro termo ou selecione outra categoria."}
               </p>
               <button
                 onClick={() => {
                   setSelectedCategorySlug(null);
                   setSearchQuery("");
+                  setSortMode("alphabetical");
                 }}
                 className="mt-4 px-4 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold shadow hover:bg-[#27120A] transition"
               >
@@ -218,13 +319,14 @@ export default function CatalogPage() {
                   product={prod}
                   onOpenOptions={setSelectedProduct}
                   showPrices={settings?.catalog_show_prices ?? true}
+                  isBestSeller={prod.id === flatBestSellerId}
                 />
               ))}
             </div>
           ) : (
             // Grouped by canonical category
             <div className="space-y-6 pt-1">
-              {categoriesWithProducts.map(({ category, displayName, items }) => {
+              {categoriesWithProducts.map(({ category, displayName, items, bestSellerId }) => {
                 const badge = getCategoryBadge(items);
                 return (
                   <section key={category.id} className="space-y-3">
