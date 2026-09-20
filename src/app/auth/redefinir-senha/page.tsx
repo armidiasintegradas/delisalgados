@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { buildAuthCallbackUrl } from "@/lib/appUrl";
 
 export default function RedefinirSenhaPage() {
   const [email, setEmail] = useState("");
@@ -52,7 +53,7 @@ export default function RedefinirSenhaPage() {
     setSending(true);
     try {
       const { error } = await client.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/auth/redefinir-senha`,
+        redirectTo: buildAuthCallbackUrl("/auth/redefinir-senha"),
       });
       if (error) throw error;
 
