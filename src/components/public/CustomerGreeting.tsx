@@ -52,8 +52,8 @@ export function CustomerGreeting({
     <div
       className={
         compact
-          ? `rounded-2xl bg-[#FFF4E8] border border-[#F0D5BE] px-4 py-3 ${className}`
-          : `rounded-3xl bg-[#FFF8EE] border border-[#F0D5BE] px-5 py-4 lg:px-6 lg:py-5 ${className}`
+          ? `deli-surface-soft rounded-2xl border px-4 py-3 ${className}`
+          : `deli-surface rounded-3xl border px-5 py-4 lg:px-6 lg:py-5 ${className}`
       }
     >
       <div
