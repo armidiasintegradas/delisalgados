@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Search, ClipboardList, Clock, CheckCircle2 } from "lucide-react";
 import { BottomNav } from "@/components/public/BottomNav";
 import { Order } from "@/types";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, getFirstName } from "@/lib/formatters";
 
 export default function MeusPedidosPage() {
   const [code, setCode] = useState("");
@@ -114,8 +114,16 @@ export default function MeusPedidosPage() {
           <div className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-black text-[#3C1F15]">Histórico de pedidos</h2>
-                <p className="text-[11px] text-[#7A6357]">Pedidos vinculados ao seu e-mail de acesso.</p>
+                <h2 className="text-base font-black text-[#3C1F15]">
+                  {accountOrders.length > 0
+                    ? `Olá, ${getFirstName(accountOrders[0]?.customer_name)}!`
+                    : "Histórico de pedidos"}
+                </h2>
+                <p className="text-[11px] text-[#7A6357]">
+                  {accountOrders.length > 0
+                    ? "Aqui estão os pedidos vinculados ao seu e-mail de acesso."
+                    : "Pedidos vinculados ao seu e-mail de acesso."}
+                </p>
               </div>
               <Link href="/" className="px-3 py-2 rounded-xl bg-[#3C1F15] text-white text-[10px] font-bold">
                 NOVO PEDIDO
@@ -231,6 +239,10 @@ export default function MeusPedidosPage() {
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#FFF4E8] text-[#8C5237]">
                 {statusLabels[searchedOrder.status] || searchedOrder.status}
               </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-[#FFF4E8] text-xs font-bold text-[#7A4B36]">
+              Olá, {getFirstName(searchedOrder.customer_name)}! Aqui estão os dados do seu pedido.
             </div>
 
             <div className="space-y-1.5 text-xs text-[#614439]">
