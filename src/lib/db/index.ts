@@ -569,6 +569,14 @@ export class DbService {
     customer: CustomerData;
     customerUserId?: string | null;
     paymentPlan?: "deposit_50" | "full";
+    deliverySelection?: {
+      provider: "uber" | "99" | "indrive" | "customer_choice";
+      price?: number | null;
+      currency?: string | null;
+      etaMinutes?: number | null;
+      quoteId?: string | null;
+      expiresAt?: string | null;
+    } | null;
     items: { productId: string; variantId?: string; quantity: number; note?: string }[];
   }): Promise<Order & { handoffToken: string }> {
     if (process.env.NODE_ENV === "production" && !isServerSupabaseConfigured && process.env.DELI_ALLOW_LOCAL_DB !== "true") {
@@ -685,6 +693,30 @@ export class DbService {
         customer_note: orderInput.customer.customerNote?.trim() || null,
         total: Number(calculatedTotal.toFixed(2)),
         payment_plan: orderInput.paymentPlan === "full" ? "full" : "deposit_50",
+        delivery_provider:
+          orderInput.customer.fulfillmentType === "delivery"
+            ? orderInput.deliverySelection?.provider || null
+            : null,
+        delivery_quote_amount:
+          orderInput.customer.fulfillmentType === "delivery"
+            ? orderInput.deliverySelection?.price ?? null
+            : null,
+        delivery_quote_currency:
+          orderInput.customer.fulfillmentType === "delivery"
+            ? orderInput.deliverySelection?.currency || "BRL"
+            : null,
+        delivery_quote_id:
+          orderInput.customer.fulfillmentType === "delivery"
+            ? orderInput.deliverySelection?.quoteId || null
+            : null,
+        delivery_quote_expires_at:
+          orderInput.customer.fulfillmentType === "delivery"
+            ? orderInput.deliverySelection?.expiresAt || null
+            : null,
+        delivery_eta_minutes:
+          orderInput.customer.fulfillmentType === "delivery"
+            ? orderInput.deliverySelection?.etaMinutes ?? null
+            : null,
       };
 
       const itemsPayload = orderItems.map((oi) => ({
