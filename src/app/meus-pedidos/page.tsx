@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Search, ClipboardList, Clock, CheckCircle2 } from "lucide-react";
 import { BottomNav } from "@/components/public/BottomNav";
+import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { Order } from "@/types";
 import { formatCurrency, getFirstName } from "@/lib/formatters";
 
@@ -110,14 +111,13 @@ export default function MeusPedidosPage() {
       </header>
 
       <main className="w-full max-w-[440px] lg:max-w-[720px] mx-auto p-4 lg:p-8 space-y-4 flex-1">
+        {!accountLoading && accountAuthenticated && <CustomerGreeting />}
         {!accountLoading && accountAuthenticated && (
           <div className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-base font-black text-[#3C1F15]">
-                  {accountOrders.length > 0
-                    ? `Olá, ${getFirstName(accountOrders[0]?.customer_name)}!`
-                    : "Histórico de pedidos"}
+                  Histórico de pedidos
                 </h2>
                 <p className="text-[11px] text-[#7A6357]">
                   {accountOrders.length > 0
