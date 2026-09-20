@@ -19,7 +19,7 @@ import { Header } from "@/components/public/Header";
 import { BottomNav } from "@/components/public/BottomNav";
 import { Product, Settings } from "@/types";
 import { useCart } from "@/lib/cartContext";
-import { buildWhatsAppLink, formatCurrency } from "@/lib/formatters";
+import { buildWhatsAppLink, formatCurrency, getFirstName } from "@/lib/formatters";
 
 type PartyMode = "cocktail" | "party" | "meal";
 type ComboMode = "balanced" | "best_sellers" | "economy";
@@ -113,7 +113,7 @@ export default function FestaPage() {
   const [comboMode, setComboMode] = useState<ComboMode>("balanced");
   const [added, setAdded] = useState(false);
 
-  const { addItem } = useCart();
+  const { addItem, customerData } = useCart();
 
   useEffect(() => {
     fetch("/api/catalog", { cache: "no-store" })
@@ -163,9 +163,10 @@ export default function FestaPage() {
         ? "Combo Econômico"
         : "Combo Equilibrado";
 
+  const customerFirstName = getFirstName(customerData.customerName);
   const whatsappMessage = combo.length
-    ? `Olá, Deli! Montei uma sugestão para minha festa no cardápio digital. São ${guestCount} convidados e a calculadora sugeriu ${recommendedUnits} salgados, no perfil "${comboTitle}", estimado em ${formatCurrency(comboTotal)}. Gostaria de confirmar disponibilidade e ajustar o combo.`
-    : "Olá, Deli! Gostaria de ajuda para montar um combo para minha festa.";
+    ? `Olá, Deli Salgados! Meu nome é ${customerFirstName}. Montei uma sugestão para minha festa no cardápio digital. São ${guestCount} convidados e a calculadora sugeriu ${recommendedUnits} salgados, no perfil "${comboTitle}", estimado em ${formatCurrency(comboTotal)}. Gostaria de confirmar a disponibilidade e ajustar o combo.`
+    : `Olá, Deli Salgados! Meu nome é ${customerFirstName}. Gostaria de ajuda para montar um combo para minha festa.`;
 
   const whatsappUrl = settings?.whatsapp_number
     ? buildWhatsAppLink(settings.whatsapp_number, whatsappMessage)
