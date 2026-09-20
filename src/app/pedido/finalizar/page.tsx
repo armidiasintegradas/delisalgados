@@ -8,6 +8,7 @@ import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
 import { PublicFooter } from "@/components/public/PublicFooter";
+import { buildAuthCallbackUrl } from "@/lib/appUrl";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -248,7 +249,7 @@ export default function CheckoutPage() {
             email: customerData.customerEmail.trim().toLowerCase(),
             options: {
               shouldCreateUser: true,
-              emailRedirectTo: `${window.location.origin}/auth/callback?next=/perfil`,
+              emailRedirectTo: buildAuthCallbackUrl("/perfil"),
             },
           });
         }
