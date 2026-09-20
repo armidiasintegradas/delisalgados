@@ -27,6 +27,9 @@ export default function AdminSettingsPage() {
   const [deliveryInfo, setDeliveryInfo] = useState("");
   const [whatsappOpeningMsg, setWhatsappOpeningMsg] = useState("");
   const [whatsappClosingMsg, setWhatsappClosingMsg] = useState("");
+  const [pixKey, setPixKey] = useState("");
+  const [pixReceiverName, setPixReceiverName] = useState("");
+  const [pixReceiverCity, setPixReceiverCity] = useState("RECIFE");
 
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -48,6 +51,9 @@ export default function AdminSettingsPage() {
             if (s.delivery_information) setDeliveryInfo(s.delivery_information);
             if (s.whatsapp_opening_message) setWhatsappOpeningMsg(s.whatsapp_opening_message);
             if (s.whatsapp_closing_message) setWhatsappClosingMsg(s.whatsapp_closing_message);
+            if (s.pix_key) setPixKey(s.pix_key);
+            if (s.pix_receiver_name) setPixReceiverName(s.pix_receiver_name);
+            if (s.pix_receiver_city) setPixReceiverCity(s.pix_receiver_city);
           }
         }
       } catch (e) {
@@ -74,6 +80,9 @@ export default function AdminSettingsPage() {
           delivery_information: deliveryInfo.trim(),
           whatsapp_opening_message: whatsappOpeningMsg,
           whatsapp_closing_message: whatsappClosingMsg,
+          pix_key: pixKey.trim(),
+          pix_receiver_name: pixReceiverName.trim(),
+          pix_receiver_city: pixReceiverCity.trim().toUpperCase(),
         }),
       });
 
@@ -297,6 +306,69 @@ export default function AdminSettingsPage() {
             />
           </div>
         </div>
+      </div>
+
+      {/* Pix configuration */}
+      <div className="bg-white p-5 rounded-3xl border border-[#F0E2D2] shadow-2xs space-y-4">
+        <div className="flex items-center gap-2 pb-2 border-b border-[#F4E8DB]">
+          <span className="text-base">💳</span>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-[#3C1F15]">
+            Pagamento Pix
+          </h2>
+        </div>
+
+        <div className="p-3 rounded-2xl bg-[#FFF4E8] border border-[#F0D5BE] text-[11px] text-[#7A4B36] leading-relaxed">
+          A entrada de 50% é obrigatória. O cliente também pode optar por quitar 100% no ato. O QR Code e o Pix Copia e Cola usam os dados abaixo.
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-1 lg:col-span-2">
+            <label className="text-[11px] font-black uppercase tracking-wider text-[#8C7367] block">
+              Chave Pix
+            </label>
+            <input
+              type="text"
+              value={pixKey}
+              onChange={(e) => setPixKey(e.target.value)}
+              placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória"
+              className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl px-3 py-2 text-xs text-[#3C1F15] focus:outline-none"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-black uppercase tracking-wider text-[#8C7367] block">
+              Nome do recebedor
+            </label>
+            <input
+              type="text"
+              value={pixReceiverName}
+              onChange={(e) => setPixReceiverName(e.target.value)}
+              placeholder="DELI SALGADOS"
+              maxLength={25}
+              className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl px-3 py-2 text-xs text-[#3C1F15] focus:outline-none"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-black uppercase tracking-wider text-[#8C7367] block">
+              Cidade do recebedor
+            </label>
+            <input
+              type="text"
+              value={pixReceiverCity}
+              onChange={(e) => setPixReceiverCity(e.target.value)}
+              placeholder="RECIFE"
+              maxLength={15}
+              className="w-full bg-[#FFFBF7] border border-[#EBDCCF] focus:border-[#DF5F45] rounded-xl px-3 py-2 text-xs text-[#3C1F15] focus:outline-none uppercase"
+            />
+          </div>
+        </div>
+
+        {!pixKey.trim() && (
+          <div className="text-[11px] text-[#B85D19] font-semibold">
+            Pix ainda não configurado. O checkout continuará registrando o pedido, mas o QR Code ficará indisponível até salvar uma chave Pix.
+          </div>
+        )}
       </div>
 
       {/* Security info card */}
