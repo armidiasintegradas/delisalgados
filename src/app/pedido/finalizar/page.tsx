@@ -7,6 +7,7 @@ import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCir
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
+import { PublicFooter } from "@/components/public/PublicFooter";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -878,6 +879,7 @@ export default function CheckoutPage() {
           </div>
         </form>
       </main>
+      <PublicFooter />
     </div>
   );
 }
