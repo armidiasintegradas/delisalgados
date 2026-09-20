@@ -20,9 +20,11 @@ interface CartContextType {
 const defaultCustomerData: CustomerData = {
   customerName: "",
   customerPhone: "",
+  customerEmail: "",
   desiredDate: "",
   fulfillmentType: "pickup",
   deliveryAddress: "",
+  referencePoint: "",
   customerNote: "",
 };
 
@@ -79,9 +81,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setCustomerData({
           customerName: "Maria Silva",
           customerPhone: "(81) 98765-4321",
+          customerEmail: "cliente@example.com",
           desiredDate: new Date().toISOString().split("T")[0],
           fulfillmentType: "pickup",
-          deliveryAddress: "",
+          deliveryAddress: "Rua Exemplo, 100, Bairro",
+          referencePoint: "Próximo à praça",
           customerNote: "",
         });
         setIsInitialized(true);
