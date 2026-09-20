@@ -71,9 +71,12 @@ export interface Order {
   public_code: string;
   customer_name: string;
   customer_phone: string;
+  customer_email?: string | null;
+  customer_user_id?: string | null;
   desired_date: string;
   fulfillment_type: FulfillmentType;
   delivery_address: string | null;
+  customer_reference_point?: string | null;
   customer_note: string | null;
   total: number;
   status: OrderStatus;
@@ -120,8 +123,22 @@ export interface CartItem {
 export interface CustomerData {
   customerName: string;
   customerPhone: string;
+  customerEmail: string;
   desiredDate: string;
   fulfillmentType: FulfillmentType;
-  deliveryAddress?: string;
+  deliveryAddress: string;
+  referencePoint: string;
   customerNote?: string;
+}
+
+
+export interface CustomerProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  whatsapp: string;
+  address: string;
+  reference_point: string;
+  created_at?: string;
+  updated_at?: string;
 }
