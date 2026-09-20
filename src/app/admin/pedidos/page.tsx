@@ -122,7 +122,11 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const getPaymentBadge = (status?: PaymentStatus) => {
+  const getPaymentBadge = (status?: PaymentStatus, reportedAt?: string | null) => {
+    if (status === "pending" && reportedAt) {
+      return { label: "Cliente informou Pix", bg: "bg-[#FFF0CC] text-[#9A5A00] border-[#F3D083]" };
+    }
+
     switch (status) {
       case "partially_paid":
         return { label: "Entrada paga", bg: "bg-[#E6F0FA] text-[#1E70B8] border-[#CFE2F5]" };
@@ -166,6 +170,13 @@ export default function AdminOrdersPage() {
       return codeMatch || nameMatch || phoneMatch;
     }
     return true;
+  });
+
+  const prioritizedOrders = [...filteredOrders].sort((a, b) => {
+    const aReported = a.payment_status === "pending" && a.payment_reported_at ? 1 : 0;
+    const bReported = b.payment_status === "pending" && b.payment_reported_at ? 1 : 0;
+    if (aReported !== bReported) return bReported - aReported;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
   return (
@@ -225,7 +236,7 @@ export default function AdminOrdersPage() {
         <div className="p-12 text-center text-xs text-[#7A6357] font-semibold bg-white rounded-3xl border border-[#F0E2D2]">
           Carregando pedidos do sistema...
         </div>
-      ) : filteredOrders.length === 0 ? (
+      ) : prioritizedOrders.length === 0 ? (
         <div className="p-12 text-center space-y-2 bg-white rounded-3xl border border-[#F0E2D2]">
           <div className="w-12 h-12 rounded-full bg-[#FFF4E8] text-[#DF5F45] flex items-center justify-center mx-auto">
             <FileText size={22} />
@@ -241,7 +252,7 @@ export default function AdminOrdersPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           {/* Order List (5 cols) */}
           <div className="lg:col-span-5 space-y-2.5">
-            {filteredOrders.map((ord) => {
+            {prioritizedOrders.map((ord) => {
               const badge = getStatusBadge(ord.status);
               const isSelected = selectedOrder?.id === ord.id;
               const rawPhone = (ord.customer_phone || "").replace(/\D/g, "");
@@ -283,8 +294,8 @@ export default function AdminOrdersPage() {
                     <span>{ord.items?.length || 0} {ord.items?.length === 1 ? "item" : "itens"}</span>
                   </div>
                   <div className="mt-2">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold border ${getPaymentBadge(ord.payment_status).bg}`}>
-                      {getPaymentBadge(ord.payment_status).label}
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold border ${getPaymentBadge(ord.payment_status, ord.payment_reported_at).bg}`}>
+                      {getPaymentBadge(ord.payment_status, ord.payment_reported_at).label}
                     </span>
                   </div>
                 </div>
@@ -374,8 +385,8 @@ export default function AdminOrdersPage() {
                       {selectedOrder.payment_plan === "full" ? "100% no pedido" : "50% no pedido + 50% na entrega"}
                     </div>
                   </div>
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${getPaymentBadge(selectedOrder.payment_status).bg}`}>
-                    {getPaymentBadge(selectedOrder.payment_status).label}
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${getPaymentBadge(selectedOrder.payment_status, selectedOrder.payment_reported_at).bg}`}>
+                    {getPaymentBadge(selectedOrder.payment_status, selectedOrder.payment_reported_at).label}
                   </span>
                 </div>
 
@@ -393,6 +404,37 @@ export default function AdminOrdersPage() {
                     <div className="text-xs font-black text-[#DF5F45]">{formatCurrency(selectedOrder.balance_due ?? selectedOrder.total)}</div>
                   </div>
                 </div>
+
+                {selectedOrder.payment_status === "pending" && selectedOrder.payment_reported_at && (
+                  <div className="p-3 rounded-xl bg-[#FFF0CC] border border-[#F3D083] space-y-2">
+                    <div className="text-[10px] uppercase font-black tracking-wider text-[#9A5A00]">
+                      Cliente informou que fez o Pix
+                    </div>
+                    <div className="text-[11px] text-[#7A5A22]">
+                      Aviso recebido em {new Date(selectedOrder.payment_reported_at).toLocaleString("pt-BR")}
+                      {selectedOrder.payment_reported_amount != null
+                        ? ` · valor informado pelo sistema: ${formatCurrency(selectedOrder.payment_reported_amount)}`
+                        : ""}.
+                    </div>
+                    <div className="text-[10px] text-[#8C6D1F]">
+                      Confira a entrada no Nubank antes de confirmar.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handlePaymentStatusChange(
+                          selectedOrder.id,
+                          selectedOrder.payment_plan === "full" ? "paid" : "partially_paid"
+                        )
+                      }
+                      className="w-full py-2.5 rounded-xl bg-[#1FAA52] hover:bg-[#198B43] text-white text-[10px] font-black uppercase tracking-wide transition"
+                    >
+                      {selectedOrder.payment_plan === "full"
+                        ? "CONFIRMEI R$ NO NUBANK — MARCAR COMO PAGO"
+                        : "CONFIRMEI R$ NO NUBANK — MARCAR ENTRADA PAGA"}
+                    </button>
+                  </div>
+                )}
 
                 <select
                   value={selectedOrder.payment_status || "pending"}
