@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, Calendar, ClipboardList, User } from "lucide-react";
+import { CustomerAvatar } from "@/components/public/CustomerAvatar";
 
 export const BottomNav: React.FC = () => {
   const pathname = usePathname();
@@ -56,7 +57,11 @@ export const BottomNav: React.FC = () => {
                   : "text-[#8C7367] hover:text-[#3C1F15] font-semibold"
               }`}
             >
-              <Icon size={20} strokeWidth={isActive ? 2.3 : 1.8} />
+              {item.label === "PERFIL" ? (
+                <CustomerAvatar size="sm" className={isActive ? "text-[#E05A36]" : "text-[#8C7367]"} />
+              ) : (
+                <Icon size={20} strokeWidth={isActive ? 2.3 : 1.8} />
+              )}
               <span className="text-[10px] tracking-wider uppercase leading-none font-bold">
                 {item.label}
               </span>
