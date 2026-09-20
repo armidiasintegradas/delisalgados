@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyAdminSession } from "@/lib/auth/adminAuth";
 import { supabaseServer, isServerSupabaseConfigured } from "@/lib/supabase/server";
+import { DbService } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -84,6 +85,71 @@ export async function POST(request: Request) {
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.message || "Falha ao enviar a imagem." },
+      { status: 500 }
+    );
+  }
+}
+
+
+export async function DELETE(request: Request) {
+  const auth = await verifyAdminSession(request);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { error: auth.error || "Acesso restrito." },
+      { status: auth.status }
+    );
+  }
+
+  if (!isServerSupabaseConfigured || !supabaseServer) {
+    return NextResponse.json(
+      { error: "Supabase Storage não configurado." },
+      { status: 503 }
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const productId = String(body.productId || "").trim();
+    const imageUrl = String(body.imageUrl || "").trim();
+
+    if (!productId) {
+      return NextResponse.json({ error: "Produto não informado." }, { status: 400 });
+    }
+
+    // Remove the stored file when the URL points to our product-images bucket.
+    if (imageUrl) {
+      try {
+        const marker = "/storage/v1/object/public/product-images/";
+        const markerIndex = imageUrl.indexOf(marker);
+        if (markerIndex >= 0) {
+          const encodedPath = imageUrl.slice(markerIndex + marker.length).split("?")[0];
+          const storagePath = decodeURIComponent(encodedPath);
+          if (storagePath) {
+            const { error: removeError } = await supabaseServer.storage
+              .from("product-images")
+              .remove([storagePath]);
+
+            if (removeError) {
+              console.warn("Product image storage cleanup failed:", removeError.message);
+            }
+          }
+        }
+      } catch (storageError) {
+        console.warn("Product image storage cleanup notice:", storageError);
+      }
+    }
+
+    // Always remove the product/image association, even if storage cleanup is not applicable.
+    const updated = await DbService.updateProduct(productId, { image_url: null });
+
+    return NextResponse.json({
+      success: true,
+      product: updated,
+      message: "Imagem removida do produto.",
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error?.message || "Falha ao remover a imagem." },
       { status: 500 }
     );
   }
