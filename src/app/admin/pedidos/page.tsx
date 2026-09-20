@@ -265,11 +265,11 @@ export default function AdminOrdersPage() {
 
       {/* Main Content Area: Split View */}
       {loading ? (
-        <div className="p-12 text-center text-xs text-[#7A6357] font-semibold bg-white rounded-3xl border border-[#F0E2D2]">
+        <div className="deli-surface p-12 text-center text-xs text-[#7A6357] font-semibold rounded-3xl border">
           Carregando pedidos do sistema...
         </div>
       ) : prioritizedOrders.length === 0 ? (
-        <div className="p-12 text-center space-y-2 bg-white rounded-3xl border border-[#F0E2D2]">
+        <div className="deli-surface p-12 text-center space-y-2 rounded-3xl border">
           <div className="w-12 h-12 rounded-full bg-[#FFF4E8] text-[#DF5F45] flex items-center justify-center mx-auto">
             <FileText size={22} />
           </div>
@@ -337,7 +337,7 @@ export default function AdminOrdersPage() {
 
           {/* Order Detail (7 cols) */}
           {selectedOrder && (
-            <div className="lg:col-span-7 bg-white rounded-3xl p-5 border border-[#F0E2D2] shadow-sm space-y-4">
+            <div className="deli-surface lg:col-span-7 rounded-3xl p-5 border space-y-4">
               <div className="flex items-center justify-between border-b border-[#F4E8DB] pb-3">
                 <div>
                   <div className="flex items-center gap-2">
@@ -363,7 +363,7 @@ export default function AdminOrdersPage() {
               </div>
 
               {/* Customer Info Card */}
-              <div className="p-3.5 rounded-2xl bg-[#FFFBF7] border border-[#F4E8DB] space-y-1.5 text-xs text-[#3C1F15]">
+              <div className="deli-surface-soft p-3.5 rounded-2xl border space-y-1.5 text-xs text-[#3C1F15]">
                 <div className="flex justify-between">
                   <span className="text-[#7A6357]">Cliente:</span>
                   <span className="font-bold">{selectedOrder.customer_name}</span>
@@ -409,7 +409,7 @@ export default function AdminOrdersPage() {
               </div>
 
               {/* Payment */}
-              <div className="p-4 rounded-2xl bg-[#FFF8EE] border border-[#F0D5BE] space-y-3">
+              <div className="deli-surface p-4 rounded-2xl border space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] uppercase font-black tracking-wider text-[#8C7367]">Pagamento</div>
@@ -423,15 +423,15 @@ export default function AdminOrdersPage() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="p-2 rounded-xl bg-white border border-[#F0E2D2]">
+                  <div className="deli-surface-soft p-2 rounded-xl border">
                     <div className="text-[9px] uppercase font-bold text-[#9E8679]">Total</div>
                     <div className="text-xs font-black">{formatCurrency(selectedOrder.total)}</div>
                   </div>
-                  <div className="p-2 rounded-xl bg-white border border-[#F0E2D2]">
+                  <div className="deli-surface-soft p-2 rounded-xl border">
                     <div className="text-[9px] uppercase font-bold text-[#9E8679]">Pago</div>
                     <div className="text-xs font-black text-[#1FAA52]">{formatCurrency(selectedOrder.amount_paid || 0)}</div>
                   </div>
-                  <div className="p-2 rounded-xl bg-white border border-[#F0E2D2]">
+                  <div className="deli-surface-soft p-2 rounded-xl border">
                     <div className="text-[9px] uppercase font-bold text-[#9E8679]">Saldo</div>
                     <div className="text-xs font-black text-[#DF5F45]">{formatCurrency(selectedOrder.balance_due ?? selectedOrder.total)}</div>
                   </div>
@@ -471,7 +471,7 @@ export default function AdminOrdersPage() {
                 <select
                   value={selectedOrder.payment_status || "pending"}
                   onChange={(e) => handlePaymentStatusChange(selectedOrder.id, e.target.value as PaymentStatus)}
-                  className="w-full bg-white border border-[#EBDCCF] rounded-xl px-3 py-2 text-xs font-bold text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
+                  className="deli-field w-full border rounded-xl px-3 py-2 text-xs font-bold text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
                 >
                   <option value="pending">Aguardando pagamento</option>
                   <option value="partially_paid">Entrada paga</option>
@@ -518,7 +518,7 @@ export default function AdminOrdersPage() {
                 <select
                   value={selectedOrder.status}
                   onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value as OrderStatus)}
-                  className="bg-[#FFF8EE] border border-[#EBDCCF] rounded-xl px-3 py-2 text-xs font-bold text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
+                  className="deli-field border rounded-xl px-3 py-2 text-xs font-bold text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
                 >
                   <option value="generated">Solicitação gerada</option>
                   <option value="contacted">Cliente contatado</option>
@@ -552,7 +552,7 @@ export default function AdminOrdersPage() {
 
                 <div className="divide-y divide-[#F7EFE6] border border-[#F0E2D2] rounded-2xl overflow-hidden">
                   {(selectedOrder.items || []).map((it, idx) => (
-                    <div key={it.id || idx} className="p-3 bg-white flex justify-between items-center text-xs">
+                    <div key={it.id || idx} className="deli-surface-soft p-3 flex justify-between items-center text-xs">
                       <div>
                         <div className="font-bold text-[#3C1F15]">
                           {it.product_name_snapshot}
@@ -572,7 +572,7 @@ export default function AdminOrdersPage() {
                     </div>
                   ))}
 
-                  <div className="p-3 bg-[#FFFBF7] flex justify-between items-center text-sm font-black border-t border-[#F0E2D2]">
+                  <div className="deli-surface-soft p-3 flex justify-between items-center text-sm font-black border-t border-[#F0E2D2]">
                     <span>Total Estimado</span>
                     <span className="text-base text-[#DF5F45]">
                       {formatCurrency(selectedOrder.total)}
