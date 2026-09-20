@@ -42,6 +42,13 @@ export async function GET() {
         full_name: "",
         whatsapp: "",
         address: "",
+        postal_code: "",
+        street: "",
+        address_number: "",
+        complement: "",
+        neighborhood: "",
+        city: "",
+        state: "",
         reference_point: "",
         avatar_url: null,
       },
@@ -54,6 +61,13 @@ export async function GET() {
     full_name: latestOrder.customer_name || "",
     whatsapp: latestOrder.customer_phone || "",
     address: latestOrder.delivery_address || "",
+    postal_code: "",
+    street: "",
+    address_number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
     reference_point: latestOrder.customer_reference_point || "",
     avatar_url: null,
     updated_at: new Date().toISOString(),
@@ -82,12 +96,30 @@ export async function PUT(request: Request) {
     full_name: String(body.full_name || "").trim(),
     whatsapp: String(body.whatsapp || "").trim(),
     address: String(body.address || "").trim(),
+    postal_code: String(body.postal_code || "").replace(/\D/g, "").trim() || null,
+    street: String(body.street || "").trim() || null,
+    address_number: String(body.address_number || "").trim() || null,
+    complement: String(body.complement || "").trim() || null,
+    neighborhood: String(body.neighborhood || "").trim() || null,
+    city: String(body.city || "").trim() || null,
+    state: String(body.state || "").trim().toUpperCase() || null,
     reference_point: String(body.reference_point || "").trim(),
     avatar_url: body.avatar_url ? String(body.avatar_url).trim() : null,
     updated_at: new Date().toISOString(),
   };
 
-  if (!profile.full_name || !profile.whatsapp || !profile.address || !profile.reference_point) {
+  if (
+    !profile.full_name ||
+    !profile.whatsapp ||
+    !profile.address ||
+    !profile.reference_point ||
+    !profile.postal_code ||
+    !profile.street ||
+    !profile.address_number ||
+    !profile.neighborhood ||
+    !profile.city ||
+    !profile.state
+  ) {
     return NextResponse.json({ error: "Preencha todos os dados obrigatórios." }, { status: 400 });
   }
 
