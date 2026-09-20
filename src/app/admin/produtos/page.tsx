@@ -16,18 +16,15 @@ import {
   X,
   Check,
   MoreVertical,
-  ChevronLeft,
-  ChevronRight,
   UtensilsCrossed,
 } from "lucide-react";
 import { Product, Category, Availability } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
-import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from "@/lib/db/seedData";
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
-  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -39,17 +36,25 @@ export default function AdminProductsPage() {
   const [isSavingPrices, setIsSavingPrices] = useState(false);
 
   async function loadData() {
+    setLoading(true);
     try {
       const [pRes, cRes] = await Promise.all([
-        fetch("/api/admin/products"),
-        fetch("/api/admin/categories"),
+        fetch("/api/admin/products", { cache: "no-store" }),
+        fetch("/api/admin/categories", { cache: "no-store" }),
       ]);
+
+      if (!pRes.ok || !cRes.ok) {
+        throw new Error("Não foi possível sincronizar produtos e categorias.");
+      }
+
       const pData = await pRes.json();
       const cData = await cRes.json();
-      if (pData.products) setProducts(pData.products);
-      if (cData.categories) setCategories(cData.categories);
+
+      setProducts(Array.isArray(pData.products) ? pData.products : []);
+      setCategories(Array.isArray(cData.categories) ? cData.categories : []);
     } catch (e) {
       console.error("Error loading products:", e);
+      showNotification("Não foi possível atualizar a lista de produtos.");
     } finally {
       setLoading(false);
     }
@@ -154,31 +159,68 @@ export default function AdminProductsPage() {
     }
   };
 
-  // Filter products
+  const normalizeText = (value: unknown) =>
+    String(value ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+  // One source of truth for mobile and desktop filters.
   const filteredProducts = products.filter((p) => {
     if (selectedCategory !== "all" && p.category_id !== selectedCategory) {
       return false;
     }
+
     if (statusFilter === "available" && p.availability !== "available") return false;
     if (statusFilter === "unavailable" && p.availability !== "unavailable") return false;
     if (statusFilter === "hidden" && p.is_visible) return false;
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      return p.name.toLowerCase().includes(q) || (p.description || "").toLowerCase().includes(q);
-    }
-    return true;
+    const q = normalizeText(searchQuery);
+    if (!q) return true;
+
+    const categoryName = categories.find((category) => category.id === p.category_id)?.name || "";
+    const variantsText = (p.variants || [])
+      .map((variant) => `${variant.name} ${variant.unit_label || ""} ${variant.preparation_type || ""}`)
+      .join(" ");
+
+    const searchable = normalizeText(
+      [
+        p.name,
+        p.slug,
+        p.id,
+        p.description,
+        p.note,
+        p.unit_label,
+        p.preparation_type,
+        categoryName,
+        variantsText,
+      ].join(" ")
+    );
+
+    return searchable.includes(q);
   });
 
-  const availableCount = products.filter((p) => p.availability === "available" && p.is_visible).length;
+  const availableCount = products.filter((p) => p.availability === "available").length;
   const unavailableCount = products.filter((p) => p.availability === "unavailable").length;
+  const hiddenCount = products.filter((p) => !p.is_visible).length;
   const variantsCount = products.filter((p) => p.price_type === "variants").length;
 
   const mobileOrder = ["coxinha-frango", "empada-camarao", "mini-burguer", "torta-frango"];
-  const mobileProducts = [
-    ...products.filter((p) => mobileOrder.includes(p.slug)).sort((a, b) => mobileOrder.indexOf(a.slug) - mobileOrder.indexOf(b.slug)),
-    ...products.filter((p) => !mobileOrder.includes(p.slug)),
-  ].slice(0, 8);
+  const mobileProducts = [...filteredProducts].sort((a, b) => {
+    const ai = mobileOrder.indexOf(a.slug);
+    const bi = mobileOrder.indexOf(b.slug);
+    if (ai >= 0 && bi >= 0) return ai - bi;
+    if (ai >= 0) return -1;
+    if (bi >= 0) return 1;
+    return a.name.localeCompare(b.name, "pt-BR");
+  });
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setStatusFilter("all");
+  };
 
   return (
     <div className="space-y-4 w-full overflow-x-hidden">
@@ -271,6 +313,61 @@ export default function AdminProductsPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-[#DF5F45]"></span>
             <span>Indisponíveis ({unavailableCount})</span>
           </button>
+          <button
+            onClick={() => setStatusFilter("hidden")}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
+              statusFilter === "hidden"
+                ? "bg-[#3C1F15] text-white shadow-2xs"
+                : "bg-white border border-[#E8D9CB] text-[#3C1F15]"
+            }`}
+          >
+            <EyeOff size={12} />
+            <span>Ocultos ({hiddenCount})</span>
+          </button>
+        </div>
+
+        {/* Mobile category filters */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <button
+            onClick={() => setSelectedCategory("all")}
+            className={`px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap ${
+              selectedCategory === "all"
+                ? "bg-[#DF5F45] text-white"
+                : "bg-white border border-[#E8D9CB] text-[#7A6357]"
+            }`}
+          >
+            Todas as categorias
+          </button>
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setSelectedCategory(category.id)}
+              className={`px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap ${
+                selectedCategory === category.id
+                  ? "bg-[#DF5F45] text-white"
+                  : "bg-white border border-[#E8D9CB] text-[#7A6357]"
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between gap-3 text-[10px] text-[#7A6357]">
+          <span>
+            {loading
+              ? "Atualizando produtos..."
+              : `${filteredProducts.length} resultado${filteredProducts.length === 1 ? "" : "s"} de ${products.length} produtos`}
+          </span>
+          {(searchQuery || selectedCategory !== "all" || statusFilter !== "all") && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="font-black text-[#DF5F45]"
+            >
+              LIMPAR FILTROS
+            </button>
+          )}
         </div>
 
         {/* Operational Notice Banner */}
@@ -290,6 +387,16 @@ export default function AdminProductsPage() {
         </div>
 
         {/* Mobile Product Cards */}
+        {loading ? (
+          <div className="py-10 text-center text-xs text-[#8C7367]">Carregando todos os produtos...</div>
+        ) : mobileProducts.length === 0 ? (
+          <div className="py-10 px-4 rounded-2xl bg-white border border-[#F0E2D2] text-center space-y-2">
+            <div className="text-xs font-bold text-[#3C1F15]">Nenhum produto encontrado</div>
+            <button type="button" onClick={clearFilters} className="text-[10px] font-black text-[#DF5F45]">
+              LIMPAR FILTROS
+            </button>
+          </div>
+        ) : (
         <div className="space-y-3 pt-1">
           {mobileProducts.map((p, idx) => {
             const cat = categories.find((c) => c.id === p.category_id);
@@ -397,6 +504,7 @@ export default function AdminProductsPage() {
             );
           })}
         </div>
+        )}
       </div>
 
       {/* DESKTOP VIEW (hidden md:block) — Matches Stitch Screen 09 */}
@@ -472,10 +580,10 @@ export default function AdminProductsPage() {
 
             <div className="flex items-center gap-1.5 shrink-0">
               {[
-                { id: "all", label: `Todos (${products.length || 41})` },
-                { id: "available", label: `Disponíveis (${availableCount || 39})` },
-                { id: "unavailable", label: `Indisponíveis (${unavailableCount || 2})` },
-                { id: "hidden", label: `Ocultos (0)` },
+                { id: "all", label: `Todos (${products.length})` },
+                { id: "available", label: `Disponíveis (${availableCount})` },
+                { id: "unavailable", label: `Indisponíveis (${unavailableCount})` },
+                { id: "hidden", label: `Ocultos (${hiddenCount})` },
               ].map((st) => (
                 <button
                   key={st.id}
@@ -553,13 +661,7 @@ export default function AdminProductsPage() {
                     const isVariants = p.price_type === "variants";
                     const isUnavailable = p.availability === "unavailable";
 
-                    // Map thumbnail image
-                    let thumb = "/products/coxinha.jpg";
-                    if (p.slug.includes("risole")) thumb = "/products/risoles.jpg";
-                    else if (p.slug.includes("queijo")) thumb = "/products/bolinho-queijo.jpg";
-                    else if (p.slug.includes("camarao")) thumb = "/products/camarao.jpg";
-                    else if (p.slug.includes("empada")) thumb = "/products/empada-frango.jpg";
-                    else if (p.slug.includes("torta")) thumb = "/products/torta-frango.jpg";
+                    const thumb = p.image_url || null;
 
                     return (
                       <tr key={p.id} className="hover:bg-[#FFFDF9] transition">
@@ -569,14 +671,18 @@ export default function AdminProductsPage() {
 
                         <td className="py-2.5 px-3">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] overflow-hidden shrink-0 relative">
-                              <Image
-                                src={thumb}
-                                alt={p.name}
-                                fill
-                                className="object-cover"
-                                unoptimized
-                              />
+                            <div className="w-9 h-9 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] overflow-hidden shrink-0 relative flex items-center justify-center">
+                              {thumb ? (
+                                <Image
+                                  src={thumb}
+                                  alt={p.name}
+                                  fill
+                                  className="object-cover"
+                                  unoptimized
+                                />
+                              ) : (
+                                <UtensilsCrossed size={14} className="text-[#C9AFA1]" />
+                              )}
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
@@ -654,10 +760,12 @@ export default function AdminProductsPage() {
                         <td className="py-2.5 px-3">
                           <button
                             onClick={() => handleToggleVisibility(p.id, p.is_visible)}
-                            className="text-[11px] font-semibold text-[#1FAA52] flex items-center gap-1 hover:underline"
+                            className={`text-[11px] font-semibold flex items-center gap-1 hover:underline ${
+                              p.is_visible ? "text-[#1FAA52]" : "text-[#9E8679]"
+                            }`}
                           >
-                            <Eye size={13} />
-                            <span>No ar</span>
+                            {p.is_visible ? <Eye size={13} /> : <EyeOff size={13} />}
+                            <span>{p.is_visible ? "No ar" : "Oculto"}</span>
                           </button>
                         </td>
 
@@ -686,42 +794,21 @@ export default function AdminProductsPage() {
               </table>
             </div>
 
-            {/* Table Footer & Pagination */}
+            {/* Table Footer */}
             <div className="bg-[#FFF8EE] px-4 py-2.5 border-t border-[#F0E2D2] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#7A6357]">
-              <div className="flex items-center gap-2 text-[11px]">
-                <span>Exibindo {Math.min(filteredProducts.length, 8)} de {products.length || 41} produtos</span>
-                <span>•</span>
-                <span>Itens por página:</span>
-                <select className="bg-white border border-[#EBDCCF] rounded-lg px-2 py-0.5 text-[11px] font-bold text-[#3C1F15]">
-                  <option>8</option>
-                  <option>20</option>
-                  <option>50</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-1 self-end sm:self-auto">
-                <button className="w-6 h-6 rounded-lg bg-white border border-[#EBDCCF] flex items-center justify-center text-[#7A6357] hover:bg-[#FAF3E8]">
-                  <ChevronLeft size={13} />
+              <span className="text-[11px]">
+                Exibindo <strong className="text-[#3C1F15]">{filteredProducts.length}</strong> de{" "}
+                <strong className="text-[#3C1F15]">{products.length}</strong> produtos cadastrados
+              </span>
+              {(searchQuery || selectedCategory !== "all" || statusFilter !== "all") && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="self-start sm:self-auto px-3 py-1 rounded-lg bg-white border border-[#EBDCCF] text-[10px] font-black text-[#DF5F45]"
+                >
+                  LIMPAR FILTROS
                 </button>
-                <button className="w-6 h-6 rounded-lg bg-[#DF5F45] text-white text-xs font-bold flex items-center justify-center shadow-2xs">
-                  1
-                </button>
-                <button className="w-6 h-6 rounded-lg bg-white border border-[#EBDCCF] text-xs font-bold text-[#7A6357] hover:bg-[#FAF3E8] flex items-center justify-center">
-                  2
-                </button>
-                <button className="w-6 h-6 rounded-lg bg-white border border-[#EBDCCF] text-xs font-bold text-[#7A6357] hover:bg-[#FAF3E8] flex items-center justify-center">
-                  3
-                </button>
-                <button className="w-6 h-6 rounded-lg bg-white border border-[#EBDCCF] text-xs font-bold text-[#7A6357] hover:bg-[#FAF3E8] flex items-center justify-center">
-                  4
-                </button>
-                <button className="w-6 h-6 rounded-lg bg-white border border-[#EBDCCF] text-xs font-bold text-[#7A6357] hover:bg-[#FAF3E8] flex items-center justify-center">
-                  5
-                </button>
-                <button className="w-6 h-6 rounded-lg bg-white border border-[#EBDCCF] flex items-center justify-center text-[#7A6357] hover:bg-[#FAF3E8]">
-                  <ChevronRight size={13} />
-                </button>
-              </div>
+              )}
             </div>
           </>
         )}
