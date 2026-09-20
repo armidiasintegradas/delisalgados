@@ -58,14 +58,14 @@ export default function CartPage() {
       <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto p-4 lg:p-8 flex-1 flex flex-col landscape-full-width">
         {!isInitialized ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="w-full lg:max-w-[720px] bg-[#FFFDF6] rounded-3xl border border-[#EAD8C7] p-8 text-center shadow-sm">
+            <div className="w-full lg:max-w-[720px] deli-surface rounded-3xl border p-8 text-center shadow-sm">
               <div className="w-8 h-8 border-3 border-[#DF5F45] border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-xs font-bold text-[#7A6357] mt-3">Carregando seu pedido...</p>
             </div>
           </div>
         ) : items.length === 0 ? (
           <div className="flex-1 flex items-center justify-center py-10 lg:py-16">
-            <div className="w-full lg:max-w-[760px] bg-[#FFFDF6] lg:rounded-3xl lg:border lg:border-[#EAD8C7] lg:shadow-sm p-6 lg:p-10 flex flex-col items-center justify-center text-center">
+            <div className="w-full lg:max-w-[760px] deli-surface lg:rounded-3xl lg:border p-6 lg:p-10 flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 rounded-full bg-[#FFF4E8] text-[#E05A36] flex items-center justify-center mb-4 shadow-inner">
               <ShoppingBag size={28} />
             </div>
@@ -88,7 +88,7 @@ export default function CartPage() {
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-[#FFFDF6] rounded-[18px] lg:rounded-2xl p-4 border border-[#EAD8C7] shadow-xs flex flex-col gap-2.5"
+                  className="deli-surface rounded-[18px] lg:rounded-2xl p-4 border flex flex-col gap-2.5"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -106,7 +106,7 @@ export default function CartPage() {
                         {formatCurrency(item.unitPrice)} / {item.unitLabel}
                       </div>
                       {item.note && (
-                        <p className="text-[11px] text-[#8C7367] italic mt-1 bg-[#FFF9E6] p-1.5 rounded-lg border border-[#F0E2D4]">
+                        <p className="text-[11px] text-[#8C7367] italic mt-1 deli-surface-soft p-1.5 rounded-lg border border-[#F0E2D4]">
                           Obs: {item.note}
                         </p>
                       )}
@@ -124,7 +124,7 @@ export default function CartPage() {
                   {/* Quantity & Subtotal Row */}
                   <div className="flex items-center justify-between pt-1">
                     {/* Controls */}
-                    <div className="flex items-center gap-2 bg-[#FFF4D9] px-2.5 py-1 rounded-2xl border border-[#E8D9CB]">
+                    <div className="flex items-center gap-2 deli-surface-soft px-2.5 py-1 rounded-2xl border border-[#E8D9CB]">
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, -1)}
@@ -160,7 +160,7 @@ export default function CartPage() {
             </div>
 
             {/* Right: Sticky Summary Card on Desktop */}
-            <div className="bg-[#FFFDF6] rounded-[18px] lg:rounded-3xl p-5 border border-[#EAD8C7] shadow-xs space-y-4 lg:sticky lg:top-24">
+            <div className="deli-surface rounded-[18px] lg:rounded-3xl p-5 border space-y-4 lg:sticky lg:top-24">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-[#3C1F15]">
                   Resumo do Pedido
@@ -214,7 +214,7 @@ export default function CartPage() {
 
                 <Link
                   href="/"
-                  className="w-full py-3 rounded-2xl bg-white hover:bg-[#FFF9E6] border border-[#EAD8C7] text-[#3C1F15] text-xs font-bold text-center block uppercase transition"
+                  className="w-full py-3 rounded-2xl bg-white hover:deli-surface-soft border border-[#EAD8C7] text-[#3C1F15] text-xs font-bold text-center block uppercase transition"
                 >
                   + Adicionar mais itens
                 </Link>
