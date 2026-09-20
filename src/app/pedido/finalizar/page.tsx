@@ -151,43 +151,54 @@ export default function CheckoutPage() {
     }
   };
 
+  const showCheckoutError = (message: string, targetId?: string) => {
+    setErrorMessage(message);
+    window.setTimeout(() => {
+      const target = targetId ? document.getElementById(targetId) : document.getElementById("checkout-error");
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const focusable = target?.querySelector("input, textarea, button") as HTMLElement | null;
+      focusable?.focus?.();
+    }, 50);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
     if (hasUnitBasedItems && qualifyingUnitTotal < MIN_ORDER_UNITS) {
-      setErrorMessage(
-        `O pedido mínimo é de ${MIN_ORDER_UNITS} unidades. Seu pedido possui ${qualifyingUnitTotal} unidades.`
+      showCheckoutError(
+        `O pedido mínimo é de ${MIN_ORDER_UNITS} unidades. Seu pedido possui ${qualifyingUnitTotal} unidades.`,
+        "checkout-summary"
       );
       return;
     }
 
     if (!customerData.customerName.trim()) {
-      setErrorMessage("Por favor, informe seu nome completo.");
+      showCheckoutError("Por favor, informe seu nome completo.", "checkout-name");
       return;
     }
     if (!customerData.customerPhone.trim()) {
-      setErrorMessage("Por favor, informe seu número de WhatsApp.");
+      showCheckoutError("Por favor, informe seu número de WhatsApp.", "checkout-phone");
       return;
     }
     if (!customerData.customerEmail.trim()) {
-      setErrorMessage("Por favor, informe seu e-mail.");
+      showCheckoutError("Por favor, informe seu e-mail.", "checkout-email");
       return;
     }
     if (!/^\S+@\S+\.\S+$/.test(customerData.customerEmail.trim())) {
-      setErrorMessage("Informe um e-mail válido.");
+      showCheckoutError("Informe um e-mail válido.", "checkout-email");
       return;
     }
     if (!customerData.deliveryAddress.trim()) {
-      setErrorMessage("Por favor, informe seu endereço completo.");
+      showCheckoutError("Por favor, informe seu endereço completo.", "checkout-address");
       return;
     }
     if (!customerData.referencePoint.trim()) {
-      setErrorMessage("Por favor, informe um ponto de referência.");
+      showCheckoutError("Por favor, informe um ponto de referência.", "checkout-reference");
       return;
     }
     if (!customerData.desiredDate.trim()) {
-      setErrorMessage("Por favor, selecione a data desejada.");
+      showCheckoutError("Por favor, selecione a data desejada.", "checkout-date");
       return;
     }
     setIsSubmitting(true);
@@ -216,6 +227,12 @@ export default function CheckoutPage() {
           setLoginEmail(customerData.customerEmail.trim().toLowerCase());
           setLoginMessage("Você já é cliente Deli. Entre com seu e-mail e senha para avançar.");
           setIsSubmitting(false);
+          window.setTimeout(() => {
+            document.getElementById("existing-customer-login")?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }, 50);
           return;
         }
         throw new Error(data.error || "Não foi possível registrar seu pedido agora. Seus itens continuam no carrinho. Tente novamente em instantes.");
@@ -250,7 +267,9 @@ export default function CheckoutPage() {
       const tokenParam = data.handoffToken ? `&t=${encodeURIComponent(data.handoffToken)}` : "";
       router.push(`/pedido/pagamento?code=${encodeURIComponent(data.order.public_code)}${tokenParam}`);
     } catch (err: any) {
-      setErrorMessage(err.message || "Não foi possível registrar seu pedido agora. Seus itens continuam no carrinho. Tente novamente em instantes.");
+      showCheckoutError(
+        err.message || "Não foi possível registrar seu pedido agora. Seus itens continuam no carrinho. Tente novamente em instantes."
+      );
       setIsSubmitting(false);
     }
   };
@@ -286,12 +305,13 @@ export default function CheckoutPage() {
 
       {/* Form Content */}
       <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-3 py-4 sm:px-4 lg:p-8 flex-1 flex flex-col overflow-x-hidden">
-        <form onSubmit={handleSubmit} className="w-full min-w-0 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between">
+        <form noValidate onSubmit={handleSubmit} className="w-full min-w-0 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between">
           {/* Left Column: Form Fields */}
           <div className="w-full min-w-0 space-y-3.5 bg-[#FFFDF6] lg:p-6 lg:rounded-3xl lg:border lg:border-[#EAD8C7] lg:shadow-xs">
             {/* Mobile Order Summary Mini Card */}
             <Link
               href="/pedido"
+              id="checkout-summary"
               className="lg:hidden bg-[#FFFDF6] rounded-[18px] p-3.5 border border-[#EAD8C7] shadow-xs flex items-center justify-between hover:bg-[#FFF9E6] transition"
             >
               <div className="flex items-center gap-2.5">
@@ -313,7 +333,7 @@ export default function CheckoutPage() {
             </Link>
 
             {!isAuthenticated ? (
-              <div className="rounded-2xl border border-[#F0D5BE] bg-[#FFF4E8] p-4 space-y-3">
+              <div id="existing-customer-login" className="rounded-2xl border border-[#F0D5BE] bg-[#FFF4E8] p-4 space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-white border border-[#F0D5BE] flex items-center justify-center text-[#E05A36] shrink-0">
                     <LogIn size={17} />
@@ -421,7 +441,7 @@ export default function CheckoutPage() {
             )}
 
             {errorMessage && (
-              <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-2xl flex flex-col gap-2.5 shadow-sm">
+              <div id="checkout-error" className="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-2xl flex flex-col gap-2.5 shadow-sm">
                 <div className="flex items-start gap-2.5">
                   <AlertCircle size={18} className="shrink-0 text-rose-600 mt-0.5" />
                   <div className="flex-1">
@@ -446,6 +466,7 @@ export default function CheckoutPage() {
                 NOME COMPLETO *
               </label>
               <input
+                id="checkout-name"
                 type="text"
                 required
                 value={customerData.customerName}
@@ -465,6 +486,7 @@ export default function CheckoutPage() {
                   DATA DA ENTREGA *
                 </label>
                 <input
+                  id="checkout-date"
                   type="date"
                   required
                   min={todayDate}
@@ -482,6 +504,7 @@ export default function CheckoutPage() {
                   WhatsApp para contato *
                 </label>
                 <input
+                  id="checkout-phone"
                   type="tel"
                   required
                   value={customerData.customerPhone}
@@ -501,6 +524,7 @@ export default function CheckoutPage() {
               <div className="relative">
                 <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A89688]" />
                 <input
+                  id="checkout-email"
                   type="email"
                   required
                   readOnly={isAuthenticated}
@@ -608,6 +632,7 @@ export default function CheckoutPage() {
                   SEU ENDEREÇO COMPLETO *
                 </label>
                 <textarea
+                  id="checkout-address"
                   required
                   rows={2}
                   value={customerData.deliveryAddress}
@@ -627,6 +652,7 @@ export default function CheckoutPage() {
                   PONTO DE REFERÊNCIA *
                 </label>
                 <input
+                  id="checkout-reference"
                   type="text"
                   required
                   value={customerData.referencePoint}
