@@ -36,6 +36,14 @@ export function generateWhatsAppMessage(order: Order, settings: Settings): strin
     lines.push(`💬 *Obs. Geral:* ${order.customer_note}`);
   }
 
+  if (order.fulfillment_type === "delivery") {
+    lines.push("");
+    lines.push("🚚 *ENTREGA:*");
+    lines.push("• A taxa de entrega NÃO está incluída no valor do pedido.");
+    lines.push("• A Deli fará uma estimativa para este endereço e enviará o valor pelo WhatsApp.");
+    lines.push("• A entrega só será contratada após a aprovação do cliente.");
+  }
+
   lines.push("");
   lines.push("🛒 *ITENS DO PEDIDO:*");
 
@@ -52,11 +60,14 @@ export function generateWhatsAppMessage(order: Order, settings: Settings): strin
   if (order.payment_plan === "full") {
     lines.push(`✅ *Forma escolhida:* pagamento integral no ato`);
     lines.push(`💳 *Valor a pagar agora:* ${formatCurrency(order.amount_due_now ?? order.total)}`);
-    lines.push(`📦 *Saldo na entrega:* ${formatCurrency(order.balance_due ?? 0)}`);
+    lines.push(`📦 *Saldo dos produtos na entrega:* ${formatCurrency(order.balance_due ?? 0)}`);
   } else {
     lines.push(`✅ *Forma escolhida:* entrada obrigatória de 50%`);
     lines.push(`💳 *Entrada a pagar agora:* ${formatCurrency(order.amount_due_now ?? Number((order.total * 0.5).toFixed(2)))}`);
-    lines.push(`📦 *Saldo na entrega:* ${formatCurrency(order.balance_due ?? Number((order.total * 0.5).toFixed(2)))}`);
+    lines.push(`📦 *Saldo dos produtos na entrega:* ${formatCurrency(order.balance_due ?? Number((order.total * 0.5).toFixed(2)))}`);
+  }
+  if (order.fulfillment_type === "delivery") {
+    lines.push("🚚 *Taxa de entrega:* a combinar separadamente pelo WhatsApp");
   }
   lines.push("");
   lines.push(settings.whatsapp_closing_message || "Aguardo confirmação da disponibilidade e do pagamento. Obrigado!");
