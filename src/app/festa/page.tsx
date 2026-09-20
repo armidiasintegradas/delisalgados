@@ -21,6 +21,7 @@ import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { Product, Settings } from "@/types";
 import { useCart } from "@/lib/cartContext";
 import { buildWhatsAppLink, formatCurrency, getFirstName } from "@/lib/formatters";
+import { PublicFooter } from "@/components/public/PublicFooter";
 
 type PartyMode = "cocktail" | "party" | "meal";
 type ComboMode = "balanced" | "best_sellers" | "economy";
@@ -461,6 +462,7 @@ export default function FestaPage() {
         </div>
       </main>
 
+      <PublicFooter />
       <BottomNav />
     </div>
   );
