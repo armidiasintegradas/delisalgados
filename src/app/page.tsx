@@ -95,7 +95,7 @@ function getBestSellerId(items: Product[]): string | null {
 }
 
 export default function CatalogPage() {
-  const [showSplash, setShowSplash] = useState(false);
+  const [showSplash, setShowSplash] = useState<boolean | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -124,6 +124,7 @@ export default function CatalogPage() {
       }
 
       if (window.location.search.includes("nosplash=1")) {
+        setShowSplash(false);
         return;
       }
       if (window.location.search.includes("splash_lock=1")) {
@@ -131,9 +132,7 @@ export default function CatalogPage() {
         return;
       }
       const hasViewedSplash = sessionStorage.getItem("deli_splash_viewed");
-      if (!hasViewedSplash) {
-        setShowSplash(true);
-      }
+      setShowSplash(!hasViewedSplash);
     }
   }, []);
 
@@ -219,8 +218,28 @@ export default function CatalogPage() {
 
   return (
     <div className="w-full max-w-[440px] lg:max-w-none mx-auto min-h-screen catalog-bg-pattern flex flex-col pb-36 lg:pb-16 overflow-x-hidden relative bg-[#FFFDF9] shadow-2xl lg:shadow-none">
-      {/* 01 — Splash Screen */}
-      {showSplash && <SplashScreen onFinish={handleFinishSplash} />}
+      {/* 01 — Splash Screen
+          Keep an immediate mobile-only cover during the hydration decision so
+          the catalog never flashes before the splash animation. */}
+      {showSplash === null && (
+        <div
+          className="fixed inset-y-0 inset-x-0 mx-auto max-w-[440px] w-full z-50 lg:hidden flex items-center justify-center overflow-hidden"
+          style={{
+            backgroundColor: "#DF5F45",
+            backgroundImage: "url('/deli-pattern-official.png')",
+            backgroundRepeat: "repeat",
+            backgroundSize: "500px auto",
+          }}
+          aria-hidden="true"
+        >
+          <img
+            src="/deli-logo-cream-official.png"
+            alt=""
+            className="w-[190px] h-auto object-contain select-none pointer-events-none drop-shadow-[0_8px_20px_rgba(60,31,21,0.25)]"
+          />
+        </div>
+      )}
+      {showSplash === true && <SplashScreen onFinish={handleFinishSplash} />}
 
       {/* Coordinated Sticky Public Header Stack */}
       <div className="sticky top-0 z-30 w-full shadow-xs">
