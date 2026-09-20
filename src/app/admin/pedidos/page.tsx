@@ -28,6 +28,8 @@ export default function AdminOrdersPage() {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   async function loadRealOrders() {
     setLoading(true);
@@ -82,27 +84,56 @@ export default function AdminOrdersPage() {
   };
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
-    // Optimistic update
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-    );
-    if (selectedOrder && selectedOrder.id === orderId) {
-      setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
-    }
+    const target = orders.find((o) => o.id === orderId);
+    if (!target) return;
+
+    setUpdatingStatusId(orderId);
+    setStatusMessage(null);
 
     try {
-      const target = orders.find((o) => o.id === orderId);
-      if (target) {
-        await fetch(`/api/orders/${target.public_code}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
-        });
+      const res = await fetch(`/api/orders/${target.public_code}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Não foi possível atualizar o status.");
       }
-    } catch (e) {
+
+      if (data.order) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? data.order : o))
+        );
+        setSelectedOrder(data.order);
+      } else {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+        );
+        setSelectedOrder((prev) =>
+          prev?.id === orderId ? { ...prev, status: newStatus } : prev
+        );
+      }
+
+      setStatusMessage("Status atualizado. O cliente verá a mudança em Meus Pedidos.");
+    } catch (e: any) {
       console.error("Error updating status:", e);
-      loadRealOrders();
+      setStatusMessage(e?.message || "Não foi possível atualizar o status.");
+      await loadRealOrders();
+    } finally {
+      setUpdatingStatusId(null);
     }
+  };
+
+  const selectOrderForManagement = (order: Order) => {
+    setSelectedOrder(order);
+    window.setTimeout(() => {
+      document.getElementById("admin-order-detail")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 50);
   };
 
   const handlePaymentStatusChange = async (orderId: string, paymentStatus: PaymentStatus) => {
@@ -190,11 +221,13 @@ export default function AdminOrdersPage() {
       case "contacted":
         return { label: "Cliente contatado", bg: "bg-[#E6F0FA] text-[#1E70B8] border-[#CFE2F5]" };
       case "confirmed":
-        return { label: "Confirmado pela Deli", bg: "bg-[#E5F7EB] text-[#1FAA52] border-[#C3ECD0]" };
+        return { label: "Pedido recebido", bg: "bg-[#E5F7EB] text-[#1FAA52] border-[#C3ECD0]" };
       case "preparing":
-        return { label: "Em preparação", bg: "bg-[#FFF4D9] text-[#B85D19] border-[#FDE0A2]" };
+        return { label: "Em andamento", bg: "bg-[#FFF4D9] text-[#B85D19] border-[#FDE0A2]" };
+      case "ready":
+        return { label: "Pronto", bg: "bg-[#E6F0FA] text-[#1E70B8] border-[#CFE2F5]" };
       case "completed":
-        return { label: "Concluído", bg: "bg-[#E5F7EB] text-[#1FAA52] border-[#C3ECD0]" };
+        return { label: "Finalizado", bg: "bg-[#E5F7EB] text-[#1FAA52] border-[#C3ECD0]" };
       case "cancelled":
         return { label: "Cancelado", bg: "bg-[#F5EBE6] text-[#7A6357] border-[#E8D9CF]" };
       default:
@@ -266,9 +299,10 @@ export default function AdminOrdersPage() {
           <option value="all">Todos os Status</option>
           <option value="generated">Solicitação gerada</option>
           <option value="contacted">Cliente contatado</option>
-          <option value="confirmed">Confirmado pela Deli</option>
-          <option value="preparing">Em preparação</option>
-          <option value="completed">Concluído</option>
+          <option value="confirmed">Pedido recebido</option>
+          <option value="preparing">Em andamento</option>
+          <option value="ready">Pronto</option>
+          <option value="completed">Finalizado</option>
           <option value="cancelled">Cancelado</option>
         </select>
       </div>
@@ -359,6 +393,16 @@ export default function AdminOrdersPage() {
                       )}
                     </div>
                   )}
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      selectOrderForManagement(ord);
+                    }}
+                    className="lg:hidden w-full mt-3 py-2.5 rounded-xl bg-[#3C1F15] text-white text-[10px] font-black uppercase tracking-wide"
+                  >
+                    GERENCIAR / ATUALIZAR STATUS
+                  </button>
                 </div>
               );
             })}
@@ -366,7 +410,7 @@ export default function AdminOrdersPage() {
 
           {/* Order Detail (7 cols) */}
           {selectedOrder && (
-            <div className="deli-surface lg:col-span-7 rounded-3xl p-5 border space-y-4">
+            <div id="admin-order-detail" className="deli-surface lg:col-span-7 rounded-3xl p-5 border space-y-4 scroll-mt-24">
               <div className="flex items-center justify-between border-b border-[#F4E8DB] pb-3">
                 <div>
                   <div className="flex items-center gap-2">
@@ -543,19 +587,54 @@ export default function AdminOrdersPage() {
                   );
                 })()}
 
-                {/* Status selector */}
-                <select
-                  value={selectedOrder.status}
-                  onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value as OrderStatus)}
-                  className="deli-field border rounded-xl px-3 py-2 text-xs font-bold text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
-                >
-                  <option value="generated">Solicitação gerada</option>
-                  <option value="contacted">Cliente contatado</option>
-                  <option value="confirmed">Confirmado pela Deli</option>
-                  <option value="preparing">Em preparação</option>
-                  <option value="completed">Concluído</option>
-                  <option value="cancelled">Cancelado</option>
-                </select>
+                <div className="w-full sm:flex-1 rounded-2xl deli-surface-soft border p-3 space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-[#8C7367]">
+                    Atualizar andamento
+                  </div>
+                  <select
+                    value={selectedOrder.status}
+                    disabled={updatingStatusId === selectedOrder.id}
+                    onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value as OrderStatus)}
+                    className="deli-field w-full border rounded-xl px-3 py-2.5 text-xs font-bold text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45] disabled:opacity-60"
+                  >
+                    <option value="generated">Solicitação gerada</option>
+                    <option value="contacted">Cliente contatado</option>
+                    <option value="confirmed">Pedido recebido</option>
+                    <option value="preparing">Em andamento</option>
+                    <option value="ready">
+                      {selectedOrder.fulfillment_type === "pickup" ? "Pronto para retirada" : "Pronto para entrega"}
+                    </option>
+                    <option value="completed">Finalizado</option>
+                    <option value="cancelled">Cancelado</option>
+                  </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      ["confirmed", "RECEBIDO"],
+                      ["preparing", "EM ANDAMENTO"],
+                      ["ready", selectedOrder.fulfillment_type === "pickup" ? "PRONTO RETIRADA" : "PRONTO ENTREGA"],
+                      ["completed", "FINALIZADO"],
+                    ] as Array<[OrderStatus, string]>).map(([status, label]) => (
+                      <button
+                        key={status}
+                        type="button"
+                        disabled={updatingStatusId === selectedOrder.id || selectedOrder.status === status}
+                        onClick={() => handleStatusChange(selectedOrder.id, status)}
+                        className={`py-2 px-2 rounded-xl text-[9px] font-black border transition disabled:opacity-50 ${
+                          selectedOrder.status === status
+                            ? "bg-[#1FAA52] border-[#1FAA52] text-white"
+                            : "bg-white/70 border-[#EBDCCF] text-[#3C1F15]"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {statusMessage && (
+                    <div className="text-[10px] leading-relaxed text-[#7A6357]">
+                      {statusMessage}
+                    </div>
+                  )}
+                </div>
               </div>
 
                 <button
