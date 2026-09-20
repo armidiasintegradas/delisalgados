@@ -113,15 +113,13 @@ export default function CheckoutPage() {
       const { error } = await authClient.auth.signInWithOtp({
         email,
         options: {
-          shouldCreateUser: false,
+          shouldCreateUser: true,
           emailRedirectTo: `${window.location.origin}/auth/callback?next=/pedido/finalizar`,
         },
       });
 
       if (error) {
-        setLoginMessage(
-          "Não encontramos uma conta com este e-mail. Se este for seu primeiro pedido, feche esta opção e preencha seu cadastro."
-        );
+        setLoginMessage("Não foi possível enviar o link de acesso para este e-mail. Tente novamente.");
         return;
       }
 
@@ -207,7 +205,7 @@ export default function CheckoutPage() {
       try {
         const { createClient } = await import("@/lib/supabase/client");
         const authClient = createClient();
-        if (authClient && customerData.customerEmail) {
+        if (!isAuthenticated && authClient && customerData.customerEmail) {
           await authClient.auth.signInWithOtp({
             email: customerData.customerEmail.trim().toLowerCase(),
             options: {
@@ -443,12 +441,13 @@ export default function CheckoutPage() {
                 <input
                   type="email"
                   required
+                  readOnly={isAuthenticated}
                   value={customerData.customerEmail}
                   onChange={(e) =>
                     setCustomerData((prev) => ({ ...prev, customerEmail: e.target.value }))
                   }
                   placeholder="seuemail@exemplo.com"
-                  className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl pl-9 pr-3 py-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
+                  className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl pl-9 pr-3 py-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs read-only:bg-[#F7F1EA] read-only:text-[#7A6357]"
                 />
               </div>
               <p className="text-[10px] text-[#7A6357] mt-1">
