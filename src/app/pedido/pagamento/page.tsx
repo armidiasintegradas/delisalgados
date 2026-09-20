@@ -277,7 +277,7 @@ function PaymentContent() {
         </div>
       </header>
 
-      <main className="w-full max-w-[920px] mx-auto p-4 lg:p-8 grid lg:grid-cols-[1fr_360px] gap-5 items-start">
+      <main className="w-full max-w-[920px] mx-auto p-4 lg:p-8 grid lg:grid-cols-[1fr_360px] landscape-order-layout gap-5 items-start">
         <section className="bg-[#FFFDF6] rounded-3xl border border-[#EAD8C7] p-5 lg:p-6 space-y-5 shadow-sm">
           <div>
             <span className="text-[10px] font-black uppercase tracking-wider text-[#8C7367]">Plano escolhido</span>
