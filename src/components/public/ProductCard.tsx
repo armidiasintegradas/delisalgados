@@ -61,6 +61,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         ? preparationLabel[product.preparation_type]
         : "";
 
+  const primaryImage =
+    (product.images || [])
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .find((image) => image.is_primary)?.image_url ||
+    (product.images || [])
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order)[0]?.image_url ||
+    product.image_url;
+
   // Check if item is already in cart
   const cartItem = items.find((i) => i.productId === product.id);
 
@@ -81,10 +91,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       onClick={() => onOpenOptions(product)}
       className="deli-surface rounded-[18px] p-4 border hover:border-[#E05A36]/40 transition-all cursor-pointer flex items-center justify-between gap-3 group"
     >
-      {product.image_url && (
+      {primaryImage && (
         <div className="deli-field w-[84px] h-[84px] sm:w-[92px] sm:h-[92px] shrink-0 rounded-[14px] overflow-hidden border">
           <img
-            src={product.image_url}
+            src={primaryImage}
             alt={product.name}
             className="w-full h-full object-cover"
             loading="lazy"
