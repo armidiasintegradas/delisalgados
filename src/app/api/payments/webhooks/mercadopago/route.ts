@@ -32,10 +32,7 @@ export async function POST(request: Request) {
     const providerReference = String(body?.data?.id || dataId || "");
 
     if (!providerReference) {
-      return NextResponse.json({ received: true });
-    }
-
-    const { error: eventError } = await supabaseServer!
+      const { error: auditError } = await supabaseServer!
       .from("payment_webhook_events")
       .insert({
         provider: "mercadopago",
@@ -45,12 +42,22 @@ export async function POST(request: Request) {
         payload: body || {},
       });
 
-    if (eventError?.code === "23505") {
-      return NextResponse.json({ received: true, duplicate: true });
+    if (auditError && auditError.code !== "23505") {
+      console.error("Webhook audit insert error:", auditError);
     }
-    if (eventError) {
-      console.error("Webhook audit insert error:", eventError);
-      return NextResponse.json({ error: "Falha ao registrar webhook." }, { status: 500 });
+
+    return NextResponse.json({ received: true });
+    }
+
+    const existingEvent = await supabaseServer!
+      .from("payment_webhook_events")
+      .select("id")
+      .eq("provider", "mercadopago")
+      .eq("event_id", eventId)
+      .maybeSingle();
+
+    if (existingEvent.data) {
+      return NextResponse.json({ received: true, duplicate: true });
     }
 
     const providerOrder = await getMercadoPagoOrder(providerReference);
@@ -80,7 +87,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true, unmatched: true });
     }
 
+    const providerAmount = Number(providerOrder?.total_amount || 0);
+    const expectedAmount = Number(localOrder.amount_due_now || 0);
+    const amountMatches =
+      Number.isFinite(providerAmount) &&
+      Math.abs(providerAmount - expectedAmount) < 0.005;
+
     if (mercadoPagoOrderIsPaid(providerOrder)) {
+      if (!amountMatches) {
+        console.error("Mercado Pago amount mismatch", {
+          providerReference,
+          providerAmount,
+          expectedAmount,
+        });
+        return NextResponse.json({ error: "Valor da cobrança divergente." }, { status: 409 });
+      }
+
       const nextStatus =
         localOrder.payment_plan === "full" ? "paid" : "partially_paid";
 
