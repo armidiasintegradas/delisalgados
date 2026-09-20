@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { Order, Settings } from "@/types";
-import { formatCurrency, generateWhatsAppMessage, buildWhatsAppLink } from "@/lib/formatters";
+import { formatCurrency, generateWhatsAppMessage, buildWhatsAppLink, getFirstName } from "@/lib/formatters";
 
 function EnviadoContent() {
   const searchParams = useSearchParams();
@@ -322,6 +322,8 @@ function EnviadoContent() {
     );
   }
 
+  const firstName = getFirstName(order.customer_name);
+
   // 4. Confirmed Handoff State
   return (
     <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col items-center justify-start p-0 lg:p-6 relative">
@@ -358,7 +360,7 @@ function EnviadoContent() {
                 <CheckCircle2 size={22} className="text-[#109E48]" />
               </div>
               <h2 className="font-display text-base lg:text-lg font-extrabold text-[#3C1F15] leading-snug px-2">
-                Seu pedido foi registrado com sucesso.
+                {firstName}, seu pedido foi registrado com sucesso.
               </h2>
               <p className="text-[11px] text-[#7A6357] px-4 leading-tight">
                 Confira o valor a pagar agora e use o WhatsApp para concluir o pagamento com a Deli.
@@ -427,10 +429,10 @@ function EnviadoContent() {
               {/* Speech bubble card */}
               <div className="bg-[#F8FDF9] p-3.5 rounded-xl border border-[#D5EEDD] space-y-2 text-xs text-[#3C1F15] font-sans">
                 <p className="font-bold text-[#109E48] text-xs">
-                  Olá, Deli Salgados! 👋
+                  Olá, Deli Salgados! Meu nome é {firstName}. 👋
                 </p>
                 <p className="text-[11px] text-[#554035]">
-                  Gostaria de solicitar este pedido pelo cardápio digital:
+                  Gostaria de enviar uma solicitação de pedido pelo cardápio digital.
                 </p>
 
                 <div className="py-1.5 space-y-1 border-y border-[#E2F2E7] text-[11px]">
