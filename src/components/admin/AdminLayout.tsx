@@ -77,7 +77,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       {/* Mobile Top Header */}
       <div className="md:hidden bg-[#DF5F45] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-xs w-full">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-white p-0.5 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+          <div className="w-11 h-11 rounded-full bg-white p-0.5 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
             <img src="/deli-logo-coral-official.png" alt="Deli Salgados" className="w-full h-full object-contain" />
           </div>
           <div>
@@ -107,9 +107,9 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       >
         <div>
           {/* Brand header */}
-          <div className="flex items-center justify-between px-2 py-3 mb-6">
+          <div className="flex items-center justify-between px-2 py-3 mb-5">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-white p-0.5 flex items-center justify-center overflow-hidden shrink-0 shadow-xs border border-[#F0E2D2]">
+              <div className="w-14 h-14 rounded-full bg-white p-0.5 flex items-center justify-center overflow-hidden shrink-0 shadow-xs border border-[#F0E2D2]">
                 <img src="/deli-logo-coral-official.png" alt="Deli Salgados" className="w-full h-full object-contain" />
               </div>
               <div>
