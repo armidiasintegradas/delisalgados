@@ -73,7 +73,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8EE] flex flex-col md:flex-row text-[#3C1F15] font-sans w-full overflow-x-hidden">
+    <div className="min-h-screen catalog-bg-pattern flex flex-col md:flex-row text-[#3C1F15] font-sans w-full overflow-x-hidden">
       {/* Mobile Top Header */}
       <div className="md:hidden bg-[#DF5F45] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-xs w-full">
         <div className="flex items-center gap-2.5">
@@ -101,7 +101,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
 
       {/* Desktop Sidebar / Mobile Drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-60 bg-[#FFF8EE] border-r border-[#F0E2D2] p-4 flex flex-col justify-between transition-transform duration-200 md:translate-x-0 md:static shrink-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-60 deli-nav-surface border-r border-[#F0E2D2] p-4 flex flex-col justify-between transition-transform duration-200 md:translate-x-0 md:static shrink-0 ${
           isMobileMenuOpen ? "translate-x-0 shadow-2xl" : "hidden md:flex"
         }`}
       >
@@ -167,7 +167,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
 
           <div
             onClick={handleLogout}
-            className="cursor-pointer bg-white rounded-2xl p-2.5 border border-[#F0E2D2] flex items-center justify-between hover:bg-[#FAF3E8] transition shadow-2xs"
+            className="deli-surface-soft cursor-pointer rounded-2xl p-2.5 border border-[#F0E2D2] flex items-center justify-between hover:bg-[#FAF3E8] transition shadow-2xs"
             title="Clique para sair"
           >
             <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       </main>
 
       {/* Mobile Bottom Admin Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full bg-[#FFFDF9] border-t border-[#F0E2D2] px-4 py-2 flex items-center justify-around z-40 shadow-lg">
+      <nav className="deli-nav-surface md:hidden fixed bottom-0 left-0 right-0 w-full border-t border-[#F0E2D2] px-4 py-2 flex items-center justify-around z-40 shadow-lg">
         <Link
           href={`${basePath}/produtos`}
           className={`flex flex-col items-center gap-0.5 text-[10px] font-black ${
