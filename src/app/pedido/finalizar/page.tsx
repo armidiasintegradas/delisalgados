@@ -302,6 +302,16 @@ export default function CheckoutPage() {
       showCheckoutError("Informe um e-mail válido.", "checkout-email");
       return;
     }
+    if (!isAuthenticated) {
+      if (newPassword.length < 8) {
+        showCheckoutError("Crie uma senha com pelo menos 8 caracteres para sua conta Deli.", "checkout-new-password");
+        return;
+      }
+      if (newPassword !== newPasswordConfirm) {
+        showCheckoutError("As senhas da nova conta não conferem.", "checkout-new-password");
+        return;
+      }
+    }
     if (
       addressFields.postalCode.replace(/\D/g, "").length !== 8 ||
       !addressFields.street.trim() ||
