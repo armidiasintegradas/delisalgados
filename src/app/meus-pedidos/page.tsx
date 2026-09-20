@@ -9,6 +9,7 @@ import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { Order, Product } from "@/types";
 import { formatCurrency, getFirstName } from "@/lib/formatters";
 import { useCart } from "@/lib/cartContext";
+import { PublicFooter } from "@/components/public/PublicFooter";
 
 export default function MeusPedidosPage() {
   const router = useRouter();
@@ -430,6 +431,7 @@ export default function MeusPedidosPage() {
         )}
       </main>
 
+      <PublicFooter />
       <BottomNav />
     </div>
   );
