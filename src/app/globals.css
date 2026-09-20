@@ -190,3 +190,13 @@ nextjs-portal,
     backdrop-filter: none;
   }
 }
+
+@media (min-width: 1024px) {
+  .deli-surface-desktop {
+    background: var(--deli-surface) !important;
+    border-color: var(--deli-border) !important;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--deli-shadow);
+  }
+}
