@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag, Mail } from "lucide-react";
+import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag, Mail, BadgeDollarSign, CheckCircle2 } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
@@ -14,6 +14,7 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [paymentPlan, setPaymentPlan] = useState<"deposit_50" | "full">("deposit_50");
 
   const qualifyingUnitTotal = items
     .filter((item) => isUnitBasedMinimum(item.minimumQuantity, item.unitLabel))
@@ -21,6 +22,10 @@ export default function CheckoutPage() {
   const hasUnitBasedItems = items.some((item) =>
     isUnitBasedMinimum(item.minimumQuantity, item.unitLabel)
   );
+  const amountDueNow = paymentPlan === "full"
+    ? Number(totalAmount.toFixed(2))
+    : Number((totalAmount * 0.5).toFixed(2));
+  const balanceOnDelivery = Number((totalAmount - amountDueNow).toFixed(2));
 
   useEffect(() => {
     setMounted(true);
@@ -113,6 +118,7 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customer: customerData,
+          paymentPlan,
           items: items.map((i) => ({
             productId: i.productId,
             variantId: i.variantId,
@@ -398,6 +404,69 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {/* Payment plan */}
+            <div className="bg-white rounded-3xl border border-[#EAD8C7] p-4 space-y-3 shadow-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#FFF0E2] text-[#E05A36] flex items-center justify-center">
+                  <BadgeDollarSign size={17} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-[#3C1F15]">Pagamento</h3>
+                  <p className="text-[10px] text-[#7A6357]">A entrada mínima de 50% é obrigatória para confirmar a encomenda.</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPaymentPlan("deposit_50")}
+                className={`w-full p-3.5 rounded-2xl border text-left transition ${
+                  paymentPlan === "deposit_50"
+                    ? "border-[#E05A36] bg-[#FFF4E8] ring-2 ring-[#E05A36]/10"
+                    : "border-[#EAD8C7] bg-[#FFFDF9]"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-black text-[#3C1F15]">Pagar 50% agora</div>
+                    <div className="text-[10px] text-[#7A6357] mt-0.5">Entrada obrigatória. Os outros 50% ficam para a entrega.</div>
+                  </div>
+                  {paymentPlan === "deposit_50" && <CheckCircle2 size={18} className="text-[#E05A36] shrink-0" />}
+                </div>
+                <div className="mt-2 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-[#7A6357]">Pagamento agora</span>
+                  <span className="font-black text-[#E05A36]">{formatCurrency(Number((totalAmount * 0.5).toFixed(2)))}</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentPlan("full")}
+                className={`w-full p-3.5 rounded-2xl border text-left transition ${
+                  paymentPlan === "full"
+                    ? "border-[#3C1F15] bg-[#FFF9E6] ring-2 ring-[#3C1F15]/10"
+                    : "border-[#EAD8C7] bg-[#FFFDF9]"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-black text-[#3C1F15]">Pagar 100% agora</div>
+                    <div className="text-[10px] text-[#7A6357] mt-0.5">Deixe o pedido totalmente quitado no ato.</div>
+                  </div>
+                  {paymentPlan === "full" && <CheckCircle2 size={18} className="text-[#3C1F15] shrink-0" />}
+                </div>
+                <div className="mt-2 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-[#7A6357]">Pagamento agora</span>
+                  <span className="font-black text-[#3C1F15]">{formatCurrency(totalAmount)}</span>
+                </div>
+              </button>
+
+              <div className="rounded-2xl bg-[#F8F4EF] p-3 text-[11px] space-y-1">
+                <div className="flex justify-between"><span className="text-[#7A6357]">Total do pedido</span><strong>{formatCurrency(totalAmount)}</strong></div>
+                <div className="flex justify-between"><span className="text-[#7A6357]">A pagar agora</span><strong className="text-[#E05A36]">{formatCurrency(amountDueNow)}</strong></div>
+                <div className="flex justify-between"><span className="text-[#7A6357]">Saldo na entrega</span><strong>{formatCurrency(balanceOnDelivery)}</strong></div>
+              </div>
+            </div>
+
             {/* General Notes */}
             <div>
               <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1">
@@ -424,10 +493,10 @@ export default function CheckoutPage() {
                 <div className="w-5 h-5 rounded-full bg-[#25D366] flex items-center justify-center text-white">
                   <Send size={11} className="ml-0.5" />
                 </div>
-                <span>{isSubmitting ? "Criando solicitação..." : "Enviar pedido pelo WhatsApp"}</span>
+                <span>{isSubmitting ? "Criando pedido..." : "Finalizar pedido"}</span>
               </button>
               <p className="text-[10px] text-center text-[#7A6357]">
-                Você será redirecionado para o WhatsApp com a mensagem pronta.
+                Após registrar o pedido, você verá o valor da entrada e os próximos passos para pagamento.
               </p>
             </div>
           </div>
@@ -474,6 +543,17 @@ export default function CheckoutPage() {
               </span>
             </div>
 
+            <div className="rounded-2xl bg-[#FFF4E8] border border-[#F0D5BE] p-3 space-y-1.5 text-[11px]">
+              <div className="flex justify-between">
+                <span className="text-[#7A6357]">{paymentPlan === "full" ? "Pagamento integral agora" : "Entrada obrigatória agora"}</span>
+                <strong className="text-[#E05A36]">{formatCurrency(amountDueNow)}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#7A6357]">Saldo na entrega</span>
+                <strong>{formatCurrency(balanceOnDelivery)}</strong>
+              </div>
+            </div>
+
             <div className="space-y-2 pt-1">
               <button
                 type="submit"
@@ -483,7 +563,7 @@ export default function CheckoutPage() {
                 <div className="w-5 h-5 rounded-full bg-[#25D366] flex items-center justify-center text-white">
                   <Send size={11} className="ml-0.5" />
                 </div>
-                <span>{isSubmitting ? "Criando solicitação..." : "Enviar pelo WhatsApp"}</span>
+                <span>{isSubmitting ? "Criando pedido..." : "Finalizar pedido"}</span>
               </button>
               <Link
                 href="/pedido"
