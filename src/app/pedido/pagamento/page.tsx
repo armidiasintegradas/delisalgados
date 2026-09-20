@@ -100,6 +100,14 @@ function PaymentContent() {
     ? `https://quickchart.io/qr?size=300&margin=2&ecLevel=M&text=${encodeURIComponent(pixPayload)}`
     : "";
 
+  const paymentReportedWhatsappUrl = useMemo(() => {
+    if (!order?.payment_reported_at || !settings?.whatsapp_number) return "";
+    const phone = settings.whatsapp_number.replace(/\D/g, "");
+    if (!phone) return "";
+    const message = `Olá, Deli! Já realizei o Pix do pedido ${order.public_code} no valor de ${formatCurrency(Number(order.payment_reported_amount ?? order.amount_due_now ?? 0))}. Já informei o pagamento pelo cardápio e aguardo a conferência. Obrigado!`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  }, [order, settings]);
+
   async function copyPix() {
     if (!pixPayload) return;
     await navigator.clipboard.writeText(pixPayload);
@@ -292,8 +300,19 @@ function PaymentContent() {
                   <ShieldCheck size={22} className="mx-auto text-[#B85D19]" />
                   <div className="text-xs font-black text-[#7A4A13]">Pagamento informado</div>
                   <p className="text-[10px] text-[#8C6D1F] leading-relaxed">
-                    Recebemos seu aviso. A Deli fará a conferência do Pix e atualizará o pedido assim que o crédito for localizado.
+                    Recebemos seu aviso. A Deli fará a conferência do Pix no Nubank e atualizará o pedido assim que o crédito for localizado.
                   </p>
+                  {paymentReportedWhatsappUrl && (
+                    <a
+                      href={paymentReportedWhatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex mt-2 px-4 py-2.5 rounded-xl bg-[#25D366] text-white text-[10px] font-black items-center justify-center gap-1.5"
+                    >
+                      <MessageCircle size={14} />
+                      AVISAR TAMBÉM PELO WHATSAPP
+                    </a>
+                  )}
                 </div>
               ) : (
                 <>
