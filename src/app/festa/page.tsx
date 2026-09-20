@@ -188,7 +188,7 @@ export default function FestaPage() {
     <div className="min-h-screen bg-[#FFFDF9] catalog-bg-pattern pb-24 lg:pb-12">
       <Header searchQuery="" onSearchChange={() => {}} showSearch={false} title="Festa" />
 
-      <main className="w-full max-w-[1180px] mx-auto px-4 lg:px-8 py-5 lg:py-8">
+      <main className="w-full max-w-[1180px] mx-auto px-3 sm:px-4 lg:px-8 py-5 lg:py-8 overflow-x-hidden">
         <CustomerGreeting className="mb-4 lg:mb-6" />
         <section className="grid lg:grid-cols-[1.05fr_.95fr] landscape-order-layout gap-5 lg:gap-7 items-start">
           <div className="space-y-4">
@@ -211,13 +211,13 @@ export default function FestaPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl border border-[#EAD8C7] p-4 lg:p-5 space-y-4">
-              <div className="flex items-center gap-2">
+            <div className="bg-transparent border-0 p-0 space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-2xl bg-[#FFF8EE]/92 border border-[#EAD8C7] px-4 py-3 shadow-sm">
                 <Calculator size={18} className="text-[#E05A36]" />
                 <h2 className="font-black text-[#3C1F15]">1. Monte sua Festa</h2>
               </div>
 
-              <label className="block space-y-1.5">
+              <label className="block space-y-1.5 rounded-2xl bg-[#FFF8EE]/92 border border-[#EAD8C7] p-3.5">
                 <span className="text-[11px] font-black uppercase tracking-wide text-[#7A6357]">
                   Seu nome
                 </span>
@@ -232,7 +232,7 @@ export default function FestaPage() {
                 />
               </label>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 rounded-2xl bg-[#FFF8EE]/92 border border-[#EAD8C7] p-3.5">
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-black uppercase tracking-wide text-[#7A6357] flex items-center gap-1.5">
                     <Users size={13} /> Adultos
@@ -277,9 +277,9 @@ export default function FestaPage() {
                           : "bg-white border-[#EAD8C7]"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="font-black text-sm text-[#3C1F15]">{rule.label}</span>
-                        <span className="text-[10px] font-black text-[#E05A36]">
+                      <div className="flex flex-col min-[390px]:flex-row min-[390px]:items-center min-[390px]:justify-between gap-1 min-[390px]:gap-3">
+                        <span className="font-black text-sm text-[#3C1F15] min-w-0">{rule.label}</span>
+                        <span className="text-[10px] font-black text-[#E05A36] whitespace-nowrap shrink-0">
                           {rule.adult}/adulto · {rule.child}/criança
                         </span>
                       </div>
@@ -289,7 +289,7 @@ export default function FestaPage() {
                 })}
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 min-w-0">
                 <div className="rounded-2xl bg-[#FFF8EE] border border-[#F0D5BE] p-3 text-center">
                   <div className="text-[9px] uppercase font-black text-[#8C7367]">Convidados</div>
                   <div className="text-xl font-black text-[#3C1F15]">{guestCount}</div>
@@ -306,7 +306,7 @@ export default function FestaPage() {
                 </div>
               </div>
 
-              <p className="text-[10px] text-[#8C7367] leading-relaxed">
+              <p className="text-[10px] text-[#7A6357] leading-relaxed rounded-2xl bg-[#FFF8EE]/80 border border-[#EAD8C7] px-3.5 py-3">
                 Estimativa de planejamento: o consumo real varia conforme duração, bebidas e outros alimentos.
                 O cálculo arredonda em blocos de 25 unidades para respeitar a venda mínima da Deli.
               </p>
