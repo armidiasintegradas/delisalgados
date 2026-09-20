@@ -24,6 +24,22 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setMounted(true);
+
+    fetch("/api/customer/profile", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data?.authenticated || !data?.profile) return;
+        const p = data.profile;
+        setCustomerData((prev) => ({
+          ...prev,
+          customerName: prev.customerName || p.full_name || "",
+          customerPhone: prev.customerPhone || p.whatsapp || "",
+          customerEmail: prev.customerEmail || p.email || "",
+          deliveryAddress: prev.deliveryAddress || p.address || "",
+          referencePoint: prev.referencePoint || p.reference_point || "",
+        }));
+      })
+      .catch(() => {});
   }, []);
 
   if (!mounted) {
