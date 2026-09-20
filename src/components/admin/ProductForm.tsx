@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Product, Category, ProductVariant, PriceType, Availability, PreparationType } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
+import { MIN_FLAVOR_QUANTITY, MIN_ORDER_UNITS } from "@/lib/orderRules";
 
 interface ProductFormProps {
   initialProduct?: Product | null;
@@ -47,7 +48,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     initialProduct?.preparation_type || ""
   );
   const [unitLabel, setUnitLabel] = useState(initialProduct?.unit_label || "UND");
-  const [minimumQuantity, setMinimumQuantity] = useState(initialProduct?.minimum_quantity || 100);
+  const [minimumQuantity, setMinimumQuantity] = useState(initialProduct?.minimum_quantity || MIN_FLAVOR_QUANTITY);
   const [priceType, setPriceType] = useState<PriceType>(initialProduct?.price_type || "simple");
   const [basePrice, setBasePrice] = useState<number | string>(
     initialProduct?.base_price !== null && initialProduct?.base_price !== undefined
@@ -193,7 +194,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const isVariantsMode = priceType === "variants";
   const numPrice = Number(basePrice) || 0;
-  const numMin = Number(minimumQuantity) || 100;
+  const numMin = Number(minimumQuantity) || MIN_FLAVOR_QUANTITY;
   const centoTotal = numPrice * numMin;
 
   return (
@@ -521,8 +522,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </h2>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-[#E5F7EB] text-[#1FAA52] text-[9px] font-bold">
-                ● Margem Contínua Calculada
+                REGRA ATIVA
               </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-[#FFF4E8] border border-[#F0D5BE] text-[11px] text-[#7A4B36] leading-relaxed">
+              <strong className="text-[#3C1F15]">Regras comerciais:</strong> mínimo de {MIN_FLAVOR_QUANTITY} unidades por sabor e mínimo de {MIN_ORDER_UNITS} unidades no pedido para itens vendidos por unidade.
             </div>
 
             {/* Segmented Structure Tabs */}
@@ -565,9 +570,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     className="w-full bg-transparent text-xl font-black text-[#DF5F45] focus:outline-none"
                   />
                 </div>
-                <span className="text-[9px] text-[#9E8679] block mt-0.5">
-                  R$ 4,80 ant. (+8%)
-                </span>
+                <span className="text-[9px] text-[#9E8679] block mt-0.5">Preço unitário cadastrado</span>
               </div>
 
               <div className="p-3 rounded-2xl bg-[#FFFBF7] border border-[#F4E8DB]">
@@ -596,7 +599,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <div className="flex items-center gap-2 mt-1">
                   <button
                     type="button"
-                    onClick={() => setMinimumQuantity(Math.max(1, numMin - 10))}
+                    onClick={() => setMinimumQuantity(Math.max(unitLabel === "UND" ? MIN_FLAVOR_QUANTITY : 1, numMin - (unitLabel === "UND" ? MIN_FLAVOR_QUANTITY : 1)))}
                     className="w-6 h-6 rounded-lg bg-white border border-[#E8D9CB] text-xs font-bold text-[#7A6357] hover:bg-[#FAF3E8]"
                   >
                     -
@@ -606,7 +609,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   </span>
                   <button
                     type="button"
-                    onClick={() => setMinimumQuantity(numMin + 10)}
+                    onClick={() => setMinimumQuantity(numMin + (unitLabel === "UND" ? MIN_FLAVOR_QUANTITY : 1))}
                     className="w-6 h-6 rounded-lg bg-white border border-[#E8D9CB] text-xs font-bold text-[#7A6357] hover:bg-[#FAF3E8]"
                   >
                     +
@@ -625,11 +628,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   $
                 </span>
                 <span className="text-[#3C1F15] font-semibold text-[11px]">
-                  Cálculo de Cento Padrão: {formatCurrency(numPrice)} × {minimumQuantity} un. = <strong className="font-black text-[#DF5F45]">{formatCurrency(centoTotal)}</strong>
+                  Lote mínimo por sabor: {formatCurrency(numPrice)} × {minimumQuantity} un. = <strong className="font-black text-[#DF5F45]">{formatCurrency(centoTotal)}</strong>
                 </span>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-white text-[#7A6357] text-[9px] font-bold border border-[#EBDCCF]">
-                Ativo no frontend web
+                Regra aplicada no cardápio
               </span>
             </div>
           </div>
