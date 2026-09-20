@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Search, RotateCcw, ShoppingBag, AlertCircle } from "lucide-react";
+import { ArrowLeft, Search, RotateCcw, AlertCircle } from "lucide-react";
 import { BottomNav } from "@/components/public/BottomNav";
 import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { Order, Product } from "@/types";
