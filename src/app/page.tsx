@@ -348,6 +348,7 @@ export default function CatalogPage() {
                           product={prod}
                           onOpenOptions={setSelectedProduct}
                           showPrices={settings?.catalog_show_prices ?? true}
+                          isBestSeller={prod.id === bestSellerId}
                         />
                       ))}
                     </div>
