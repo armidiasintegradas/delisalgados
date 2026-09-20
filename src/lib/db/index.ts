@@ -565,6 +565,7 @@ export class DbService {
   static async createOrder(orderInput: {
     customer: CustomerData;
     customerUserId?: string | null;
+    paymentPlan?: "deposit_50" | "full";
     items: { productId: string; variantId?: string; quantity: number; note?: string }[];
   }): Promise<Order & { handoffToken: string }> {
     if (process.env.NODE_ENV === "production" && !isServerSupabaseConfigured && process.env.DELI_ALLOW_LOCAL_DB !== "true") {
@@ -680,6 +681,7 @@ export class DbService {
         customer_reference_point: orderInput.customer.referencePoint.trim(),
         customer_note: orderInput.customer.customerNote?.trim() || null,
         total: Number(calculatedTotal.toFixed(2)),
+        payment_plan: orderInput.paymentPlan === "full" ? "full" : "deposit_50",
       };
 
       const itemsPayload = orderItems.map((oi) => ({
