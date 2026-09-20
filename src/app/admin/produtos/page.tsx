@@ -343,7 +343,7 @@ export default function AdminProductsPage() {
                       {formatCurrency(p.base_price || 0)} <span className="text-[10px] font-normal text-[#8C7367]">/ {p.unit_label || "un."}</span>
                       {p.price_type === "simple" && (p.base_price || 0) < 10 && (
                         <span className="text-[10px] font-medium text-[#8C7367] ml-1.5">
-                          · Cento: {formatCurrency((p.base_price || 0) * 100)}
+                          · 25 un: {formatCurrency((p.base_price || 0) * 25)}
                         </span>
                       )}
                     </div>
