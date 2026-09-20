@@ -1,5 +1,6 @@
 import { Category, Product, ProductVariant, Settings, Order, OrderItem, CustomerData, Availability } from "@/types";
 import { isServerSupabaseConfigured, supabaseServer } from "@/lib/supabase/server";
+import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
 import { INITIAL_CATEGORIES, INITIAL_PRODUCTS, INITIAL_VARIANTS, INITIAL_SETTINGS } from "./seedData";
 import fs from "fs";
 import path from "path";
@@ -583,6 +584,8 @@ export class DbService {
     const orderId = crypto.randomUUID(); // Valid PostgreSQL UUID
     const orderItems: OrderItem[] = [];
     let calculatedTotal = 0;
+    let qualifyingUnitTotal = 0;
+    let hasUnitBasedItems = false;
 
     for (const item of orderInput.items) {
       const product = allProducts.find((p) => p.id === item.productId);
@@ -622,6 +625,11 @@ export class DbService {
         throw new Error(`Quantidade mínima para ${product.name} é ${minQty} ${unitLabel}.`);
       }
 
+      if (isUnitBasedMinimum(minQty, unitLabel)) {
+        hasUnitBasedItems = true;
+        qualifyingUnitTotal += item.quantity;
+      }
+
       const subtotal = Number((unitPrice * item.quantity).toFixed(2));
       calculatedTotal += subtotal;
 
@@ -638,6 +646,12 @@ export class DbService {
         subtotal: subtotal,
         note: item.note || null,
       });
+    }
+
+    if (hasUnitBasedItems && qualifyingUnitTotal < MIN_ORDER_UNITS) {
+      throw new Error(
+        `O pedido mínimo é de ${MIN_ORDER_UNITS} unidades. O pedido possui ${qualifyingUnitTotal} unidades.`
+      );
     }
 
     // Generate secure handoff token (32 bytes hex = 64 chars) and SHA-256 hash
