@@ -8,7 +8,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, totalAmount, clearCart } = useCart();
+  const { items, updateQuantity, removeItem, totalAmount, clearCart, isInitialized } = useCart();
   const totalItemCount = items.length;
   const qualifyingUnitTotal = items
     .filter((item) => isUnitBasedMinimum(item.minimumQuantity, item.unitLabel))
@@ -56,8 +56,16 @@ export default function CartPage() {
 
       {/* Main Content */}
       <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto p-4 lg:p-8 flex-1 flex flex-col">
-        {items.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
+        {!isInitialized ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="w-full lg:max-w-[720px] bg-[#FFFDF6] rounded-3xl border border-[#EAD8C7] p-8 text-center shadow-sm">
+              <div className="w-8 h-8 border-3 border-[#DF5F45] border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-xs font-bold text-[#7A6357] mt-3">Carregando seu pedido...</p>
+            </div>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center py-10 lg:py-16">
+            <div className="w-full lg:max-w-[760px] bg-[#FFFDF6] lg:rounded-3xl lg:border lg:border-[#EAD8C7] lg:shadow-sm p-6 lg:p-10 flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 rounded-full bg-[#FFF4E8] text-[#E05A36] flex items-center justify-center mb-4 shadow-inner">
               <ShoppingBag size={28} />
             </div>
@@ -71,6 +79,7 @@ export default function CartPage() {
             >
               Voltar ao Cardápio
             </Link>
+            </div>
           </div>
         ) : (
           <div className="space-y-3.5 lg:space-y-0 lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between">
