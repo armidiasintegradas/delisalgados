@@ -2,13 +2,17 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Search, ClipboardList, Clock, CheckCircle2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Search, RotateCcw, ShoppingBag, AlertCircle } from "lucide-react";
 import { BottomNav } from "@/components/public/BottomNav";
 import { CustomerGreeting } from "@/components/public/CustomerGreeting";
-import { Order } from "@/types";
+import { Order, Product } from "@/types";
 import { formatCurrency, getFirstName } from "@/lib/formatters";
+import { useCart } from "@/lib/cartContext";
 
 export default function MeusPedidosPage() {
+  const router = useRouter();
+  const { clearCart, addItem } = useCart();
   const [code, setCode] = useState("");
   const [phone, setPhone] = useState("");
   const [searchedOrder, setSearchedOrder] = useState<any | null>(null);
@@ -17,6 +21,8 @@ export default function MeusPedidosPage() {
   const [accountOrders, setAccountOrders] = useState<any[]>([]);
   const [accountLoading, setAccountLoading] = useState(true);
   const [accountAuthenticated, setAccountAuthenticated] = useState(false);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
+  const [reorderMessage, setReorderMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/customer/orders", { cache: "no-store" })
@@ -64,6 +70,99 @@ export default function MeusPedidosPage() {
       setErrorMessage("Não localizamos um pedido com esses dados.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBuyAgain = async (order: Order) => {
+    if (!order.items?.length) {
+      setReorderMessage("Este pedido não possui itens disponíveis para recompra.");
+      return;
+    }
+
+    setReorderingId(order.id);
+    setReorderMessage(null);
+
+    try {
+      const res = await fetch("/api/catalog", { cache: "no-store" });
+      if (!res.ok) throw new Error("Não foi possível carregar o cardápio atual.");
+
+      const data = await res.json();
+      const catalogProducts: Product[] = Array.isArray(data.products) ? data.products : [];
+
+      const repeatable: Array<{
+        product: Product;
+        variant?: NonNullable<Product["variants"]>[number];
+        quantity: number;
+        note?: string;
+      }> = [];
+      const unavailableNames: string[] = [];
+
+      for (const oldItem of order.items) {
+        const product = catalogProducts.find((p) => p.id === oldItem.product_id);
+
+        if (!product || !product.is_visible || product.availability !== "available") {
+          unavailableNames.push(oldItem.product_name_snapshot);
+          continue;
+        }
+
+        if (oldItem.variant_id) {
+          const variant = (product.variants || []).find(
+            (v) => v.id === oldItem.variant_id && v.is_active
+          );
+          if (!variant) {
+            unavailableNames.push(
+              `${oldItem.product_name_snapshot}${oldItem.variant_name_snapshot ? ` (${oldItem.variant_name_snapshot})` : ""}`
+            );
+            continue;
+          }
+
+          repeatable.push({
+            product,
+            variant,
+            quantity: Math.max(Number(oldItem.quantity), Number(variant.minimum_quantity)),
+            note: oldItem.note || undefined,
+          });
+          continue;
+        }
+
+        repeatable.push({
+          product,
+          quantity: Math.max(Number(oldItem.quantity), Number(product.minimum_quantity)),
+          note: oldItem.note || undefined,
+        });
+      }
+
+      if (repeatable.length === 0) {
+        setReorderMessage(
+          "Os itens desse pedido não estão disponíveis no cardápio atual. Escolha novos itens no cardápio."
+        );
+        return;
+      }
+
+      clearCart();
+      repeatable.forEach(({ product, variant, quantity, note }) => {
+        addItem(product, quantity, variant, note);
+      });
+
+      if (unavailableNames.length > 0) {
+        sessionStorage.setItem(
+          "deli_reorder_notice",
+          `Alguns itens do pedido anterior não estão disponíveis agora: ${unavailableNames.join(", ")}. Os demais foram adicionados com os preços atuais.`
+        );
+      } else {
+        sessionStorage.setItem(
+          "deli_reorder_notice",
+          "Pedido anterior adicionado novamente ao carrinho com disponibilidade e preços atuais."
+        );
+      }
+
+      router.push("/pedido");
+    } catch (error: any) {
+      setReorderMessage(
+        error?.message || "Não foi possível montar novamente este pedido agora."
+      );
+    } finally {
+      setReorderingId(null);
     }
   };
 
@@ -157,14 +256,39 @@ export default function MeusPedidosPage() {
                         {statusLabels[order.status] || order.status}
                       </span>
                     </div>
-                    <div className="text-xs text-[#614439]">
-                      {(order.items || []).map((item: any) => (
-                        <div key={item.id} className="flex justify-between gap-3 py-0.5">
-                          <span>{item.quantity} {item.unit_label_snapshot} — {item.product_name_snapshot}</span>
-                          <span className="font-semibold">{formatCurrency(item.subtotal)}</span>
-                        </div>
-                      ))}
+                    <div className="rounded-2xl deli-surface-soft border overflow-hidden">
+                      <div className="px-3 py-2 border-b border-[#F0E2D4] text-[10px] font-black uppercase tracking-wider text-[#8C7367]">
+                        Itens comprados ({order.items?.length || 0})
+                      </div>
+                      <div className="divide-y divide-[#F0E2D4]">
+                        {(order.items || []).map((item: any) => (
+                          <div key={item.id} className="p-3 flex justify-between gap-3 text-xs">
+                            <div className="min-w-0">
+                              <div className="font-black text-[#3C1F15]">
+                                {item.quantity} {item.unit_label_snapshot || "un."} · {item.product_name_snapshot}
+                              </div>
+                              {item.variant_name_snapshot && (
+                                <div className="text-[10px] font-bold text-[#E05A36] mt-0.5">
+                                  {item.variant_name_snapshot}
+                                </div>
+                              )}
+                              <div className="text-[10px] text-[#7A6357] mt-0.5">
+                                {formatCurrency(item.unit_price_snapshot)} por {item.unit_label_snapshot || "un."}
+                              </div>
+                              {item.note && (
+                                <div className="text-[10px] italic text-[#9E8679] mt-0.5">
+                                  Obs: {item.note}
+                                </div>
+                              )}
+                            </div>
+                            <span className="font-black text-[#3C1F15] shrink-0">
+                              {formatCurrency(item.subtotal)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+
                     <div className="pt-2 border-t border-[#F0E2D4] space-y-1 text-xs">
                       <div className="flex justify-between font-bold">
                         <span>Total</span>
@@ -175,14 +299,40 @@ export default function MeusPedidosPage() {
                         <strong>{formatCurrency(order.amount_due_now ?? order.total)}</strong>
                       </div>
                       <div className="flex justify-between text-[10px] text-[#7A6357]">
-                        <span>Saldo na entrega</span>
+                        <span>Saldo dos produtos</span>
                         <strong>{formatCurrency(order.balance_due ?? 0)}</strong>
                       </div>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleBuyAgain(order)}
+                      disabled={reorderingId === order.id}
+                      className="w-full mt-1 py-3 rounded-2xl bg-[#3C1F15] hover:bg-[#27120A] text-white text-[11px] font-black uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-60 transition"
+                    >
+                      {reorderingId === order.id ? (
+                        "MONTANDO PEDIDO..."
+                      ) : (
+                        <>
+                          <RotateCcw size={15} />
+                          COMPRAR NOVAMENTE
+                        </>
+                      )}
+                    </button>
+                    <p className="text-[9px] text-[#8C7367] text-center leading-relaxed">
+                      A recompra usa disponibilidade e preços atuais do cardápio.
+                    </p>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {reorderMessage && (
+          <div className="deli-surface-soft border rounded-2xl p-3 text-xs text-[#7A4B36] flex items-start gap-2">
+            <AlertCircle size={16} className="text-[#E05A36] shrink-0 mt-0.5" />
+            <span>{reorderMessage}</span>
           </div>
         )}
 
