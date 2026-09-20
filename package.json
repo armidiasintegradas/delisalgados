@@ -9,7 +9,8 @@
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/run-all-tests.mjs",
-    "bootstrap:admin": "node scripts/bootstrap-admin.mjs"
+    "bootstrap:admin": "node scripts/bootstrap-admin.mjs",
+    "test:pwa": "node scripts/pwa-check.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
