@@ -13,13 +13,13 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#3C1F15",
     icons: [
       {
-        src: "/delisalgados/admin/icon?v=20260920-3",
+        src: "/deli-admin-icon-512.png?v=20260920-4",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/delisalgados/admin/apple-icon?v=20260920-3",
+        src: "/deli-admin-apple-touch-icon.png?v=20260920-4",
         sizes: "180x180",
         type: "image/png",
         purpose: "any",
