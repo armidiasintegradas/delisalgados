@@ -194,6 +194,20 @@ function PaymentContent() {
             </div>
           </div>
 
+          {order.fulfillment_type === "delivery" && (
+            <div className="p-4 rounded-3xl bg-[#FFF8EE] border border-[#F0D5BE] space-y-2">
+              <div className="text-[10px] uppercase font-black tracking-wider text-[#8C7367]">
+                Entrega
+              </div>
+              <div className="text-sm font-black text-[#3C1F15]">
+                Frete não incluído neste pagamento
+              </div>
+              <p className="text-[11px] text-[#7A6357] leading-relaxed">
+                Este Pix corresponde somente aos produtos. A Deli fará uma estimativa da entrega para o endereço informado e enviará o valor pelo WhatsApp. A contratação da entrega só acontece após sua aprovação.
+              </p>
+            </div>
+          )}
+
           {paymentAlreadyConfirmed ? (
             <div className="p-5 rounded-3xl bg-[#EAF7EE] border border-[#CDEEDB] text-center space-y-2">
               <ShieldCheck size={28} className="mx-auto text-[#1FAA52]" />
