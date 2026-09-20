@@ -8,7 +8,6 @@ import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
 import { PublicFooter } from "@/components/public/PublicFooter";
-import { buildAuthCallbackUrl } from "@/lib/appUrl";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -25,6 +24,9 @@ export default function CheckoutPage() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [sendingLogin, setSendingLogin] = useState(false);
   const [loginMessage, setLoginMessage] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [lookingUpCep, setLookingUpCep] = useState(false);
   const [addressFields, setAddressFields] = useState({
     postalCode: customerData.postalCode || "",
@@ -322,6 +324,57 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
+      if (!isAuthenticated) {
+        const signupRes = await fetch("/api/auth/customer-signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: customerData.customerName.trim(),
+            whatsapp: customerData.customerPhone.trim(),
+            email: customerData.customerEmail.trim().toLowerCase(),
+            password: newPassword,
+            postalCode: addressFields.postalCode,
+            street: addressFields.street,
+            addressNumber: addressFields.number,
+            complement: addressFields.complement,
+            neighborhood: addressFields.neighborhood,
+            city: addressFields.city,
+            state: addressFields.state,
+            referencePoint: customerData.referencePoint.trim(),
+          }),
+        });
+        const signupData = await signupRes.json();
+
+        if (!signupRes.ok) {
+          if (signupData.code === "ACCOUNT_EXISTS") {
+            setShowExistingLogin(true);
+            setLoginEmail(customerData.customerEmail.trim().toLowerCase());
+            setLoginMessage("Esta conta já existe. Entre com sua senha para continuar o pedido.");
+            setIsSubmitting(false);
+            window.setTimeout(() => {
+              document.getElementById("existing-customer-login")?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+            }, 50);
+            return;
+          }
+          throw new Error(signupData.error || "Não foi possível criar sua conta Deli.");
+        }
+
+        const { createClient } = await import("@/lib/supabase/client");
+        const authClient = createClient();
+        if (!authClient) throw new Error("Conta criada, mas o login automático está indisponível.");
+
+        const { error: loginError } = await authClient.auth.signInWithPassword({
+          email: customerData.customerEmail.trim().toLowerCase(),
+          password: newPassword,
+        });
+        if (loginError) throw new Error("Conta criada, mas não foi possível entrar automaticamente. Tente entrar em “Já sou cliente”.");
+
+        setIsAuthenticated(true);
+      }
+
       // POST to server for server-side authority & snapshots
       const res = await fetch("/api/orders", {
         method: "POST",
@@ -363,23 +416,6 @@ export default function CheckoutPage() {
           return;
         }
         throw new Error(data.error || "Não foi possível registrar seu pedido agora. Seus itens continuam no carrinho. Tente novamente em instantes.");
-      }
-
-      // Create/reuse the customer login through passwordless e-mail access.
-      try {
-        const { createClient } = await import("@/lib/supabase/client");
-        const authClient = createClient();
-        if (!isAuthenticated && authClient && customerData.customerEmail) {
-          await authClient.auth.signInWithOtp({
-            email: customerData.customerEmail.trim().toLowerCase(),
-            options: {
-              shouldCreateUser: true,
-              emailRedirectTo: buildAuthCallbackUrl("/perfil"),
-            },
-          });
-        }
-      } catch (authError) {
-        console.warn("Customer access link could not be sent:", authError);
       }
 
       // Order created server-side! Store in session with handoff token
@@ -669,6 +705,62 @@ export default function CheckoutPage() {
                   : "No primeiro pedido, este e-mail cria seu acesso Deli. Nos próximos pedidos, será necessário entrar na conta."}
               </p>
             </div>
+
+            {!isAuthenticated && !showExistingLogin && (
+              <div id="checkout-new-password" className="deli-surface-soft rounded-3xl border p-4 space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <LockKeyhole size={17} className="text-[#E05A36] mt-0.5 shrink-0" />
+                  <div>
+                    <div className="text-xs font-black text-[#3C1F15]">Crie sua senha Deli *</div>
+                    <p className="text-[10px] text-[#7A6357] mt-0.5 leading-relaxed">
+                      No primeiro pedido você já cria sua conta com senha. Nos próximos pedidos, basta entrar.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[#7A6357]">Senha *</label>
+                    <div className="relative mt-1">
+                      <LockKeyhole size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A89688]" />
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        minLength={8}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        autoComplete="new-password"
+                        placeholder="Mínimo 8 caracteres"
+                        className="deli-field w-full pl-9 pr-10 py-3 rounded-2xl border text-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword((value) => !value)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9E8679]"
+                        aria-label={showNewPassword ? "Ocultar senha" : "Mostrar senha"}
+                      >
+                        {showNewPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[#7A6357]">Confirmar senha *</label>
+                    <div className="relative mt-1">
+                      <LockKeyhole size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A89688]" />
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        minLength={8}
+                        value={newPasswordConfirm}
+                        onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                        autoComplete="new-password"
+                        placeholder="Digite novamente"
+                        className="deli-field w-full pl-9 pr-3 py-3 rounded-2xl border text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Fulfillment Type */}
             <div>
