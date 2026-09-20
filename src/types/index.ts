@@ -154,6 +154,13 @@ export interface CustomerData {
   desiredDate: string;
   fulfillmentType: FulfillmentType;
   deliveryAddress: string;
+  postalCode?: string;
+  street?: string;
+  addressNumber?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
   referencePoint: string;
   customerNote?: string;
 }
