@@ -16,6 +16,7 @@ export function PWAInstallPrompt() {
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [androidFallbackReady, setAndroidFallbackReady] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -45,18 +46,30 @@ export function PWAInstallPrompt() {
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
+      setAndroidFallbackReady(false);
       setDeferredPrompt(event as BeforeInstallPromptEvent);
       if (canShow) {
-        window.setTimeout(() => setShowBanner(true), 1800);
+        window.setTimeout(() => setShowBanner(true), 600);
       }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // iOS has no beforeinstallprompt. Some Android browsers also omit it,
-    // so still expose a manual home-screen guide on mobile.
-    if ((ios || android) && canShow) {
+    let fallbackTimer: number | undefined;
+
+    // iOS has no native install event, so show its guidance directly.
+    if (ios && canShow) {
       window.setTimeout(() => setShowBanner(true), 1800);
+    }
+
+    // Android: wait for the native install event first. Only if the browser
+    // does not expose it do we offer the manual fallback instructions.
+    if (android && canShow) {
+      fallbackTimer = window.setTimeout(() => {
+        setAndroidFallbackReady(true);
+        setShowBanner(true);
+      }, 4500);
     }
 
     const handleInstalled = () => {
@@ -68,6 +81,7 @@ export function PWAInstallPrompt() {
     window.addEventListener("appinstalled", handleInstalled);
 
     return () => {
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleInstalled);
     };
@@ -103,7 +117,7 @@ export function PWAInstallPrompt() {
       return;
     }
 
-    if (isAndroid) {
+    if (isAndroid && androidFallbackReady) {
       setShowAndroidHelp(true);
     }
   }
@@ -129,7 +143,9 @@ export function PWAInstallPrompt() {
           <div className="min-w-0">
             <div className="text-sm font-black text-[#3C1F15]">Deli Salgados no seu celular</div>
             <p className="text-[11px] leading-relaxed text-[#7A6357] mt-1">
-              Adicione o cardápio à tela inicial e abra como um app, sem precisar procurar o link novamente.
+              {deferredPrompt
+                ? "Instale agora e abra o cardápio como um app no seu celular."
+                : "Adicione o cardápio à tela inicial e abra como um app, sem precisar procurar o link novamente."}
             </p>
           </div>
         </div>
@@ -139,8 +155,12 @@ export function PWAInstallPrompt() {
           onClick={install}
           className="mt-3 w-full py-3 rounded-2xl bg-[#E05A36] text-white text-xs font-black flex items-center justify-center gap-2"
         >
-          {isIOS ? <Share2 size={16} /> : <Download size={16} />}
-          {isIOS ? "COMO ADICIONAR À TELA INICIAL" : "INSTALAR DELI SALGADOS"}
+          {deferredPrompt ? <Download size={16} /> : isIOS ? <Share2 size={16} /> : <Download size={16} />}
+          {deferredPrompt
+            ? "INSTALAR DELI SALGADOS"
+            : isIOS
+              ? "COMO ADICIONAR À TELA INICIAL"
+              : "COMO INSTALAR DELI SALGADOS"}
         </button>
       </div>
 
