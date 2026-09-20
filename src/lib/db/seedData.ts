@@ -873,6 +873,9 @@ export const INITIAL_SETTINGS: Settings = {
   "special_order_cta_enabled": true,
   "special_order_cta_text": "Precisa de uma encomenda personalizada para sua festa? Fale conosco no WhatsApp!",
   "logo_url": null,
-  "pattern_url": null
+  "pattern_url": null,
+  "pix_key": "",
+  "pix_receiver_name": "",
+  "pix_receiver_city": "RECIFE"
 };
 
