@@ -40,26 +40,34 @@ export async function POST(request: Request) {
     const city = String(customer.city || "").trim();
     const state = String(customer.state || "").trim().toUpperCase();
 
-    // Registration data are mandatory for the first order and remain required thereafter.
+    const requiresDeliveryAddress = fulfillmentType === "delivery";
+
     if (
       !customerName ||
       !customerPhone ||
       phoneDigits.length < 10 ||
       !customerEmail ||
       !/^\S+@\S+\.\S+$/.test(customerEmail) ||
-      !deliveryAddress ||
-      !referencePoint ||
       !desiredDate ||
       !fulfillmentType ||
-      postalCode.length !== 8 ||
-      !street ||
-      !addressNumber ||
-      !neighborhood ||
-      !city ||
-      !state
+      (requiresDeliveryAddress &&
+        (
+          !deliveryAddress ||
+          postalCode.length !== 8 ||
+          !street ||
+          !addressNumber ||
+          !neighborhood ||
+          !city ||
+          !state
+        ))
     ) {
       return NextResponse.json(
-        { error: "Preencha todos os dados obrigatórios do cadastro antes de continuar.", code: "CUSTOMER_DATA_REQUIRED" },
+        {
+          error: requiresDeliveryAddress
+            ? "Para entrega, preencha CEP, rua, número, bairro, cidade e UF."
+            : "Preencha nome, WhatsApp, e-mail, data e modalidade antes de continuar.",
+          code: "CUSTOMER_DATA_REQUIRED",
+        },
         { status: 400 }
       );
     }
@@ -159,7 +167,7 @@ export async function POST(request: Request) {
             neighborhood,
             city,
             state,
-            reference_point: referencePoint,
+            reference_point: referencePoint || null,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "id" }
