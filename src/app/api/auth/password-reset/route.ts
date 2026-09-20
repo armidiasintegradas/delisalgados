@@ -39,8 +39,54 @@ export async function POST(request: Request) {
     if (!profile && !order) {
       return NextResponse.json({
         success: true,
+        email_queued: false,
         message: "Se este e-mail estiver cadastrado, enviaremos um link de redefinição.",
       });
+    }
+
+    // Some customers may have orders/profile records but no Auth identity yet.
+    // In that case a password-reset request is silently useless, because there
+    // is no Auth user to receive the recovery flow. Provision the Auth identity
+    // first, then request the recovery e-mail.
+    let authUser: any = null;
+    let page = 1;
+
+    while (!authUser && page <= 10) {
+      const { data, error } = await supabaseServer.auth.admin.listUsers({
+        page,
+        perPage: 200,
+      });
+      if (error) throw error;
+
+      authUser = (data.users || []).find(
+        (user) => String(user.email || "").trim().toLowerCase() === email
+      );
+
+      if (!data.users || data.users.length < 200) break;
+      page += 1;
+    }
+
+    if (!authUser) {
+      const fallbackName = String((order as any)?.customer_name || "").trim();
+      const fallbackPhone = String((order as any)?.customer_phone || "").trim();
+
+      const { data, error } = await supabaseServer.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: {
+          full_name: fallbackName,
+          whatsapp: fallbackPhone,
+        },
+      });
+      if (error) throw error;
+      authUser = data.user;
+
+      if (authUser?.id) {
+        await supabaseServer
+          .from("orders")
+          .update({ customer_user_id: authUser.id, updated_at: new Date().toISOString() })
+          .eq("customer_email", email);
+      }
     }
 
     const { error } = await supabaseServer.auth.resetPasswordForEmail(email, {
@@ -51,7 +97,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Enviamos um link para seu e-mail. Verifique também Spam, Lixo Eletrônico e Promoções.",
+      email_queued: true,
+      message: "Solicitação de redefinição aceita. Enviamos um link para seu e-mail. Verifique também Spam, Lixo Eletrônico e Promoções.",
     });
   } catch (error: any) {
     return NextResponse.json(
