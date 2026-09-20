@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag, Mail, BadgeDollarSign, CheckCircle2, Navigation, ExternalLink, LogIn, ShieldCheck, LockKeyhole, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag, Mail, BadgeDollarSign, CheckCircle2, Navigation, ExternalLink, LogIn, ShieldCheck, LockKeyhole, Eye, EyeOff, Search, Loader2 } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
@@ -25,6 +25,76 @@ export default function CheckoutPage() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [sendingLogin, setSendingLogin] = useState(false);
   const [loginMessage, setLoginMessage] = useState<string | null>(null);
+  const [lookingUpCep, setLookingUpCep] = useState(false);
+  const [addressFields, setAddressFields] = useState({
+    postalCode: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+  });
+
+  const composeCheckoutAddress = (fields: typeof addressFields) =>
+    [
+      [fields.street, fields.number].filter(Boolean).join(", "),
+      fields.complement,
+      fields.neighborhood,
+      [fields.city, fields.state].filter(Boolean).join(" - "),
+      fields.postalCode
+        ? `CEP ${fields.postalCode.replace(/\D/g, "").replace(/^(\d{5})(\d{3})$/, "$1-$2")}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+  const updateAddressField = (field: keyof typeof addressFields, value: string) => {
+    setAddressFields((current) => {
+      const next = { ...current, [field]: value };
+      setCustomerData((prev) => ({
+        ...prev,
+        deliveryAddress: composeCheckoutAddress(next),
+      }));
+      return next;
+    });
+  };
+
+  async function lookupCheckoutCep() {
+    const digits = addressFields.postalCode.replace(/\D/g, "");
+    if (digits.length !== 8) {
+      showCheckoutError("Informe um CEP com 8 números.", "checkout-cep");
+      return;
+    }
+
+    setLookingUpCep(true);
+    try {
+      const res = await fetch(`/api/cep/${digits}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "CEP não encontrado.");
+
+      setAddressFields((current) => {
+        const next = {
+          ...current,
+          postalCode: digits,
+          street: data.street || current.street,
+          neighborhood: data.neighborhood || current.neighborhood,
+          city: data.city || current.city,
+          state: data.state || current.state,
+          complement: current.complement || data.complement || "",
+        };
+        setCustomerData((prev) => ({
+          ...prev,
+          deliveryAddress: composeCheckoutAddress(next),
+        }));
+        return next;
+      });
+    } catch (err: any) {
+      showCheckoutError(err?.message || "Não foi possível consultar o CEP.", "checkout-cep");
+    } finally {
+      setLookingUpCep(false);
+    }
+  }
 
   const qualifyingUnitTotal = items
     .filter((item) => isUnitBasedMinimum(item.minimumQuantity, item.unitLabel))
@@ -60,6 +130,15 @@ export default function CheckoutPage() {
           customerEmail: prev.customerEmail || p.email || "",
           deliveryAddress: prev.deliveryAddress || p.address || "",
           referencePoint: prev.referencePoint || p.reference_point || "",
+        }));
+        setAddressFields((current) => ({
+          postalCode: p.postal_code || current.postalCode,
+          street: p.street || current.street,
+          number: p.address_number || current.number,
+          complement: p.complement || current.complement,
+          neighborhood: p.neighborhood || current.neighborhood,
+          city: p.city || current.city,
+          state: p.state || current.state,
         }));
       })
       .catch(() => {});
@@ -142,6 +221,15 @@ export default function CheckoutPage() {
           deliveryAddress: p.address || prev.deliveryAddress,
           referencePoint: p.reference_point || prev.referencePoint,
         }));
+        setAddressFields((current) => ({
+          postalCode: p.postal_code || current.postalCode,
+          street: p.street || current.street,
+          number: p.address_number || current.number,
+          complement: p.complement || current.complement,
+          neighborhood: p.neighborhood || current.neighborhood,
+          city: p.city || current.city,
+          state: p.state || current.state,
+        }));
       }
 
       setLoginPassword("");
@@ -191,8 +279,15 @@ export default function CheckoutPage() {
       showCheckoutError("Informe um e-mail válido.", "checkout-email");
       return;
     }
-    if (!customerData.deliveryAddress.trim()) {
-      showCheckoutError("Por favor, informe seu endereço completo.", "checkout-address");
+    if (
+      addressFields.postalCode.replace(/\D/g, "").length !== 8 ||
+      !addressFields.street.trim() ||
+      !addressFields.number.trim() ||
+      !addressFields.neighborhood.trim() ||
+      !addressFields.city.trim() ||
+      !addressFields.state.trim()
+    ) {
+      showCheckoutError("Complete CEP, rua, número, bairro, cidade e UF.", "checkout-cep");
       return;
     }
     if (!customerData.referencePoint.trim()) {
@@ -627,47 +722,87 @@ export default function CheckoutPage() {
               )}
             </div>
 
-            {/* Customer address — required for account and future orders. This is the customer address, not the Deli pickup address. */}
-            <div className="space-y-3">
-              <div>
-                <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1">
-                  SEU ENDEREÇO COMPLETO *
-                </label>
-                <textarea
-                  id="checkout-address"
-                  required
-                  rows={2}
-                  value={customerData.deliveryAddress}
-                  onChange={(e) =>
-                    setCustomerData((prev) => ({
-                      ...prev,
-                      deliveryAddress: e.target.value,
-                    }))
-                  }
-                  placeholder="Rua, número, complemento, bairro, cidade e CEP"
-                  className="w-full deli-field border rounded-2xl p-2.5 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
-                />
+            {/* Structured customer address */}
+            <div className="deli-surface-soft rounded-3xl border p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <MapPin size={17} className="text-[#E05A36]" />
+                <div>
+                  <div className="text-xs font-black text-[#3C1F15]">Seu endereço *</div>
+                  <div className="text-[10px] text-[#8C7367]">Digite o CEP para preencher o endereço automaticamente.</div>
+                </div>
               </div>
 
-              <div>
-                <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1">
-                  PONTO DE REFERÊNCIA *
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase text-[#7A6357]">CEP *</span>
+                  <input
+                    id="checkout-cep"
+                    inputMode="numeric"
+                    value={addressFields.postalCode}
+                    onChange={(e) => updateAddressField("postalCode", e.target.value.replace(/\D/g, "").slice(0, 8))}
+                    onBlur={() => {
+                      if (addressFields.postalCode.replace(/\D/g, "").length === 8) lookupCheckoutCep();
+                    }}
+                    placeholder="50761-080"
+                    className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs"
+                  />
                 </label>
+                <button
+                  type="button"
+                  onClick={lookupCheckoutCep}
+                  disabled={lookingUpCep}
+                  className="self-end h-[44px] px-4 rounded-2xl bg-[#3C1F15] text-white text-[10px] font-black flex items-center gap-1.5 disabled:opacity-60"
+                >
+                  {lookingUpCep ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+                  BUSCAR
+                </button>
+              </div>
+
+              <div className="grid grid-cols-[1fr_90px] gap-2">
+                <label className="block min-w-0">
+                  <span className="text-[10px] font-black uppercase text-[#7A6357]">Rua / Avenida *</span>
+                  <input value={addressFields.street} onChange={(e) => updateAddressField("street", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
+                </label>
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase text-[#7A6357]">Número *</span>
+                  <input value={addressFields.number} onChange={(e) => updateAddressField("number", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
+                </label>
+              </div>
+
+              <label className="block">
+                <span className="text-[10px] font-black uppercase text-[#7A6357]">Complemento</span>
+                <input value={addressFields.complement} onChange={(e) => updateAddressField("complement", e.target.value)} placeholder="Apto, bloco, casa..." className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase text-[#7A6357]">Bairro *</span>
+                  <input value={addressFields.neighborhood} onChange={(e) => updateAddressField("neighborhood", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
+                </label>
+                <div className="grid grid-cols-[1fr_68px] gap-2">
+                  <label className="block min-w-0">
+                    <span className="text-[10px] font-black uppercase text-[#7A6357]">Cidade *</span>
+                    <input value={addressFields.city} onChange={(e) => updateAddressField("city", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-black uppercase text-[#7A6357]">UF *</span>
+                    <input maxLength={2} value={addressFields.state} onChange={(e) => updateAddressField("state", e.target.value.toUpperCase().slice(0, 2))} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs uppercase" />
+                  </label>
+                </div>
+              </div>
+
+              <label className="block">
+                <span className="text-[10px] font-black uppercase text-[#7A6357]">Ponto de referência *</span>
                 <input
                   id="checkout-reference"
                   type="text"
                   required
                   value={customerData.referencePoint}
-                  onChange={(e) =>
-                    setCustomerData((prev) => ({
-                      ...prev,
-                      referencePoint: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setCustomerData((prev) => ({ ...prev, referencePoint: e.target.value }))}
                   placeholder="Ex: ao lado da farmácia, portão azul..."
-                  className="w-full deli-field border rounded-2xl p-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
+                  className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs"
                 />
-              </div>
+              </label>
             </div>
 
             {customerData.fulfillmentType === "delivery" && (
