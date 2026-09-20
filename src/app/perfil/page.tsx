@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, User, LogOut, ShoppingBag, Save, Camera, Trash2, LockKeyhole, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Mail, User, LogOut, ShoppingBag, Save, Camera, Trash2, LockKeyhole, Eye, EyeOff, MapPin, Search, Loader2 } from "lucide-react";
 import { BottomNav } from "@/components/public/BottomNav";
 import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { AvatarCropModal } from "@/components/public/AvatarCropModal";
@@ -22,6 +22,7 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+  const [lookingUpCep, setLookingUpCep] = useState(false);
 
   async function loadProfile() {
     setLoading(true);
@@ -202,15 +203,67 @@ export default function PerfilPage() {
     }
   }
 
+  const composeAddress = (value: CustomerProfile) =>
+    [
+      [value.street, value.address_number].filter(Boolean).join(", "),
+      value.complement,
+      value.neighborhood,
+      [value.city, value.state].filter(Boolean).join(" - "),
+      value.postal_code ? `CEP ${String(value.postal_code).replace(/\D/g, "").replace(/^(\d{5})(\d{3})$/, "$1-$2")}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+  async function lookupCep() {
+    if (!profile) return;
+    const digits = String(profile.postal_code || "").replace(/\D/g, "");
+    if (digits.length !== 8) {
+      setMessage("Informe um CEP com 8 números.");
+      return;
+    }
+
+    setLookingUpCep(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/cep/${digits}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "CEP não encontrado.");
+
+      setProfile((current) =>
+        current
+          ? {
+              ...current,
+              postal_code: digits,
+              street: data.street || current.street || "",
+              neighborhood: data.neighborhood || current.neighborhood || "",
+              city: data.city || current.city || "",
+              state: data.state || current.state || "",
+              complement: current.complement || data.complement || "",
+            }
+          : current
+      );
+      setMessage("CEP localizado. Confira o número e o complemento.");
+    } catch (err: any) {
+      setMessage(err?.message || "Não foi possível consultar o CEP.");
+    } finally {
+      setLookingUpCep(false);
+    }
+  }
+
   async function saveProfile() {
     if (!profile) return;
     setSaving(true);
     setMessage(null);
     try {
+      const updatedProfile = {
+        ...profile,
+        address: composeAddress(profile),
+      };
+
       const res = await fetch("/api/customer/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
+        body: JSON.stringify(updatedProfile),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Falha ao salvar perfil.");
@@ -403,14 +456,78 @@ export default function PerfilPage() {
                     <span className="text-[10px] font-bold uppercase text-[#7A6357]">WhatsApp</span>
                     <input value={profile.whatsapp} onChange={(e) => setProfile({ ...profile, whatsapp: e.target.value })} className="mt-1 w-full p-3 rounded-2xl border border-[#E8D9CB] text-sm" />
                   </label>
-                  <label className="block">
-                    <span className="text-[10px] font-bold uppercase text-[#7A6357]">Endereço completo</span>
-                    <textarea rows={2} value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} className="mt-1 w-full p-3 rounded-2xl border border-[#E8D9CB] text-sm" />
-                  </label>
-                  <label className="block">
-                    <span className="text-[10px] font-bold uppercase text-[#7A6357]">Ponto de referência</span>
-                    <input value={profile.reference_point} onChange={(e) => setProfile({ ...profile, reference_point: e.target.value })} className="mt-1 w-full p-3 rounded-2xl border border-[#E8D9CB] text-sm" />
-                  </label>
+                  <div className="deli-surface-soft border rounded-3xl p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <MapPin size={16} className="text-[#E05A36]" />
+                      <div>
+                        <div className="text-xs font-black text-[#3C1F15]">Endereço</div>
+                        <div className="text-[10px] text-[#8C7367]">Busque pelo CEP e complete os campos.</div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-[1fr_auto] gap-2">
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase text-[#7A6357]">CEP *</span>
+                        <input
+                          inputMode="numeric"
+                          value={profile.postal_code || ""}
+                          onChange={(e) => setProfile({ ...profile, postal_code: e.target.value.replace(/\D/g, "").slice(0, 8) })}
+                          onBlur={() => {
+                            if (String(profile.postal_code || "").replace(/\D/g, "").length === 8) lookupCep();
+                          }}
+                          placeholder="50761-080"
+                          className="deli-field mt-1 w-full p-3 rounded-2xl border text-sm"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={lookupCep}
+                        disabled={lookingUpCep}
+                        className="self-end h-[46px] px-4 rounded-2xl bg-[#3C1F15] text-white text-[10px] font-black flex items-center gap-1.5 disabled:opacity-60"
+                      >
+                        {lookingUpCep ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+                        BUSCAR
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-[1fr_100px] gap-2">
+                      <label className="block min-w-0">
+                        <span className="text-[10px] font-bold uppercase text-[#7A6357]">Rua / Avenida *</span>
+                        <input value={profile.street || ""} onChange={(e) => setProfile({ ...profile, street: e.target.value })} className="deli-field mt-1 w-full p-3 rounded-2xl border text-sm" />
+                      </label>
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase text-[#7A6357]">Número *</span>
+                        <input value={profile.address_number || ""} onChange={(e) => setProfile({ ...profile, address_number: e.target.value })} className="deli-field mt-1 w-full p-3 rounded-2xl border text-sm" />
+                      </label>
+                    </div>
+
+                    <label className="block">
+                      <span className="text-[10px] font-bold uppercase text-[#7A6357]">Complemento</span>
+                      <input value={profile.complement || ""} onChange={(e) => setProfile({ ...profile, complement: e.target.value })} placeholder="Apto, bloco, casa, sala..." className="deli-field mt-1 w-full p-3 rounded-2xl border text-sm" />
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase text-[#7A6357]">Bairro *</span>
+                        <input value={profile.neighborhood || ""} onChange={(e) => setProfile({ ...profile, neighborhood: e.target.value })} className="deli-field mt-1 w-full p-3 rounded-2xl border text-sm" />
+                      </label>
+                      <div className="grid grid-cols-[1fr_72px] gap-2">
+                        <label className="block min-w-0">
+                          <span className="text-[10px] font-bold uppercase text-[#7A6357]">Cidade *</span>
+                          <input value={profile.city || ""} onChange={(e) => setProfile({ ...profile, city: e.target.value })} className="deli-field mt-1 w-full p-3 rounded-2xl border text-sm" />
+                        </label>
+                        <label className="block">
+                          <span className="text-[10px] font-bold uppercase text-[#7A6357]">UF *</span>
+                          <input maxLength={2} value={profile.state || ""} onChange={(e) => setProfile({ ...profile, state: e.target.value.toUpperCase().slice(0, 2) })} className="deli-field mt-1 w-full p-3 rounded-2xl border text-sm uppercase" />
+                        </label>
+                      </div>
+                    </div>
+
+                    <label className="block">
+                      <span className="text-[10px] font-bold uppercase text-[#7A6357]">Ponto de referência *</span>
+                      <input value={profile.reference_point} onChange={(e) => setProfile({ ...profile, reference_point: e.target.value })} className="deli-field mt-1 w-full p-3 rounded-2xl border text-sm" />
+                    </label>
+                  </div>
 
                   {message && <div className="text-xs p-3 rounded-2xl bg-[#FFF4E8] text-[#7A4B36]">{message}</div>}
 
