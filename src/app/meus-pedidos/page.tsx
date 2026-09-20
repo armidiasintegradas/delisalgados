@@ -170,14 +170,15 @@ export default function MeusPedidosPage() {
   const statusLabels: Record<string, string> = {
     generated: "Solicitação gerada",
     contacted: "Cliente contatado",
-    confirmed: "Confirmado pela Deli",
-    preparing: "Em preparação",
-    completed: "Concluído",
+    confirmed: "Pedido recebido",
+    preparing: "Em andamento",
+    ready: "Pronto",
+    completed: "Finalizado",
     cancelled: "Cancelado",
   };
 
   const getCustomerStatusClasses = (status?: string) => {
-    if (status === "confirmed" || status === "preparing" || status === "completed") {
+    if (status === "confirmed" || status === "preparing" || status === "ready" || status === "completed") {
       return "bg-[#EAF7EE] text-[#1E7A45] border border-[#BFE7CC]";
     }
     if (status === "cancelled") {
@@ -254,7 +255,11 @@ export default function MeusPedidosPage() {
                         <div className="text-[10px] text-[#8C7367]">{new Date(order.created_at).toLocaleDateString("pt-BR")}</div>
                       </div>
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${getCustomerStatusClasses(order.status)}`}>
-                        {statusLabels[order.status] || order.status}
+                        {order.status === "ready"
+                          ? order.fulfillment_type === "pickup"
+                            ? "Pronto para retirada"
+                            : "Pronto para entrega"
+                          : statusLabels[order.status] || order.status}
                       </span>
                     </div>
                     <div className="rounded-2xl deli-surface-soft border overflow-hidden">
@@ -398,7 +403,11 @@ export default function MeusPedidosPage() {
                 </div>
               </div>
               <span className={`px-3 py-1 rounded-full text-xs font-bold ${getCustomerStatusClasses(searchedOrder.status)}`}>
-                {statusLabels[searchedOrder.status] || searchedOrder.status}
+                {searchedOrder.status === "ready"
+                  ? searchedOrder.fulfillment_type === "pickup"
+                    ? "Pronto para retirada"
+                    : "Pronto para entrega"
+                  : statusLabels[searchedOrder.status] || searchedOrder.status}
               </span>
             </div>
 
