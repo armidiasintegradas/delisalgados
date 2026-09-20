@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, User, Phone, MapPin, LogOut, ShoppingBag, Save } from "lucide-react";
+import { ArrowLeft, Mail, User, LogOut, ShoppingBag, Save, Camera, Trash2 } from "lucide-react";
 import { BottomNav } from "@/components/public/BottomNav";
 import { createClient } from "@/lib/supabase/client";
 import { CustomerProfile } from "@/types";
@@ -15,6 +15,7 @@ export default function PerfilPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   async function loadProfile() {
     setLoading(true);
@@ -53,6 +54,100 @@ export default function PerfilPage() {
       setMessage(err?.message || "Não foi possível enviar o link de acesso.");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function uploadAvatar(file: File) {
+    if (!profile) return;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setMessage("Use uma imagem JPG, PNG ou WebP.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage("A foto deve ter no máximo 2 MB.");
+      return;
+    }
+
+    const client = createClient();
+    if (!client) {
+      setMessage("Upload de foto indisponível.");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setMessage(null);
+
+    try {
+      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      const path = `${profile.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await client.storage
+        .from("customer-avatars")
+        .upload(path, file, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: file.type,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = client.storage.from("customer-avatars").getPublicUrl(path);
+      const avatarUrl = `${data.publicUrl}?v=${Date.now()}`;
+
+      const updatedProfile = { ...profile, avatar_url: avatarUrl };
+      setProfile(updatedProfile);
+
+      const res = await fetch("/api/customer/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedProfile),
+      });
+      const saved = await res.json();
+      if (!res.ok) throw new Error(saved.error || "Falha ao salvar a foto.");
+
+      setProfile(saved.profile);
+      setMessage("Foto de perfil atualizada.");
+    } catch (err: any) {
+      setMessage(err?.message || "Não foi possível enviar a foto.");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
+  async function removeAvatar() {
+    if (!profile?.avatar_url) return;
+
+    const client = createClient();
+    if (!client) return;
+
+    setUploadingAvatar(true);
+    setMessage(null);
+
+    try {
+      const extMatch = profile.avatar_url.match(/avatar\.(jpg|png|webp)/);
+      if (extMatch) {
+        await client.storage
+          .from("customer-avatars")
+          .remove([`${profile.id}/avatar.${extMatch[1]}`]);
+      }
+
+      const updatedProfile = { ...profile, avatar_url: null };
+      const res = await fetch("/api/customer/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedProfile),
+      });
+      const saved = await res.json();
+      if (!res.ok) throw new Error(saved.error || "Falha ao remover foto.");
+
+      setProfile(saved.profile);
+      setMessage("Foto de perfil removida.");
+    } catch (err: any) {
+      setMessage(err?.message || "Não foi possível remover a foto.");
+    } finally {
+      setUploadingAvatar(false);
     }
   }
 
@@ -139,15 +234,61 @@ export default function PerfilPage() {
         ) : (
           <div className="space-y-4">
             <div className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-black text-[#3C1F15]">Seus dados</h2>
-                  <p className="text-[11px] text-[#7A6357]">{profile?.email}</p>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative shrink-0">
+                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#F0D5BE] bg-[#FFF0E2] flex items-center justify-center">
+                      {profile?.avatar_url ? (
+                        <img
+                          src={profile.avatar_url}
+                          alt="Foto de perfil"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User size={30} className="text-[#E05A36]" />
+                      )}
+                    </div>
+                    <label className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-[#E05A36] text-white flex items-center justify-center border-2 border-white shadow cursor-pointer">
+                      <Camera size={16} />
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        disabled={uploadingAvatar}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) uploadAvatar(file);
+                          e.currentTarget.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-black text-[#3C1F15]">Seus dados</h2>
+                    <p className="text-[11px] text-[#7A6357] truncate">{profile?.email}</p>
+                    <p className="text-[10px] text-[#9E8679] mt-1">
+                      {uploadingAvatar ? "Atualizando foto..." : "Toque na câmera para escolher uma foto"}
+                    </p>
+                  </div>
                 </div>
-                <button onClick={signOut} className="p-2 rounded-xl border border-[#EBDCCF] text-[#7A6357]" aria-label="Sair">
+
+                <button onClick={signOut} className="p-2 rounded-xl border border-[#EBDCCF] text-[#7A6357] shrink-0" aria-label="Sair">
                   <LogOut size={16} />
                 </button>
               </div>
+
+              {profile?.avatar_url && (
+                <button
+                  type="button"
+                  onClick={removeAvatar}
+                  disabled={uploadingAvatar}
+                  className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#C04220] disabled:opacity-50"
+                >
+                  <Trash2 size={13} />
+                  Remover foto
+                </button>
+              )
 
               {profile && (
                 <div className="space-y-3">
