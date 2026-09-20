@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Mail, User, LogOut, ShoppingBag, Save, Camera, Trash2 } from "lucide-react";
 import { BottomNav } from "@/components/public/BottomNav";
+import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { createClient } from "@/lib/supabase/client";
 import { CustomerProfile } from "@/types";
 import { getFirstName } from "@/lib/formatters";
@@ -234,6 +235,7 @@ export default function PerfilPage() {
           </form>
         ) : (
           <div className="space-y-4">
+            <CustomerGreeting />
             <div className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -266,9 +268,7 @@ export default function PerfilPage() {
                   </div>
 
                   <div className="min-w-0">
-                    <h2 className="text-lg font-black text-[#3C1F15]">
-                      Olá, {getFirstName(profile?.full_name)}!
-                    </h2>
+                    <h2 className="text-lg font-black text-[#3C1F15]">Seu perfil Deli</h2>
                     <p className="text-[11px] text-[#7A6357] truncate">{profile?.email}</p>
                     <p className="text-[10px] text-[#9E8679] mt-1">
                       {uploadingAvatar ? "Atualizando foto..." : "Toque na câmera para escolher uma foto"}
