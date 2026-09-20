@@ -95,6 +95,8 @@ export interface Order {
   payment_provider?: string | null;
   payment_reference?: string | null;
   payment_confirmed_at?: string | null;
+  payment_reported_at?: string | null;
+  payment_reported_amount?: number | null;
   delivery_provider?: DeliveryProvider | null;
   delivery_quote_amount?: number | null;
   delivery_quote_currency?: string | null;
