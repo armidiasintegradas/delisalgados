@@ -32,6 +32,13 @@ export async function POST(request: Request) {
     const referencePoint = String(customer.referencePoint || "").trim();
     const desiredDate = String(customer.desiredDate || "").trim();
     const fulfillmentType = String(customer.fulfillmentType || "").trim();
+    const postalCode = String(customer.postalCode || "").replace(/\D/g, "").trim();
+    const street = String(customer.street || "").trim();
+    const addressNumber = String(customer.addressNumber || "").trim();
+    const complement = String(customer.complement || "").trim();
+    const neighborhood = String(customer.neighborhood || "").trim();
+    const city = String(customer.city || "").trim();
+    const state = String(customer.state || "").trim().toUpperCase();
 
     // Registration data are mandatory for the first order and remain required thereafter.
     if (
@@ -43,7 +50,13 @@ export async function POST(request: Request) {
       !deliveryAddress ||
       !referencePoint ||
       !desiredDate ||
-      !fulfillmentType
+      !fulfillmentType ||
+      postalCode.length !== 8 ||
+      !street ||
+      !addressNumber ||
+      !neighborhood ||
+      !city ||
+      !state
     ) {
       return NextResponse.json(
         { error: "Preencha todos os dados obrigatórios do cadastro antes de continuar.", code: "CUSTOMER_DATA_REQUIRED" },
@@ -114,6 +127,45 @@ export async function POST(request: Request) {
       paymentPlan: paymentPlan === "full" ? "full" : "deposit_50"
     });
     const { handoffToken, ...orderData } = result;
+
+    if (supabaseServer && orderData?.id) {
+      const addressSnapshot = {
+        customer_postal_code: postalCode,
+        customer_street: street,
+        customer_address_number: addressNumber,
+        customer_complement: complement || null,
+        customer_neighborhood: neighborhood,
+        customer_city: city,
+        customer_state: state,
+      };
+
+      await supabaseServer
+        .from("orders")
+        .update(addressSnapshot)
+        .eq("id", orderData.id);
+
+      if (user?.id) {
+        await supabaseServer.from("customer_profiles").upsert(
+          {
+            id: user.id,
+            email: customerEmail,
+            full_name: customerName,
+            whatsapp: customerPhone,
+            address: deliveryAddress,
+            postal_code: postalCode,
+            street,
+            address_number: addressNumber,
+            complement: complement || null,
+            neighborhood,
+            city,
+            state,
+            reference_point: referencePoint,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
+      }
+    }
 
     return NextResponse.json(
       {
