@@ -20,7 +20,7 @@ import {
   Layers,
   UploadCloud,
 } from "lucide-react";
-import { Product, Category, ProductVariant, PriceType, Availability, PreparationType } from "@/types";
+import { Product, Category, ProductVariant, ProductImage, PriceType, Availability, PreparationType } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_FLAVOR_QUANTITY, MIN_ORDER_UNITS } from "@/lib/orderRules";
 
@@ -44,7 +44,20 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [slug, setSlug] = useState(initialProduct?.slug || "");
   const [description, setDescription] = useState(initialProduct?.description || "");
   const [internalNotes, setInternalNotes] = useState(initialProduct?.note || "");
-  const [imageUrl, setImageUrl] = useState(initialProduct?.image_url || "");
+  const initialImages: ProductImage[] =
+    initialProduct?.images && initialProduct.images.length > 0
+      ? [...initialProduct.images].sort((a, b) => a.sort_order - b.sort_order)
+      : initialProduct?.image_url
+        ? [{
+            id: `legacy-${initialProduct.id}`,
+            product_id: initialProduct.id,
+            image_url: initialProduct.image_url,
+            sort_order: 1,
+            is_primary: true,
+          }]
+        : [];
+  const [images, setImages] = useState<ProductImage[]>(initialImages);
+  const [imageUrl, setImageUrl] = useState(initialImages[0]?.image_url || "");
   const [preparationType, setPreparationType] = useState<PreparationType | "">(
     initialProduct?.preparation_type || ""
   );
@@ -122,8 +135,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     setIsDraggingImage(false);
 
     if (isUploadingImage) return;
-    const file = validateImageFile(event.dataTransfer.files?.[0]);
-    if (file) handleImageUpload(file);
+    const files = Array.from(event.dataTransfer.files || []).slice(0, 6 - images.length);
+    if (files.length) handleImageFiles(files);
   };
 
   const handleImageDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -143,78 +156,134 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const handleImageUpload = async (file?: File | null) => {
+  const handleImageUpload = async (file?: File | null): Promise<ProductImage | null> => {
     const validFile = validateImageFile(file);
-    if (!validFile) return;
+    if (!validFile) return null;
+
+    const form = new FormData();
+    form.append("file", validFile);
+    form.append("productId", initialProduct?.id || "novo");
+    form.append("slug", slug || name || "produto");
+
+    const res = await fetch("/api/admin/products/image", {
+      method: "POST",
+      body: form,
+    });
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      throw new Error(data.error || "Falha ao enviar imagem.");
+    }
+
+    return {
+      id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `temp-${Date.now()}`,
+      product_id: initialProduct?.id || "",
+      image_url: data.publicUrl,
+      sort_order: images.length + 1,
+      is_primary: images.length === 0,
+    };
+  };
+
+  const handleImageFiles = async (files: File[]) => {
+    const remaining = Math.max(0, 6 - images.length);
+    const selected = files.slice(0, remaining);
+
+    if (selected.length === 0) {
+      setErrorMessage("Este produto já possui o limite de 6 imagens.");
+      return;
+    }
+
     setErrorMessage(null);
     setIsUploadingImage(true);
 
     try {
-      const form = new FormData();
-      form.append("file", validFile);
-      form.append("productId", initialProduct?.id || "novo");
-      form.append("slug", slug || name || "produto");
+      const uploaded: ProductImage[] = [];
 
-      const res = await fetch("/api/admin/products/image", {
-        method: "POST",
-        body: form,
-      });
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "Falha ao enviar imagem.");
+      for (const file of selected) {
+        const image = await handleImageUpload(file);
+        if (image) uploaded.push(image);
       }
 
-      setImageUrl(data.publicUrl);
-      setSuccessMessage("Imagem enviada. Salve o produto para vincular a foto ao cadastro.");
+      if (uploaded.length > 0) {
+        setImages((current) => {
+          const next = [...current, ...uploaded].slice(0, 6).map((image, index) => ({
+            ...image,
+            sort_order: index + 1,
+            is_primary: index === 0,
+          }));
+          setImageUrl(next[0]?.image_url || "");
+          return next;
+        });
+
+        setSuccessMessage(
+          uploaded.length === 1
+            ? "Imagem adicionada à galeria. Salve o produto."
+            : `${uploaded.length} imagens adicionadas à galeria. Salve o produto.`
+        );
+      }
     } catch (err: any) {
-      setErrorMessage(err?.message || "Falha ao enviar imagem.");
+      setErrorMessage(err?.message || "Falha ao enviar imagens.");
     } finally {
       setIsUploadingImage(false);
     }
   };
 
-  const handleRemoveImage = async () => {
-    if (!imageUrl) return;
+  const setPrimaryImage = (index: number) => {
+    setImages((current) => {
+      const selected = current[index];
+      if (!selected) return current;
+      const next = [
+        selected,
+        ...current.filter((_, currentIndex) => currentIndex !== index),
+      ].map((image, imageIndex) => ({
+        ...image,
+        sort_order: imageIndex + 1,
+        is_primary: imageIndex === 0,
+      }));
+      setImageUrl(next[0]?.image_url || "");
+      return next;
+    });
+  };
+
+  const moveImage = (index: number, direction: -1 | 1) => {
+    setImages((current) => {
+      const target = index + direction;
+      if (target < 0 || target >= current.length) return current;
+      const next = [...current];
+      [next[index], next[target]] = [next[target], next[index]];
+      const normalized = next.map((image, imageIndex) => ({
+        ...image,
+        sort_order: imageIndex + 1,
+        is_primary: imageIndex === 0,
+      }));
+      setImageUrl(normalized[0]?.image_url || "");
+      return normalized;
+    });
+  };
+
+  const handleRemoveGalleryImage = (index: number) => {
+    const image = images[index];
+    if (!image) return;
 
     const confirmed = window.confirm(
-      "Remover a imagem deste produto? O cardápio passará a exibir o item sem foto."
+      index === 0
+        ? "Remover a imagem principal? A próxima imagem passará a ser a capa do produto."
+        : "Remover esta imagem da galeria?"
     );
     if (!confirmed) return;
 
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    // Unsaved products only need the local preview cleared.
-    if (isNew || !initialProduct?.id) {
-      setImageUrl("");
-      setSuccessMessage("Imagem removida do cadastro.");
-      return;
-    }
-
-    setIsUploadingImage(true);
-    try {
-      const res = await fetch("/api/admin/products/image", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: initialProduct.id,
-          imageUrl,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "Falha ao remover imagem.");
-      }
-
-      setImageUrl("");
-      setSuccessMessage("Imagem removida do produto e do cardápio.");
-    } catch (err: any) {
-      setErrorMessage(err?.message || "Não foi possível remover a imagem.");
-    } finally {
-      setIsUploadingImage(false);
-    }
+    setImages((current) => {
+      const next = current
+        .filter((_, currentIndex) => currentIndex !== index)
+        .map((entry, imageIndex) => ({
+          ...entry,
+          sort_order: imageIndex + 1,
+          is_primary: imageIndex === 0,
+        }));
+      setImageUrl(next[0]?.image_url || "");
+      return next;
+    });
+    setSuccessMessage("Imagem removida da galeria. Salve o produto para confirmar.");
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -246,9 +315,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       availability,
       is_visible: isVisible,
       preparation_type: preparationType,
-      image_url: imageUrl.trim() || null,
+      image_url: images[0]?.image_url || null,
       sort_order: Number(displayOrder),
       variants,
+      images,
     };
 
     try {
