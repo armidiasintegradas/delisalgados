@@ -29,6 +29,31 @@ export async function PATCH(request: Request, context: { params: Promise<{ code:
   try {
     const { code } = await context.params;
     const body = await request.json();
+
+    const allowedStatuses = new Set([
+      "generated",
+      "contacted",
+      "confirmed",
+      "preparing",
+      "ready",
+      "completed",
+      "cancelled",
+    ]);
+    const allowedPaymentStatuses = new Set([
+      "pending",
+      "partially_paid",
+      "paid",
+      "failed",
+      "refunded",
+    ]);
+
+    if (body.status && !allowedStatuses.has(body.status)) {
+      return NextResponse.json({ error: "Status do pedido inválido." }, { status: 400 });
+    }
+    if (body.payment_status && !allowedPaymentStatuses.has(body.payment_status)) {
+      return NextResponse.json({ error: "Status de pagamento inválido." }, { status: 400 });
+    }
+
     const order = await DbService.getOrderByCode(code);
     if (!order) {
       return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
@@ -36,12 +61,12 @@ export async function PATCH(request: Request, context: { params: Promise<{ code:
 
     if (body.status) {
       if (
-        (body.status === "confirmed" || body.status === "preparing") &&
+        (body.status === "confirmed" || body.status === "preparing" || body.status === "ready") &&
         order.payment_status !== "paid" &&
         order.payment_status !== "partially_paid"
       ) {
         return NextResponse.json(
-          { error: "Confirme o recebimento do Pix antes de confirmar ou preparar o pedido." },
+          { error: "Confirme o recebimento do Pix antes de receber, preparar ou liberar o pedido." },
           { status: 409 }
         );
       }
