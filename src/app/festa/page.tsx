@@ -212,7 +212,7 @@ export default function FestaPage() {
             <div className="bg-white rounded-3xl border border-[#EAD8C7] p-4 lg:p-5 space-y-4">
               <div className="flex items-center gap-2">
                 <Calculator size={18} className="text-[#E05A36]" />
-                <h2 className="font-black text-[#3C1F15]">1. Conte sua festa</h2>
+                <h2 className="font-black text-[#3C1F15]">1. Monte sua Festa</h2>
               </div>
 
               <label className="block space-y-1.5">
