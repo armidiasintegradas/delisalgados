@@ -64,3 +64,40 @@ export async function PATCH(request: Request, context: { params: Promise<{ code:
   }
 }
 
+
+
+export async function DELETE(request: Request, context: { params: Promise<{ code: string }> }) {
+  const auth = await verifyAdminSession(request);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { error: auth.error || "Acesso restrito a administradores." },
+      { status: auth.status }
+    );
+  }
+
+  try {
+    const { code } = await context.params;
+    const order = await DbService.getOrderByCode(code);
+    if (!order) {
+      return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
+    }
+
+    const deleted = await DbService.deleteOrder(order.id);
+    if (!deleted) {
+      return NextResponse.json(
+        { error: "Não foi possível excluir o pedido." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      deleted_code: order.public_code,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || "Erro ao excluir pedido" },
+      { status: 500 }
+    );
+  }
+}
