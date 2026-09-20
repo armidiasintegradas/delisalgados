@@ -79,6 +79,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ code:
     }
 
     if (body.payment_status) {
+      if (!validPaymentStatuses.has(body.payment_status)) {
+        return NextResponse.json({ error: "Status de pagamento inválido." }, { status: 400 });
+      }
       await DbService.updateOrderPaymentStatus(order.id, body.payment_status);
     }
 
