@@ -160,7 +160,7 @@ export default function CheckoutPage() {
 
       // Note: Cart is NOT cleared here. It remains intact until the handoff page confirms loading.
       const tokenParam = data.handoffToken ? `&t=${encodeURIComponent(data.handoffToken)}` : "";
-      router.push(`/pedido/enviado?code=${encodeURIComponent(data.order.public_code)}${tokenParam}`);
+      router.push(`/pedido/pagamento?code=${encodeURIComponent(data.order.public_code)}${tokenParam}`);
     } catch (err: any) {
       setErrorMessage(err.message || "Não foi possível registrar seu pedido agora. Seus itens continuam no carrinho. Tente novamente em instantes.");
       setIsSubmitting(false);
