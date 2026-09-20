@@ -5,6 +5,7 @@ import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { Product, ProductVariant, PreparationType } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import { useCart } from "@/lib/cartContext";
+import { MIN_FLAVOR_QUANTITY, quantityStep } from "@/lib/orderRules";
 
 interface ProductModalProps {
   product: Product | null;
@@ -19,7 +20,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 }) => {
   const { addItem } = useCart();
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-  const [quantity, setQuantity] = useState(100);
+  const [quantity, setQuantity] = useState(MIN_FLAVOR_QUANTITY);
   const [note, setNote] = useState("");
 
   const isVariants = product?.price_type === "variants";
@@ -57,7 +58,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const unitLabel = selectedVariant
     ? selectedVariant.unit_label
     : product.unit_label;
-  const step = minQty >= 100 ? 100 : 1;
+  const step = quantityStep(minQty, unitLabel);
 
   const subtotal = Number((unitPrice * quantity).toFixed(2));
 
