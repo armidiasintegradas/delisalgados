@@ -10,12 +10,14 @@ interface ProductCardProps {
   product: Product;
   onOpenOptions: (product: Product) => void;
   showPrices?: boolean;
+  isBestSeller?: boolean;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onOpenOptions,
   showPrices = true,
+  isBestSeller = false,
 }) => {
   const { addItem, items } = useCart();
   const [justAdded, setJustAdded] = useState(false);
@@ -91,6 +93,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       )}
 
       <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+          {isBestSeller && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#3C1F15] text-white text-[9px] font-extrabold uppercase tracking-wide">
+              Mais vendido
+            </span>
+          )}
+          {product.is_promotion && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#E05A36] text-white text-[9px] font-extrabold uppercase tracking-wide">
+              Promoção
+            </span>
+          )}
+        </div>
+
         <h3 className="text-[16px] font-bold text-[#3C1F15] tracking-tight group-hover:text-[#E05A36] transition-colors leading-snug">
           {product.name}
         </h3>
