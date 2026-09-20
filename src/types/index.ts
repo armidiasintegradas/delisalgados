@@ -5,6 +5,8 @@ export type FulfillmentType = 'pickup' | 'delivery' | 'to_agree';
 export type OrderStatus = 'generated' | 'contacted' | 'confirmed' | 'preparing' | 'completed' | 'cancelled';
 export type PaymentPlan = 'deposit_50' | 'full';
 export type PaymentStatus = 'pending' | 'partially_paid' | 'paid' | 'failed' | 'refunded';
+export type DeliveryProvider = 'uber' | '99' | 'indrive' | 'customer_choice';
+export type DeliveryQuoteStatus = 'available' | 'external' | 'unavailable' | 'error';
 
 export interface Category {
   id: string;
@@ -93,6 +95,12 @@ export interface Order {
   payment_provider?: string | null;
   payment_reference?: string | null;
   payment_confirmed_at?: string | null;
+  delivery_provider?: DeliveryProvider | null;
+  delivery_quote_amount?: number | null;
+  delivery_quote_currency?: string | null;
+  delivery_quote_id?: string | null;
+  delivery_quote_expires_at?: string | null;
+  delivery_eta_minutes?: number | null;
   handoff_token_hash?: string | null;
   handoff_token_expires_at?: string | null;
   created_at: string;
@@ -156,4 +164,18 @@ export interface CustomerProfile {
   reference_point: string;
   created_at?: string;
   updated_at?: string;
+}
+
+
+export interface DeliveryQuoteOption {
+  provider: DeliveryProvider;
+  provider_label: string;
+  status: DeliveryQuoteStatus;
+  price: number | null;
+  currency: string;
+  eta_minutes: number | null;
+  quote_id: string | null;
+  expires_at: string | null;
+  action_url?: string | null;
+  note?: string | null;
 }
