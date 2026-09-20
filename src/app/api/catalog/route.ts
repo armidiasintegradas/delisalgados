@@ -38,7 +38,10 @@ export async function GET(request: Request) {
 
         enrichedProducts = products.map((product) => ({
           ...product,
-          sales_count: salesMap.get(product.id) || 0,
+          sales_count:
+            product.slug === "produto-teste-pix" || product.unit_label === "TESTE"
+              ? 0
+              : salesMap.get(product.id) || 0,
         }));
       }
     }
