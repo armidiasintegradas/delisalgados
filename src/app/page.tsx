@@ -6,6 +6,7 @@ import { CategoryRail } from "@/components/public/CategoryRail";
 import { ProductCard } from "@/components/public/ProductCard";
 import { ProductModal } from "@/components/public/ProductModal";
 import { FloatingCartBar } from "@/components/public/FloatingCartBar";
+import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { BottomNav } from "@/components/public/BottomNav";
 import { SplashScreen } from "@/components/public/SplashScreen";
 import { Category, Product, Settings } from "@/types";
@@ -240,6 +241,7 @@ export default function CatalogPage() {
       <div className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-4 lg:px-8 pt-3 flex-1 flex flex-col lg:flex-row lg:items-start lg:gap-8">
         {/* Left: Main Content Area (~880px on desktop) */}
         <main className="w-full lg:flex-1 lg:max-w-[880px] min-w-0">
+          <CustomerGreeting className="mb-4" />
           <div className="mb-3 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-2 min-w-max py-1">
               {[
