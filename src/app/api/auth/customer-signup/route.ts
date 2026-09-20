@@ -90,11 +90,10 @@ export async function POST(request: Request) {
       !addressNumber ||
       !neighborhood ||
       !city ||
-      state.length !== 2 ||
-      !referencePoint
+      state.length !== 2
     ) {
       return NextResponse.json(
-        { error: "Complete CEP, rua, número, bairro, cidade, UF e ponto de referência." },
+        { error: "Complete CEP, rua, número, bairro, cidade e UF." },
         { status: 400 }
       );
     }
@@ -135,7 +134,7 @@ export async function POST(request: Request) {
       neighborhood,
       city,
       state,
-      reference_point: referencePoint,
+      reference_point: referencePoint || null,
       avatar_url: null,
       updated_at: new Date().toISOString(),
     };
