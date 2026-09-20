@@ -91,6 +91,34 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Preencha todos os dados obrigatórios." }, { status: 400 });
   }
 
+  const phoneDigits = profile.whatsapp.replace(/\D/g, "");
+  if (phoneDigits.length < 10) {
+    return NextResponse.json({ error: "Informe um WhatsApp válido." }, { status: 400 });
+  }
+
+  // Do not allow a second customer account to reuse an existing e-mail or WhatsApp.
+  const { data: otherProfiles } = await supabaseServer
+    .from("customer_profiles")
+    .select("id,email,whatsapp")
+    .neq("id", user.id);
+
+  const identityConflict = (otherProfiles || []).some((other: any) => {
+    const sameEmail = String(other.email || "").trim().toLowerCase() === profile.email;
+    const samePhone =
+      String(other.whatsapp || "").replace(/\D/g, "") === phoneDigits;
+    return sameEmail || samePhone;
+  });
+
+  if (identityConflict) {
+    return NextResponse.json(
+      {
+        error: "Este e-mail ou WhatsApp já está cadastrado em outra conta Deli.",
+        code: "CUSTOMER_IDENTITY_CONFLICT",
+      },
+      { status: 409 }
+    );
+  }
+
   const { data, error } = await supabaseServer
     .from("customer_profiles")
     .upsert(profile, { onConflict: "id" })
@@ -98,6 +126,15 @@ export async function PUT(request: Request) {
     .single();
 
   if (error) {
+    if (error.code === "23505") {
+      return NextResponse.json(
+        {
+          error: "Este e-mail ou WhatsApp já está cadastrado em outra conta Deli.",
+          code: "CUSTOMER_IDENTITY_CONFLICT",
+        },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
