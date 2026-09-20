@@ -113,7 +113,7 @@ export default function FestaPage() {
   const [comboMode, setComboMode] = useState<ComboMode>("balanced");
   const [added, setAdded] = useState(false);
 
-  const { addItem, customerData } = useCart();
+  const { addItem, customerData, setCustomerData } = useCart();
 
   useEffect(() => {
     fetch("/api/catalog", { cache: "no-store" })
@@ -164,9 +164,14 @@ export default function FestaPage() {
         : "Combo Equilibrado";
 
   const customerFirstName = getFirstName(customerData.customerName);
+  const hasCustomerName = Boolean(customerData.customerName.trim());
+  const intro = hasCustomerName
+    ? `Olá, Deli Salgados! Meu nome é ${customerFirstName}.`
+    : "Olá, Deli Salgados!";
+
   const whatsappMessage = combo.length
-    ? `Olá, Deli Salgados! Meu nome é ${customerFirstName}. Montei uma sugestão para minha festa no cardápio digital. São ${guestCount} convidados e a calculadora sugeriu ${recommendedUnits} salgados, no perfil "${comboTitle}", estimado em ${formatCurrency(comboTotal)}. Gostaria de confirmar a disponibilidade e ajustar o combo.`
-    : `Olá, Deli Salgados! Meu nome é ${customerFirstName}. Gostaria de ajuda para montar um combo para minha festa.`;
+    ? `${intro} Montei uma sugestão para minha festa no cardápio digital. São ${guestCount} convidados e a calculadora sugeriu ${recommendedUnits} salgados, no perfil "${comboTitle}", estimado em ${formatCurrency(comboTotal)}. Gostaria de confirmar a disponibilidade e ajustar o combo.`
+    : `${intro} Gostaria de ajuda para montar um combo para minha festa.`;
 
   const whatsappUrl = settings?.whatsapp_number
     ? buildWhatsAppLink(settings.whatsapp_number, whatsappMessage)
@@ -209,6 +214,21 @@ export default function FestaPage() {
                 <Calculator size={18} className="text-[#E05A36]" />
                 <h2 className="font-black text-[#3C1F15]">1. Conte sua festa</h2>
               </div>
+
+              <label className="block space-y-1.5">
+                <span className="text-[11px] font-black uppercase tracking-wide text-[#7A6357]">
+                  Seu nome
+                </span>
+                <input
+                  type="text"
+                  value={customerData.customerName}
+                  onChange={(e) =>
+                    setCustomerData((prev) => ({ ...prev, customerName: e.target.value }))
+                  }
+                  placeholder="Ex: Alessandre Ribeiro"
+                  className="w-full h-12 rounded-2xl border border-[#EAD8C7] bg-[#FFFDF9] px-4 text-base font-bold text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
+                />
+              </label>
 
               <div className="grid grid-cols-2 gap-3">
                 <label className="space-y-1.5">
