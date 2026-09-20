@@ -147,9 +147,19 @@ export default function MeusPedidosPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="pt-2 border-t border-[#F0E2D4] flex justify-between text-xs font-bold">
-                      <span>Total</span>
-                      <span className="text-[#E05A36]">{formatCurrency(order.total)}</span>
+                    <div className="pt-2 border-t border-[#F0E2D4] space-y-1 text-xs">
+                      <div className="flex justify-between font-bold">
+                        <span>Total</span>
+                        <span className="text-[#E05A36]">{formatCurrency(order.total)}</span>
+                      </div>
+                      <div className="flex justify-between text-[10px] text-[#7A6357]">
+                        <span>{order.payment_plan === "full" ? "Pagamento integral" : "Entrada de 50%"}</span>
+                        <strong>{formatCurrency(order.amount_due_now ?? order.total)}</strong>
+                      </div>
+                      <div className="flex justify-between text-[10px] text-[#7A6357]">
+                        <span>Saldo na entrega</span>
+                        <strong>{formatCurrency(order.balance_due ?? 0)}</strong>
+                      </div>
                     </div>
                   </div>
                 ))}
