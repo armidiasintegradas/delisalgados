@@ -17,14 +17,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Informe um e-mail válido." }, { status: 400 });
     }
 
-    const { data: profile } = await supabaseServer
-      .from("customer_profiles")
-      .select("id,email")
-      .eq("email", email)
-      .maybeSingle();
+    // A customer may already exist in Auth and have orders before a
+    // customer_profiles row is created. Password recovery must therefore not
+    // depend on the profile table.
+    const [{ data: profile }, { data: order }] = await Promise.all([
+      supabaseServer
+        .from("customer_profiles")
+        .select("id,email")
+        .eq("email", email)
+        .maybeSingle(),
+      supabaseServer
+        .from("orders")
+        .select("id,customer_email")
+        .eq("customer_email", email)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
-    // Keep response neutral for unknown e-mails.
-    if (!profile) {
+    // Keep response neutral for truly unknown e-mails.
+    if (!profile && !order) {
       return NextResponse.json({
         success: true,
         message: "Se este e-mail estiver cadastrado, enviaremos um link de redefinição.",
