@@ -8,6 +8,7 @@ import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { AvatarCropModal } from "@/components/public/AvatarCropModal";
 import { createClient } from "@/lib/supabase/client";
 import { CustomerProfile } from "@/types";
+import { PublicFooter } from "@/components/public/PublicFooter";
 
 export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
@@ -443,6 +444,7 @@ export default function PerfilPage() {
         />
       )}
 
+      <PublicFooter />
       <BottomNav />
     </div>
   );
