@@ -17,6 +17,7 @@ import { Order, Settings } from "@/types";
 import { formatCurrency, getFirstName } from "@/lib/formatters";
 import { buildPixPayload } from "@/lib/pix";
 import { PaymentSuccessModal } from "@/components/public/PaymentSuccessModal";
+import { PublicFooter } from "@/components/public/PublicFooter";
 
 function PaymentContent() {
   const searchParams = useSearchParams();
@@ -446,6 +447,7 @@ function PaymentContent() {
           </Link>
         </aside>
       </main>
+      <PublicFooter />
       {showSuccessModal && (
         <PaymentSuccessModal
           firstName={firstName}
