@@ -233,7 +233,7 @@ function PaymentContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex items-center justify-center p-4">
-        <div className="bg-[#FFFDF6] rounded-3xl p-8 border border-[#EAD8C7] text-center space-y-3">
+        <div className="deli-surface rounded-3xl p-8 border border-[#EAD8C7] text-center space-y-3">
           <RefreshCw size={24} className="mx-auto animate-spin text-[#E05A36]" />
           <p className="text-xs font-bold text-[#7A6357]">Preparando pagamento...</p>
         </div>
@@ -244,7 +244,7 @@ function PaymentContent() {
   if (error || !order) {
     return (
       <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex items-center justify-center p-4">
-        <div className="bg-[#FFFDF6] rounded-3xl p-7 max-w-md w-full border border-[#EAD8C7] text-center space-y-4">
+        <div className="deli-surface rounded-3xl p-7 max-w-md w-full border border-[#EAD8C7] text-center space-y-4">
           <AlertCircle size={28} className="mx-auto text-[#C04220]" />
           <h1 className="font-display text-lg font-black text-[#3C1F15]">Pagamento indisponível</h1>
           <p className="text-xs text-[#7A6357]">{error}</p>
@@ -278,7 +278,7 @@ function PaymentContent() {
       </header>
 
       <main className="w-full max-w-[920px] mx-auto p-4 lg:p-8 grid lg:grid-cols-[1fr_360px] landscape-order-layout gap-5 items-start">
-        <section className="bg-[#FFFDF6] rounded-3xl border border-[#EAD8C7] p-5 lg:p-6 space-y-5 shadow-sm">
+        <section className="deli-surface rounded-3xl border border-[#EAD8C7] p-5 lg:p-6 space-y-5 shadow-sm">
           <div>
             <span className="text-[10px] font-black uppercase tracking-wider text-[#8C7367]">Plano escolhido</span>
             <h2 className="font-display text-xl font-black text-[#3C1F15] mt-1">
@@ -292,11 +292,11 @@ function PaymentContent() {
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <div className="p-3 rounded-2xl bg-white border border-[#F0E2D2] text-center">
+            <div className="deli-surface-soft p-3 rounded-2xl border text-center">
               <div className="text-[9px] uppercase font-bold text-[#9E8679]">Total</div>
               <div className="text-sm font-black text-[#3C1F15]">{formatCurrency(order.total)}</div>
             </div>
-            <div className="p-3 rounded-2xl bg-[#FFF4E8] border border-[#F0D5BE] text-center">
+            <div className="deli-surface-soft p-3 rounded-2xl border text-center">
               <div className="text-[9px] uppercase font-bold text-[#9E8679]">Pagar agora</div>
               <div className="text-sm font-black text-[#E05A36]">{formatCurrency(dueNow)}</div>
             </div>
@@ -307,7 +307,7 @@ function PaymentContent() {
           </div>
 
           {order.fulfillment_type === "delivery" && (
-            <div className="p-4 rounded-3xl bg-[#FFF8EE] border border-[#F0D5BE] space-y-2">
+            <div className="deli-surface p-4 rounded-3xl border space-y-2">
               <div className="text-[10px] uppercase font-black tracking-wider text-[#8C7367]">
                 Entrega
               </div>
@@ -340,7 +340,7 @@ function PaymentContent() {
                 <p className="text-[10px] text-[#7A6357] mt-1">Escaneie o QR Code ou use o Pix Copia e Cola.</p>
               </div>
 
-              <div className="w-full max-w-[300px] aspect-square mx-auto rounded-3xl bg-white border border-[#EAD8C7] p-3 flex items-center justify-center">
+              <div className="deli-surface-soft w-full max-w-[300px] aspect-square mx-auto rounded-3xl border p-3 flex items-center justify-center">
                 <img
                   src={qrUrl}
                   alt={`QR Code Pix do pedido ${order.public_code}`}
@@ -358,7 +358,7 @@ function PaymentContent() {
               </button>
 
               {order.payment_reported_at ? (
-                <div className="p-4 rounded-2xl bg-[#FFF4D9] border border-[#FDE0A2] text-center space-y-1.5">
+                <div className="deli-surface-soft p-4 rounded-2xl border text-center space-y-1.5">
                   <ShieldCheck size={22} className="mx-auto text-[#B85D19]" />
                   <div className="text-xs font-black text-[#7A4A13]">Pagamento informado</div>
                   <p className="text-[10px] text-[#8C6D1F] leading-relaxed">
@@ -380,7 +380,7 @@ function PaymentContent() {
                     {reportingPayment ? "INFORMANDO..." : "JÁ FIZ O PIX"}
                   </button>
 
-                  <div className="p-3 rounded-2xl bg-[#FFF9E6] border border-[#EFE2C4] text-[10px] text-[#7A6357] leading-relaxed">
+                  <div className="deli-surface-soft p-3 rounded-2xl border text-[10px] text-[#7A6357] leading-relaxed">
                     {firstName}, depois de pagar, toque em <strong>JÁ FIZ O PIX</strong>. A Deli receberá seu aviso e fará a conferência manual no Nubank. Seu pedido só será marcado como pago depois dessa conferência.
                   </div>
 
@@ -393,7 +393,7 @@ function PaymentContent() {
               )}
             </div>
           ) : (
-            <div className="p-5 rounded-3xl bg-[#FFF4E8] border border-[#F0D5BE] space-y-2">
+            <div className="deli-surface p-5 rounded-3xl border space-y-2">
               <AlertCircle size={22} className="text-[#B85D19]" />
               <div className="font-black text-[#3C1F15] text-sm">Pix ainda não configurado</div>
               <p className="text-xs text-[#7A6357]">
@@ -403,7 +403,7 @@ function PaymentContent() {
           )}
         </section>
 
-        <aside className="bg-[#FFFDF6] rounded-3xl border border-[#EAD8C7] p-5 shadow-sm space-y-4 lg:sticky lg:top-24">
+        <aside className="deli-surface rounded-3xl border border-[#EAD8C7] p-5 shadow-sm space-y-4 lg:sticky lg:top-24">
           <div>
             <span className="text-[10px] font-black uppercase tracking-wider text-[#8C7367]">Pedido</span>
             <div className="font-display text-xl font-black text-[#E05A36]">{order.public_code}</div>
@@ -440,7 +440,7 @@ function PaymentContent() {
 
           <Link
             href={`/pedido/enviado?code=${encodeURIComponent(order.public_code)}${handoffToken ? `&t=${encodeURIComponent(handoffToken)}` : ""}`}
-            className="w-full py-3 rounded-2xl border border-[#EAD8C7] bg-white text-[#3C1F15] text-xs font-bold text-center block"
+            className="deli-surface-soft w-full py-3 rounded-2xl border text-[#3C1F15] text-xs font-bold text-center block"
           >
             ACOMPANHAR PEDIDO
           </Link>
