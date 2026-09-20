@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag, Mail, BadgeDollarSign, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag, Mail, BadgeDollarSign, CheckCircle2, Navigation, ExternalLink } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
@@ -15,6 +15,7 @@ export default function CheckoutPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [paymentPlan, setPaymentPlan] = useState<"deposit_50" | "full">("deposit_50");
+  const [pickupAddress, setPickupAddress] = useState("");
 
   const qualifyingUnitTotal = items
     .filter((item) => isUnitBasedMinimum(item.minimumQuantity, item.unitLabel))
@@ -29,6 +30,13 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setMounted(true);
+
+    fetch("/api/catalog", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.settings?.address) setPickupAddress(data.settings.address);
+      })
+      .catch(() => {});
 
     fetch("/api/customer/profile", { cache: "no-store" })
       .then((res) => res.json())
@@ -361,13 +369,52 @@ export default function CheckoutPage() {
                   {customerData.fulfillmentType === "to_agree" && "Os detalhes da entrega serão confirmados pela Deli no WhatsApp."}
                 </span>
               </p>
+
+              {customerData.fulfillmentType === "pickup" && pickupAddress && (
+                <div className="mt-3 p-4 rounded-2xl bg-[#FFF4E8] border border-[#F0D5BE] space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-white border border-[#F0D5BE] text-[#E05A36] flex items-center justify-center shrink-0">
+                      <MapPin size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[10px] uppercase tracking-wider font-black text-[#8C7367]">
+                        Endereço para retirada
+                      </div>
+                      <div className="text-xs font-bold text-[#3C1F15] leading-relaxed mt-0.5">
+                        {pickupAddress}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pickupAddress)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-2.5 px-3 rounded-xl bg-white border border-[#E8D9CB] text-[#3C1F15] text-[10px] font-black flex items-center justify-center gap-1.5 hover:bg-[#FFFDF9] transition"
+                    >
+                      <ExternalLink size={13} />
+                      VER NO MAPA
+                    </a>
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(pickupAddress)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-2.5 px-3 rounded-xl bg-[#3C1F15] text-white text-[10px] font-black flex items-center justify-center gap-1.5 hover:bg-[#27120A] transition"
+                    >
+                      <Navigation size={13} />
+                      VER ROTAS
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Customer address — required for account and future orders */}
+            {/* Customer address — required for account and future orders. This is the customer address, not the Deli pickup address. */}
             <div className="space-y-3">
               <div>
                 <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1">
-                  ENDEREÇO COMPLETO *
+                  SEU ENDEREÇO COMPLETO *
                 </label>
                 <textarea
                   required
