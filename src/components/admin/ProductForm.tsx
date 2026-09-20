@@ -829,7 +829,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <div>
                     <UploadCloud size={32} className="mx-auto text-[#C9AFA1] mb-2" />
                     <p className="text-xs font-black text-[#5E463B]">
-                      Arraste uma imagem para cá
+                      Arraste imagens para cá
                     </p>
                     <p className="text-[10px] text-[#9E8679] mt-1">
                       ou use o botão Enviar foto
@@ -840,7 +840,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
               {imageUrl && !isDraggingImage && (
                 <div className="absolute left-3 right-3 bottom-3 rounded-xl bg-[#3C1F15]/78 backdrop-blur-sm text-white px-3 py-2 text-[10px] font-bold text-center pointer-events-none">
-                  Arraste outra imagem aqui para substituir
+                  Arraste mais imagens aqui
                 </div>
               )}
 
@@ -848,7 +848,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <div className="absolute inset-0 z-10 bg-[#FFF0E8]/92 backdrop-blur-sm flex items-center justify-center text-center p-5 pointer-events-none">
                   <div>
                     <UploadCloud size={38} className="mx-auto text-[#E05A36] mb-2" />
-                    <p className="text-sm font-black text-[#3C1F15]">Solte a imagem aqui</p>
+                    <p className="text-sm font-black text-[#3C1F15]">Solte as imagens aqui</p>
                     <p className="text-[10px] text-[#7A6357] mt-1">JPG, PNG ou WebP · até 5 MB</p>
                   </div>
                 </div>
@@ -861,31 +861,67 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               )}
             </div>
 
+            {images.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {images.map((image, index) => (
+                  <div
+                    key={image.id || image.image_url}
+                    className={`relative aspect-square rounded-xl overflow-hidden border-2 ${
+                      index === 0 ? "border-[#E05A36]" : "border-[#E8D9CB]"
+                    }`}
+                  >
+                    <img src={image.image_url} alt={`${name || "Produto"} ${index + 1}`} className="w-full h-full object-cover" />
+                    {index === 0 && (
+                      <span className="absolute top-1 left-1 rounded-full bg-[#E05A36] text-white px-1.5 py-0.5 text-[8px] font-black">
+                        CAPA
+                      </span>
+                    )}
+                    <div className="absolute inset-x-1 bottom-1 flex items-center justify-center gap-1">
+                      {index > 0 && (
+                        <button type="button" onClick={() => setPrimaryImage(index)} className="px-1.5 py-1 rounded-md bg-[#3C1F15]/85 text-white text-[8px] font-black">
+                          CAPA
+                        </button>
+                      )}
+                      <button type="button" onClick={() => moveImage(index, -1)} disabled={index === 0} className="w-6 h-6 rounded-md bg-white/90 text-[#3C1F15] text-[10px] font-black disabled:opacity-30">←</button>
+                      <button type="button" onClick={() => moveImage(index, 1)} disabled={index === images.length - 1} className="w-6 h-6 rounded-md bg-white/90 text-[#3C1F15] text-[10px] font-black disabled:opacity-30">→</button>
+                      <button type="button" onClick={() => handleRemoveGalleryImage(index)} className="w-6 h-6 rounded-md bg-[#C04220]/90 text-white flex items-center justify-center">
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6357] block">
-                Imagem do produto
+                Galeria do produto · {images.length}/6
               </label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <label className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold cursor-pointer hover:bg-[#27120A] transition">
                   <Camera size={14} />
-                  <span>{isUploadingImage ? "Enviando..." : imageUrl ? "Trocar foto" : "Enviar foto"}</span>
+                  <span>{isUploadingImage ? "Enviando..." : images.length > 0 ? "Adicionar imagens" : "Enviar imagens"}</span>
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
-                    disabled={isUploadingImage}
-                    onChange={(e) => handleImageUpload(e.target.files?.[0])}
+                    multiple
+                    disabled={isUploadingImage || images.length >= 6}
+                    onChange={(e) => {
+                      handleImageFiles(Array.from(e.target.files || []));
+                      e.currentTarget.value = "";
+                    }}
                     className="hidden"
                   />
                 </label>
                 {imageUrl && (
                   <button
                     type="button"
-                    onClick={handleRemoveImage}
+                    onClick={() => handleRemoveGalleryImage(0)}
                     disabled={isUploadingImage}
                     className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-[#F0B9AD] bg-[#FFF4F2] text-[#C04220] text-xs font-bold hover:bg-[#FCE8E4] transition disabled:opacity-60"
                   >
                     <Trash2 size={14} />
-                    <span>Remover imagem</span>
+                    <span>Remover capa</span>
                   </button>
                 )}
               </div>
@@ -897,13 +933,39 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <input
                   type="url"
                   value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setImageUrl(value);
+                    setImages((current) => {
+                      if (!value) {
+                        const next = current.slice(1).map((image, index) => ({
+                          ...image,
+                          sort_order: index + 1,
+                          is_primary: index === 0,
+                        }));
+                        setImageUrl(next[0]?.image_url || "");
+                        return next;
+                      }
+                      if (current.length === 0) {
+                        return [{
+                          id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `temp-${Date.now()}`,
+                          product_id: initialProduct?.id || "",
+                          image_url: value,
+                          sort_order: 1,
+                          is_primary: true,
+                        }];
+                      }
+                      return current.map((image, index) =>
+                        index === 0 ? { ...image, image_url: value, is_primary: true } : image
+                      );
+                    });
+                  }}
                   placeholder="https://.../produto.webp"
                   className="w-full bg-[#FFFDF9] border border-[#E8D9CB] rounded-xl px-3 py-2 text-xs text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
                 />
               </div>
               <p className="text-[10px] text-[#9E8679]">
-                JPG, PNG ou WebP, até 5 MB. O arquivo é salvo no Supabase Storage.
+                Até 6 imagens por produto. JPG, PNG ou WebP, até 5 MB por imagem. A primeira imagem é a capa do cardápio.
               </p>
             </div>
           </div>
@@ -1212,7 +1274,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     <div>
                       <UploadCloud size={30} className="mx-auto text-[#C9AFA1] mb-2" />
                       <span className="text-[10px] font-black text-[#5E463B] block">
-                        Arraste uma imagem para cá
+                        Arraste imagens para cá
                       </span>
                       <span className="text-[9px] text-[#9E8679] block mt-1">
                         ou use Enviar foto
@@ -1231,7 +1293,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <div className="absolute inset-0 z-10 bg-[#FFF0E8]/92 backdrop-blur-sm flex items-center justify-center text-center p-4 pointer-events-none">
                     <div>
                       <UploadCloud size={34} className="mx-auto text-[#E05A36] mb-2" />
-                      <p className="text-xs font-black text-[#3C1F15]">Solte a imagem aqui</p>
+                      <p className="text-xs font-black text-[#3C1F15]">Solte as imagens aqui</p>
                     </div>
                   </div>
                 )}
@@ -1242,32 +1304,65 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   </div>
                 )}
               </div>
+
+              {images.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {images.map((image, index) => (
+                    <div
+                      key={image.id || image.image_url}
+                      className={`relative aspect-square rounded-xl overflow-hidden border-2 ${
+                        index === 0 ? "border-[#E05A36]" : "border-[#E8D9CB]"
+                      }`}
+                    >
+                      <img src={image.image_url} alt={`${name || "Produto"} ${index + 1}`} className="w-full h-full object-cover" />
+                      {index === 0 && (
+                        <span className="absolute top-1 left-1 rounded-full bg-[#E05A36] text-white px-1 py-0.5 text-[7px] font-black">
+                          CAPA
+                        </span>
+                      )}
+                      <div className="absolute inset-x-1 bottom-1 flex justify-center gap-1">
+                        {index > 0 && (
+                          <button type="button" onClick={() => setPrimaryImage(index)} className="px-1 py-1 rounded bg-[#3C1F15]/85 text-white text-[7px] font-black">CAPA</button>
+                        )}
+                        <button type="button" onClick={() => handleRemoveGalleryImage(index)} className="w-6 h-6 rounded bg-[#C04220]/90 text-white flex items-center justify-center">
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <label className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold cursor-pointer">
                   <Camera size={13} />
-                  <span>{isUploadingImage ? "Enviando..." : imageUrl ? "Trocar foto" : "Enviar foto"}</span>
+                  <span>{isUploadingImage ? "Enviando..." : images.length > 0 ? "Adicionar imagens" : "Enviar imagens"}</span>
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
-                    disabled={isUploadingImage}
-                    onChange={(e) => handleImageUpload(e.target.files?.[0])}
+                    multiple
+                    disabled={isUploadingImage || images.length >= 6}
+                    onChange={(e) => {
+                      handleImageFiles(Array.from(e.target.files || []));
+                      e.currentTarget.value = "";
+                    }}
                     className="hidden"
                   />
                 </label>
                 {imageUrl && (
                   <button
                     type="button"
-                    onClick={handleRemoveImage}
+                    onClick={() => handleRemoveGalleryImage(0)}
                     disabled={isUploadingImage}
                     className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-[#F0B9AD] bg-[#FFF4F2] text-[#C04220] text-xs font-bold hover:bg-[#FCE8E4] transition disabled:opacity-60"
                   >
                     <Trash2 size={13} />
-                    <span>Remover imagem</span>
+                    <span>Remover capa</span>
                   </button>
                 )}
               </div>
               <span className="text-[10px] text-[#9E8679] block text-center">
-                JPG, PNG ou WebP, até 5 MB. Arquivo salvo no Supabase Storage.
+                Até 6 imagens. A primeira é a capa; as demais aparecem na galeria do cardápio.
               </span>
             </div>
 
