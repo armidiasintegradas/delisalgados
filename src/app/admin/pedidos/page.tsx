@@ -18,7 +18,7 @@ import {
   Trash2
 } from "lucide-react";
 import { Order, OrderStatus, PaymentStatus } from "@/types";
-import { formatCurrency, buildWhatsAppLink } from "@/lib/formatters";
+import { formatCurrency, buildWhatsAppLink, generateFirstCustomerWhatsAppResponse } from "@/lib/formatters";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -488,7 +488,10 @@ export default function AdminOrdersPage() {
                   const rawPhone = (selectedOrder.customer_phone || "").replace(/\D/g, "");
                   const isValid = rawPhone.length >= 10;
                   const waUrl = isValid
-                    ? `https://wa.me/${rawPhone.startsWith("55") ? rawPhone : `55${rawPhone}`}`
+                    ? buildWhatsAppLink(
+                        rawPhone.startsWith("55") ? rawPhone : `55${rawPhone}`,
+                        generateFirstCustomerWhatsAppResponse(selectedOrder)
+                      )
                     : null;
 
                   return waUrl ? (
