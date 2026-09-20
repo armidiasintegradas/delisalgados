@@ -154,15 +154,25 @@ export default function CheckoutPage() {
           state: prev.state || p.state || "",
           referencePoint: prev.referencePoint || p.reference_point || "",
         }));
-        setAddressFields((current) => ({
-          postalCode: p.postal_code || current.postalCode,
-          street: p.street || current.street,
-          number: p.address_number || current.number,
-          complement: p.complement || current.complement,
-          neighborhood: p.neighborhood || current.neighborhood,
-          city: p.city || current.city,
-          state: p.state || current.state,
-        }));
+        setAddressFields((current) => {
+          const next = {
+            postalCode: p.postal_code || current.postalCode,
+            street: p.street || current.street,
+            number: p.address_number || current.number,
+            complement: p.complement || current.complement,
+            neighborhood: p.neighborhood || current.neighborhood,
+            city: p.city || current.city,
+            state: p.state || current.state,
+          };
+          const composed = composeCheckoutAddress(next);
+          if (composed) {
+            setCustomerData((prev) => ({
+              ...prev,
+              deliveryAddress: composed,
+            }));
+          }
+          return next;
+        });
       })
       .catch(() => {});
   }, []);
@@ -244,15 +254,25 @@ export default function CheckoutPage() {
           deliveryAddress: p.address || prev.deliveryAddress,
           referencePoint: p.reference_point || prev.referencePoint,
         }));
-        setAddressFields((current) => ({
-          postalCode: p.postal_code || current.postalCode,
-          street: p.street || current.street,
-          number: p.address_number || current.number,
-          complement: p.complement || current.complement,
-          neighborhood: p.neighborhood || current.neighborhood,
-          city: p.city || current.city,
-          state: p.state || current.state,
-        }));
+        setAddressFields((current) => {
+          const next = {
+            postalCode: p.postal_code || current.postalCode,
+            street: p.street || current.street,
+            number: p.address_number || current.number,
+            complement: p.complement || current.complement,
+            neighborhood: p.neighborhood || current.neighborhood,
+            city: p.city || current.city,
+            state: p.state || current.state,
+          };
+          const composed = composeCheckoutAddress(next);
+          if (composed) {
+            setCustomerData((prev) => ({
+              ...prev,
+              deliveryAddress: composed,
+            }));
+          }
+          return next;
+        });
       }
 
       setLoginPassword("");
@@ -312,19 +332,19 @@ export default function CheckoutPage() {
         return;
       }
     }
+    const requiresDeliveryAddress = customerData.fulfillmentType === "delivery";
     if (
-      addressFields.postalCode.replace(/\D/g, "").length !== 8 ||
-      !addressFields.street.trim() ||
-      !addressFields.number.trim() ||
-      !addressFields.neighborhood.trim() ||
-      !addressFields.city.trim() ||
-      !addressFields.state.trim()
+      requiresDeliveryAddress &&
+      (
+        addressFields.postalCode.replace(/\D/g, "").length !== 8 ||
+        !addressFields.street.trim() ||
+        !addressFields.number.trim() ||
+        !addressFields.neighborhood.trim() ||
+        !addressFields.city.trim() ||
+        !addressFields.state.trim()
+      )
     ) {
-      showCheckoutError("Complete CEP, rua, número, bairro, cidade e UF.", "checkout-cep");
-      return;
-    }
-    if (!customerData.referencePoint.trim()) {
-      showCheckoutError("Por favor, informe um ponto de referência.", "checkout-reference");
+      showCheckoutError("Para entrega, complete CEP, rua, número, bairro, cidade e UF.", "checkout-cep");
       return;
     }
     if (!customerData.desiredDate.trim()) {
@@ -392,6 +412,8 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           customer: {
             ...customerData,
+            deliveryAddress: composeCheckoutAddress(addressFields),
+            referencePoint: customerData.referencePoint.trim(),
             postalCode: addressFields.postalCode,
             street: addressFields.street,
             addressNumber: addressFields.number,
@@ -694,21 +716,32 @@ export default function CheckoutPage() {
               <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1">
                 E-MAIL *
               </label>
-              <div className="relative">
-                <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A89688]" />
-                <input
+              {isAuthenticated ? (
+                <div
                   id="checkout-email"
-                  type="email"
-                  required
-                  readOnly={isAuthenticated}
-                  value={customerData.customerEmail}
-                  onChange={(e) =>
-                    setCustomerData((prev) => ({ ...prev, customerEmail: e.target.value }))
-                  }
-                  placeholder="seuemail@exemplo.com"
-                  className="w-full deli-field border rounded-2xl pl-9 pr-3 py-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs read-only:bg-[#F7F1EA] read-only:text-[#7A6357]"
-                />
-              </div>
+                  className="w-full border border-[#E8D9CB] rounded-2xl pl-9 pr-3 py-3 text-xs text-[#7A6357] bg-[#F7F1EA] relative"
+                  aria-label="E-mail da conta Deli conectada"
+                >
+                  <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A89688]" />
+                  <span className="block truncate">{customerData.customerEmail}</span>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A89688]" />
+                  <input
+                    id="checkout-email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={customerData.customerEmail}
+                    onChange={(e) =>
+                      setCustomerData((prev) => ({ ...prev, customerEmail: e.target.value }))
+                    }
+                    placeholder="seuemail@exemplo.com"
+                    className="w-full deli-field border rounded-2xl pl-9 pr-3 py-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
+                  />
+                </div>
+              )}
               <p className="text-[10px] text-[#7A6357] mt-1">
                 {isAuthenticated
                   ? "Este é o e-mail da sua conta Deli conectada."
@@ -859,8 +892,8 @@ export default function CheckoutPage() {
               <div className="flex items-center gap-2">
                 <MapPin size={17} className="text-[#E05A36]" />
                 <div>
-                  <div className="text-xs font-black text-[#3C1F15]">Seu endereço *</div>
-                  <div className="text-[10px] text-[#8C7367]">Digite o CEP para preencher o endereço automaticamente.</div>
+                  <div className="text-xs font-black text-[#3C1F15]">Seu endereço {customerData.fulfillmentType === "delivery" ? "*" : "(opcional para retirada)"}</div>
+                  <div className="text-[10px] text-[#8C7367]">Digite o CEP para buscar o endereço. Você pode corrigir qualquer campo manualmente.</div>
                 </div>
               </div>
 
@@ -870,6 +903,7 @@ export default function CheckoutPage() {
                   <input
                     id="checkout-cep"
                     inputMode="numeric"
+                    autoComplete="postal-code"
                     value={addressFields.postalCode}
                     onChange={(e) => updateAddressField("postalCode", e.target.value.replace(/\D/g, "").slice(0, 8))}
                     onBlur={() => {
@@ -893,42 +927,41 @@ export default function CheckoutPage() {
               <div className="grid grid-cols-[1fr_90px] gap-2">
                 <label className="block min-w-0">
                   <span className="text-[10px] font-black uppercase text-[#7A6357]">Rua / Avenida *</span>
-                  <input value={addressFields.street} onChange={(e) => updateAddressField("street", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
+                  <input autoComplete="address-line1" value={addressFields.street} onChange={(e) => updateAddressField("street", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
                 </label>
                 <label className="block">
                   <span className="text-[10px] font-black uppercase text-[#7A6357]">Número *</span>
-                  <input value={addressFields.number} onChange={(e) => updateAddressField("number", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
+                  <input autoComplete="off" value={addressFields.number} onChange={(e) => updateAddressField("number", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
                 </label>
               </div>
 
               <label className="block">
                 <span className="text-[10px] font-black uppercase text-[#7A6357]">Complemento</span>
-                <input value={addressFields.complement} onChange={(e) => updateAddressField("complement", e.target.value)} placeholder="Apto, bloco, casa..." className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
+                <input autoComplete="address-line2" value={addressFields.complement} onChange={(e) => updateAddressField("complement", e.target.value)} placeholder="Apto, bloco, casa..." className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <label className="block">
                   <span className="text-[10px] font-black uppercase text-[#7A6357]">Bairro *</span>
-                  <input value={addressFields.neighborhood} onChange={(e) => updateAddressField("neighborhood", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
+                  <input autoComplete="address-level3" value={addressFields.neighborhood} onChange={(e) => updateAddressField("neighborhood", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
                 </label>
                 <div className="grid grid-cols-[1fr_68px] gap-2">
                   <label className="block min-w-0">
                     <span className="text-[10px] font-black uppercase text-[#7A6357]">Cidade *</span>
-                    <input value={addressFields.city} onChange={(e) => updateAddressField("city", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
+                    <input autoComplete="address-level2" value={addressFields.city} onChange={(e) => updateAddressField("city", e.target.value)} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs" />
                   </label>
                   <label className="block">
                     <span className="text-[10px] font-black uppercase text-[#7A6357]">UF *</span>
-                    <input maxLength={2} value={addressFields.state} onChange={(e) => updateAddressField("state", e.target.value.toUpperCase().slice(0, 2))} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs uppercase" />
+                    <input maxLength={2} autoComplete="address-level1" value={addressFields.state} onChange={(e) => updateAddressField("state", e.target.value.toUpperCase().slice(0, 2))} className="deli-field mt-1 w-full p-3 rounded-2xl border text-xs uppercase" />
                   </label>
                 </div>
               </div>
 
               <label className="block">
-                <span className="text-[10px] font-black uppercase text-[#7A6357]">Ponto de referência *</span>
+                <span className="text-[10px] font-black uppercase text-[#7A6357]">Ponto de referência <span className="normal-case font-semibold">(opcional)</span></span>
                 <input
                   id="checkout-reference"
                   type="text"
-                  required
                   value={customerData.referencePoint}
                   onChange={(e) => setCustomerData((prev) => ({ ...prev, referencePoint: e.target.value }))}
                   placeholder="Ex: ao lado da farmácia, portão azul..."
