@@ -382,8 +382,23 @@ export default function PerfilPage() {
               {sending ? "ENTRANDO..." : "ENTRAR"}
             </button>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Link
+                href="/auth/criar-conta"
+                className="w-full py-3 rounded-2xl bg-[#E05A36] text-white text-[11px] font-black text-center"
+              >
+                CRIAR CONTA
+              </Link>
+              <Link
+                href="/auth/redefinir-senha"
+                className="w-full py-3 rounded-2xl border border-[#E8D9CB] text-[#3C1F15] text-[11px] font-black text-center deli-surface-soft"
+              >
+                PRECISO DE AJUDA COM A SENHA
+              </Link>
+            </div>
+
             <p className="text-[10px] text-center text-[#9E8679] leading-relaxed">
-              Primeiro acesso sem senha? Use “Esqueci minha senha” para criar uma senha segura para sua conta.
+              Novo por aqui? Crie sua conta. Já é cliente e ainda não tem senha? Use a recuperação de acesso.
             </p>
           </form>
         ) : (
