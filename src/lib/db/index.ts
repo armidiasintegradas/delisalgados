@@ -873,7 +873,12 @@ export class DbService {
           : paymentStatus === "partially_paid"
             ? dueNow
             : 0;
-      const balanceDue = Math.max(0, Number((total - amountPaid).toFixed(2)));
+      const balanceDue =
+        paymentStatus === "paid"
+          ? 0
+          : order.payment_plan === "full"
+            ? 0
+            : Math.max(0, Number((total - dueNow).toFixed(2)));
 
       const { error } = await supabaseServer
         .from("orders")
@@ -905,7 +910,12 @@ export class DbService {
         : paymentStatus === "partially_paid"
           ? dueNow
           : 0;
-    ord.balance_due = Math.max(0, Number((total - (ord.amount_paid || 0)).toFixed(2)));
+    ord.balance_due =
+      paymentStatus === "paid"
+        ? 0
+        : ord.payment_plan === "full"
+          ? 0
+          : Math.max(0, Number((total - dueNow).toFixed(2)));
     ord.payment_confirmed_at =
       paymentStatus === "paid" || paymentStatus === "partially_paid"
         ? new Date().toISOString()
