@@ -214,7 +214,7 @@ export default function CartPage() {
 
                 <Link
                   href="/"
-                  className="w-full py-3 rounded-2xl bg-white hover:deli-surface-soft border border-[#EAD8C7] text-[#3C1F15] text-xs font-bold text-center block uppercase transition"
+                  className="w-full py-3 rounded-2xl bg-white hover:bg-[#FFF8EE]/80 border border-[#EAD8C7] text-[#3C1F15] text-xs font-bold text-center block uppercase transition"
                 >
                   + Adicionar mais itens
                 </Link>
