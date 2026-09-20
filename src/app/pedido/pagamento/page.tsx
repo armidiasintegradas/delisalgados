@@ -14,7 +14,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Order, Settings } from "@/types";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, getFirstName } from "@/lib/formatters";
 import { buildPixPayload } from "@/lib/pix";
 
 function PaymentContent() {
@@ -196,6 +196,7 @@ function PaymentContent() {
     );
   }
 
+  const firstName = getFirstName(order.customer_name);
   const dueNow = Number(order.amount_due_now || 0);
   const balance = Number(order.balance_due || 0);
   const paymentAlreadyConfirmed =
@@ -266,7 +267,7 @@ function PaymentContent() {
                 {order.payment_status === "paid" ? "Pagamento confirmado" : "Entrada confirmada"}
               </div>
               <p className="text-xs text-[#52765E]">
-                A Deli conferiu o recebimento do Pix e confirmou seu pagamento.
+                {firstName}, a Deli conferiu o recebimento do Pix e confirmou seu pagamento.
               </p>
             </div>
           ) : pixPayload ? (
@@ -301,7 +302,7 @@ function PaymentContent() {
                   <ShieldCheck size={22} className="mx-auto text-[#B85D19]" />
                   <div className="text-xs font-black text-[#7A4A13]">Pagamento informado</div>
                   <p className="text-[10px] text-[#8C6D1F] leading-relaxed">
-                    Recebemos seu aviso. A Deli fará a conferência do Pix no Nubank e atualizará o pedido assim que o crédito for localizado.
+                    {firstName}, recebemos seu aviso. A Deli fará a conferência do Pix no Nubank e atualizará seu pedido assim que o crédito for localizado.
                   </p>
                   {paymentReportedWhatsappUrl && (
                     <a
@@ -328,7 +329,7 @@ function PaymentContent() {
                   </button>
 
                   <div className="p-3 rounded-2xl bg-[#FFF9E6] border border-[#EFE2C4] text-[10px] text-[#7A6357] leading-relaxed">
-                    Depois de pagar, toque em <strong>JÁ FIZ O PIX</strong>. A Deli receberá o aviso e fará a conferência manual no Nubank. O pedido só será marcado como pago depois dessa conferência.
+                    {firstName}, depois de pagar, toque em <strong>JÁ FIZ O PIX</strong>. A Deli receberá seu aviso e fará a conferência manual no Nubank. Seu pedido só será marcado como pago depois dessa conferência.
                   </div>
 
                   {paymentReportError && (
