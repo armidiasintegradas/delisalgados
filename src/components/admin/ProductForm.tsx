@@ -18,6 +18,7 @@ import {
   EyeOff,
   Edit2,
   Layers,
+  UploadCloud,
 } from "lucide-react";
 import { Product, Category, ProductVariant, PriceType, Availability, PreparationType } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
@@ -66,6 +67,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -101,14 +103,55 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     setVariants(variants.filter((_, i) => i !== idx));
   };
 
+  const validateImageFile = (file?: File | null) => {
+    if (!file) return null;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setErrorMessage("Use uma imagem JPG, PNG ou WebP.");
+      return null;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage("A imagem deve ter no máximo 5 MB.");
+      return null;
+    }
+    return file;
+  };
+
+  const handleImageDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDraggingImage(false);
+
+    if (isUploadingImage) return;
+    const file = validateImageFile(event.dataTransfer.files?.[0]);
+    if (file) handleImageUpload(file);
+  };
+
+  const handleImageDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!isUploadingImage) setIsDraggingImage(true);
+  };
+
+  const handleImageDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const current = event.currentTarget;
+    const next = event.relatedTarget as Node | null;
+    if (!next || !current.contains(next)) {
+      setIsDraggingImage(false);
+    }
+  };
+
   const handleImageUpload = async (file?: File | null) => {
-    if (!file) return;
+    const validFile = validateImageFile(file);
+    if (!validFile) return;
     setErrorMessage(null);
     setIsUploadingImage(true);
 
     try {
       const form = new FormData();
-      form.append("file", file);
+      form.append("file", validFile);
       form.append("productId", initialProduct?.id || "novo");
       form.append("slug", slug || name || "produto");
 
@@ -694,22 +737,59 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </span>
             </div>
 
-            {imageUrl ? (
-              <div className="relative rounded-2xl overflow-hidden border border-[#F0E2D2] aspect-square max-w-[360px] mx-auto bg-[#FFF8EE]">
+            <div
+              onDrop={handleImageDrop}
+              onDragOver={handleImageDragOver}
+              onDragEnter={handleImageDragOver}
+              onDragLeave={handleImageDragLeave}
+              className={`relative rounded-2xl overflow-hidden border-2 border-dashed aspect-square max-w-[360px] mx-auto transition-all ${
+                isDraggingImage
+                  ? "border-[#E05A36] bg-[#FFF0E8] scale-[1.01] shadow-lg"
+                  : "border-[#E8D9CB] bg-[#FFF8EE]"
+              }`}
+            >
+              {imageUrl ? (
                 <img
                   src={imageUrl}
                   alt={name || "Produto Deli"}
                   className="absolute inset-0 w-full h-full object-cover"
                 />
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-[#E8D9CB] aspect-square max-w-[360px] mx-auto bg-[#FFF8EE] flex items-center justify-center text-center p-5">
-                <div>
-                  <Camera size={24} className="mx-auto text-[#C9AFA1] mb-2" />
-                  <p className="text-xs font-bold text-[#7A6357]">Produto sem imagem cadastrada</p>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-center p-5">
+                  <div>
+                    <UploadCloud size={32} className="mx-auto text-[#C9AFA1] mb-2" />
+                    <p className="text-xs font-black text-[#5E463B]">
+                      Arraste uma imagem para cá
+                    </p>
+                    <p className="text-[10px] text-[#9E8679] mt-1">
+                      ou use o botão Enviar foto
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {imageUrl && !isDraggingImage && (
+                <div className="absolute left-3 right-3 bottom-3 rounded-xl bg-[#3C1F15]/78 backdrop-blur-sm text-white px-3 py-2 text-[10px] font-bold text-center pointer-events-none">
+                  Arraste outra imagem aqui para substituir
+                </div>
+              )}
+
+              {isDraggingImage && (
+                <div className="absolute inset-0 z-10 bg-[#FFF0E8]/92 backdrop-blur-sm flex items-center justify-center text-center p-5 pointer-events-none">
+                  <div>
+                    <UploadCloud size={38} className="mx-auto text-[#E05A36] mb-2" />
+                    <p className="text-sm font-black text-[#3C1F15]">Solte a imagem aqui</p>
+                    <p className="text-[10px] text-[#7A6357] mt-1">JPG, PNG ou WebP · até 5 MB</p>
+                  </div>
+                </div>
+              )}
+
+              {isUploadingImage && (
+                <div className="absolute inset-0 z-20 bg-[#FFF8EE]/90 backdrop-blur-sm flex items-center justify-center text-xs font-black text-[#3C1F15]">
+                  Enviando imagem...
+                </div>
+              )}
+            </div>
 
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6357] block">
@@ -1040,22 +1120,58 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </span>
                 <span className="text-[9px] text-[#DF5F45] font-bold">WebP HD 1:1</span>
               </div>
-              {imageUrl ? (
-                <div className="relative rounded-2xl overflow-hidden aspect-square max-w-[360px] mx-auto bg-[#FFF8EE] border border-[#F0E2D2]">
+              <div
+                onDrop={handleImageDrop}
+                onDragOver={handleImageDragOver}
+                onDragEnter={handleImageDragOver}
+                onDragLeave={handleImageDragLeave}
+                className={`relative rounded-2xl overflow-hidden aspect-square max-w-[360px] mx-auto border-2 border-dashed transition-all ${
+                  isDraggingImage
+                    ? "border-[#E05A36] bg-[#FFF0E8] scale-[1.01] shadow-lg"
+                    : "border-[#E8D9CB] bg-[#FFF8EE]"
+                }`}
+              >
+                {imageUrl ? (
                   <img
                     src={imageUrl}
                     alt={name || "Produto Deli"}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-[#E8D9CB] aspect-square max-w-[360px] mx-auto bg-[#FFF8EE] flex items-center justify-center">
-                  <div className="text-center">
-                    <Camera size={22} className="mx-auto text-[#C9AFA1] mb-1" />
-                    <span className="text-[10px] font-bold text-[#8C7367]">Sem foto cadastrada</span>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-center p-4">
+                    <div>
+                      <UploadCloud size={30} className="mx-auto text-[#C9AFA1] mb-2" />
+                      <span className="text-[10px] font-black text-[#5E463B] block">
+                        Arraste uma imagem para cá
+                      </span>
+                      <span className="text-[9px] text-[#9E8679] block mt-1">
+                        ou use Enviar foto
+                      </span>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {imageUrl && !isDraggingImage && (
+                  <div className="absolute left-2.5 right-2.5 bottom-2.5 rounded-lg bg-[#3C1F15]/78 backdrop-blur-sm text-white px-2.5 py-1.5 text-[9px] font-bold text-center pointer-events-none">
+                    Arraste outra imagem para substituir
+                  </div>
+                )}
+
+                {isDraggingImage && (
+                  <div className="absolute inset-0 z-10 bg-[#FFF0E8]/92 backdrop-blur-sm flex items-center justify-center text-center p-4 pointer-events-none">
+                    <div>
+                      <UploadCloud size={34} className="mx-auto text-[#E05A36] mb-2" />
+                      <p className="text-xs font-black text-[#3C1F15]">Solte a imagem aqui</p>
+                    </div>
+                  </div>
+                )}
+
+                {isUploadingImage && (
+                  <div className="absolute inset-0 z-20 bg-[#FFF8EE]/90 backdrop-blur-sm flex items-center justify-center text-[10px] font-black text-[#3C1F15]">
+                    Enviando imagem...
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <label className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold cursor-pointer">
                   <Camera size={13} />
