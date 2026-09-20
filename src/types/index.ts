@@ -116,6 +116,9 @@ export interface Settings {
   special_order_cta_text: string;
   logo_url: string | null;
   pattern_url: string | null;
+  pix_key: string;
+  pix_receiver_name: string;
+  pix_receiver_city: string;
 }
 
 export interface CartItem {
