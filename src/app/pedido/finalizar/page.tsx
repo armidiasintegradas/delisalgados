@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag, Mail, BadgeDollarSign, CheckCircle2, Navigation, ExternalLink } from "lucide-react";
+import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag, Mail, BadgeDollarSign, CheckCircle2, Navigation, ExternalLink, LogIn, ShieldCheck } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
@@ -16,6 +16,11 @@ export default function CheckoutPage() {
   const [mounted, setMounted] = useState(false);
   const [paymentPlan, setPaymentPlan] = useState<"deposit_50" | "full">("deposit_50");
   const [pickupAddress, setPickupAddress] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showExistingLogin, setShowExistingLogin] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [sendingLogin, setSendingLogin] = useState(false);
+  const [loginMessage, setLoginMessage] = useState<string | null>(null);
 
   const qualifyingUnitTotal = items
     .filter((item) => isUnitBasedMinimum(item.minimumQuantity, item.unitLabel))
@@ -41,6 +46,7 @@ export default function CheckoutPage() {
     fetch("/api/customer/profile", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
+        setIsAuthenticated(Boolean(data?.authenticated));
         if (!data?.authenticated || !data?.profile) return;
         const p = data.profile;
         setCustomerData((prev) => ({
@@ -87,6 +93,45 @@ export default function CheckoutPage() {
       </div>
     );
   }
+
+  const sendExistingCustomerLink = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setLoginMessage(null);
+
+    const email = (loginEmail || customerData.customerEmail).trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setLoginMessage("Informe o e-mail usado no seu primeiro pedido.");
+      return;
+    }
+
+    setSendingLogin(true);
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const authClient = createClient();
+      if (!authClient) throw new Error("Acesso temporariamente indisponível.");
+
+      const { error } = await authClient.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/pedido/finalizar`,
+        },
+      });
+
+      if (error) {
+        setLoginMessage(
+          "Não encontramos uma conta com este e-mail. Se este for seu primeiro pedido, feche esta opção e preencha seu cadastro."
+        );
+        return;
+      }
+
+      setLoginMessage("Enviamos um link de acesso para seu e-mail. Abra o link e você voltará para finalizar o pedido.");
+    } catch (err: any) {
+      setLoginMessage(err?.message || "Não foi possível enviar o link de acesso.");
+    } finally {
+      setSendingLogin(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,6 +193,13 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
+        if (data.code === "CUSTOMER_LOGIN_REQUIRED") {
+          setShowExistingLogin(true);
+          setLoginEmail(customerData.customerEmail.trim().toLowerCase());
+          setLoginMessage("Você já é cliente Deli. Faça seu login para avançar com um novo pedido.");
+          setIsSubmitting(false);
+          return;
+        }
         throw new Error(data.error || "Não foi possível registrar seu pedido agora. Seus itens continuam no carrinho. Tente novamente em instantes.");
       }
 
@@ -242,6 +294,72 @@ export default function CheckoutPage() {
               </span>
             </Link>
 
+            {!isAuthenticated ? (
+              <div className="rounded-2xl border border-[#F0D5BE] bg-[#FFF4E8] p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full bg-white border border-[#F0D5BE] flex items-center justify-center text-[#E05A36] shrink-0">
+                    <LogIn size={17} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-black text-[#3C1F15]">Já sou cliente</div>
+                    <p className="text-[11px] text-[#7A6357] leading-relaxed mt-0.5">
+                      A partir do segundo pedido, o login é obrigatório. Use o mesmo e-mail do seu primeiro cadastro para continuar com segurança.
+                    </p>
+                  </div>
+                </div>
+
+                {!showExistingLogin ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowExistingLogin(true);
+                      setLoginEmail(customerData.customerEmail);
+                      setLoginMessage(null);
+                    }}
+                    className="w-full py-3 rounded-xl bg-white border border-[#E8D9CB] text-[#3C1F15] text-xs font-black"
+                  >
+                    JÁ SOU CLIENTE — ENTRAR
+                  </button>
+                ) : (
+                  <div className="space-y-2.5">
+                    <div className="relative">
+                      <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A89688]" />
+                      <input
+                        type="email"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        placeholder="E-mail usado no primeiro pedido"
+                        className="w-full bg-white border border-[#E8D9CB] rounded-xl pl-9 pr-3 py-3 text-xs text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => sendExistingCustomerLink()}
+                      disabled={sendingLogin}
+                      className="w-full py-3 rounded-xl bg-[#3C1F15] text-white text-xs font-black disabled:opacity-60"
+                    >
+                      {sendingLogin ? "ENVIANDO..." : "ENVIAR LINK DE ACESSO"}
+                    </button>
+                    {loginMessage && (
+                      <div className="text-[11px] leading-relaxed text-[#7A4B36] bg-white/70 border border-[#E8D9CB] rounded-xl p-3">
+                        {loginMessage}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-[#CDEEDB] bg-[#EAF7EE] p-3.5 flex items-center gap-2.5">
+                <ShieldCheck size={18} className="text-[#1FAA52] shrink-0" />
+                <div>
+                  <div className="text-xs font-black text-[#1E5631]">Conta Deli conectada</div>
+                  <p className="text-[10px] text-[#52765E]">
+                    Seus dados cadastrados foram carregados. Você pode avançar com este novo pedido.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {errorMessage && (
               <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-2xl flex flex-col gap-2.5 shadow-sm">
                 <div className="flex items-start gap-2.5">
@@ -334,7 +452,9 @@ export default function CheckoutPage() {
                 />
               </div>
               <p className="text-[10px] text-[#7A6357] mt-1">
-                Este e-mail será usado para acessar sua conta e seu histórico de pedidos.
+                {isAuthenticated
+                  ? "Este é o e-mail da sua conta Deli conectada."
+                  : "No primeiro pedido, este e-mail cria seu acesso Deli. Nos próximos pedidos, será necessário entrar na conta."}
               </p>
             </div>
 
