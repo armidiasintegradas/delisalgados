@@ -55,7 +55,7 @@ export default function CartPage() {
       </header>
 
       {/* Main Content */}
-      <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto p-4 lg:p-8 flex-1 flex flex-col">
+      <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto p-4 lg:p-8 flex-1 flex flex-col landscape-full-width">
         {!isInitialized ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="w-full lg:max-w-[720px] bg-[#FFFDF6] rounded-3xl border border-[#EAD8C7] p-8 text-center shadow-sm">
@@ -82,7 +82,7 @@ export default function CartPage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-3.5 lg:space-y-0 lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between">
+          <div className="space-y-3.5 lg:space-y-0 lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between landscape-order-layout">
             {/* Left: Items list */}
             <div className="space-y-3">
               {items.map((item) => (
