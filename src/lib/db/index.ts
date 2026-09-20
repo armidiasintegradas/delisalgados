@@ -1,4 +1,4 @@
-import { Category, Product, ProductVariant, Settings, Order, OrderItem, CustomerData, Availability } from "@/types";
+import { Category, Product, ProductVariant, ProductImage, Settings, Order, OrderItem, CustomerData, Availability } from "@/types";
 import { isServerSupabaseConfigured, supabaseServer } from "@/lib/supabase/server";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
 import { INITIAL_CATEGORIES, INITIAL_PRODUCTS, INITIAL_VARIANTS, INITIAL_SETTINGS } from "./seedData";
@@ -239,6 +239,33 @@ export class DbService {
   }
 
   // 3. Products
+  private static normalizeProductImages(product: Product): Product {
+    const images = [...(product.images || [])].sort(
+      (a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0)
+    );
+
+    if (images.length === 0 && product.image_url) {
+      images.push({
+        id: `legacy-${product.id}`,
+        product_id: product.id,
+        image_url: product.image_url,
+        sort_order: 1,
+        is_primary: true,
+      });
+    }
+
+    const primary =
+      images.find((image) => image.is_primary) ||
+      images[0] ||
+      null;
+
+    return {
+      ...product,
+      image_url: primary?.image_url || product.image_url || null,
+      images,
+    };
+  }
+
   static async getProducts(options?: {
     categorySlug?: string;
     includeUnavailable?: boolean;
@@ -247,7 +274,7 @@ export class DbService {
     if (isServerSupabaseConfigured && supabaseServer) {
       let query = supabaseServer
         .from("products")
-        .select("*, variants:product_variants(*), category:categories(*)")
+        .select("*, variants:product_variants(*), images:product_images(*), category:categories(*)")
         .order("sort_order", { ascending: true });
 
       if (!options?.includeHidden) {
@@ -259,7 +286,7 @@ export class DbService {
 
       const { data, error } = await query;
       if (!error && data) {
-        let prods = data as Product[];
+        let prods = (data as Product[]).map((product) => this.normalizeProductImages(product));
         if (options?.categorySlug) {
           prods = prods.filter((p: any) => p.category?.slug === options.categorySlug);
         }
@@ -320,10 +347,10 @@ export class DbService {
     if (isServerSupabaseConfigured && supabaseServer) {
       const { data, error } = await supabaseServer
         .from("products")
-        .select("*, variants:product_variants(*), category:categories(*)")
+        .select("*, variants:product_variants(*), images:product_images(*), category:categories(*)")
         .eq("id", id)
         .single();
-      if (!error && data) return data as Product;
+      if (!error && data) return this.normalizeProductImages(data as Product);
     }
 
     if (!isLocalDbAllowed()) {
@@ -464,6 +491,90 @@ export class DbService {
     state.products[idx] = { ...state.products[idx], ...updates, updated_at: new Date().toISOString() };
     saveLocalState(state);
     return state.products[idx];
+  }
+
+  static async syncProductImages(
+    productId: string,
+    images: ProductImage[]
+  ): Promise<ProductImage[]> {
+    const normalized = (images || []).map((image, index) => ({
+      id:
+        image.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(image.id)
+          ? image.id
+          : crypto.randomUUID(),
+      product_id: productId,
+      image_url: String(image.image_url || "").trim(),
+      sort_order: index + 1,
+      is_primary: index === 0,
+      updated_at: new Date().toISOString(),
+    })).filter((image) => Boolean(image.image_url));
+
+    if (isServerSupabaseConfigured && supabaseServer) {
+      const { data: existing, error: existingError } = await supabaseServer
+        .from("product_images")
+        .select("id,image_url")
+        .eq("product_id", productId);
+
+      if (existingError) {
+        throw new Error(`[Supabase Error] Falha ao consultar imagens: ${existingError.message}`);
+      }
+
+      // Clear primary flags first to avoid partial unique-index conflicts.
+      const { error: clearPrimaryError } = await supabaseServer
+        .from("product_images")
+        .update({ is_primary: false, updated_at: new Date().toISOString() })
+        .eq("product_id", productId);
+
+      if (clearPrimaryError) {
+        throw new Error(`[Supabase Error] Falha ao reorganizar imagens: ${clearPrimaryError.message}`);
+      }
+
+      if (normalized.length > 0) {
+        const { error: upsertError } = await supabaseServer
+          .from("product_images")
+          .upsert(normalized, { onConflict: "id" });
+
+        if (upsertError) {
+          throw new Error(`[Supabase Error] Falha ao salvar imagens: ${upsertError.message}`);
+        }
+      }
+
+      const activeIds = new Set(normalized.map((image) => image.id));
+      const idsToDelete = (existing || [])
+        .map((row: any) => row.id as string)
+        .filter((id: string) => !activeIds.has(id));
+
+      if (idsToDelete.length > 0) {
+        const { error: deleteError } = await supabaseServer
+          .from("product_images")
+          .delete()
+          .in("id", idsToDelete);
+
+        if (deleteError) {
+          throw new Error(`[Supabase Error] Falha ao remover imagens antigas: ${deleteError.message}`);
+        }
+      }
+
+      const primaryUrl = normalized[0]?.image_url || null;
+      await supabaseServer
+        .from("products")
+        .update({ image_url: primaryUrl, updated_at: new Date().toISOString() })
+        .eq("id", productId);
+
+      const { data, error } = await supabaseServer
+        .from("product_images")
+        .select("*")
+        .eq("product_id", productId)
+        .order("sort_order", { ascending: true });
+
+      if (error) {
+        throw new Error(`[Supabase Error] Falha ao recarregar imagens: ${error.message}`);
+      }
+
+      return (data || []) as ProductImage[];
+    }
+
+    return normalized as ProductImage[];
   }
 
   static async syncProductVariants(
