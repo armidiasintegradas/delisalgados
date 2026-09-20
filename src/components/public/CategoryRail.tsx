@@ -19,8 +19,10 @@ export const CategoryRail: React.FC<CategoryRailProps> = ({
     return name;
   };
 
-  // Respect canonical backend sort_order
-  const orderedCategories = [...categories].sort((a, b) => a.sort_order - b.sort_order);
+  // "Todos" is always first; categories are alphabetical for faster scanning.
+  const orderedCategories = [...categories].sort((a, b) =>
+    a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" })
+  );
 
   return (
     <div className="bg-[#FFF0D1]/95 backdrop-blur-md py-2.5 px-4 lg:px-8 w-full overflow-hidden min-w-0 border-b border-[#F0DEC0]/60">
