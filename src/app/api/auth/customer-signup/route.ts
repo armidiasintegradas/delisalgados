@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/supabase/server";
-import { buildAuthCallbackUrl } from "@/lib/appUrl";
 
 export const runtime = "nodejs";
 
@@ -77,41 +75,85 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-    if (!supabaseUrl || !anonKey) {
-      return NextResponse.json({ error: "Serviço de cadastro não configurado." }, { status: 503 });
+    const postalCode = String(body?.postalCode || "").replace(/\D/g, "");
+    const street = String(body?.street || "").trim();
+    const addressNumber = String(body?.addressNumber || "").trim();
+    const complement = String(body?.complement || "").trim();
+    const neighborhood = String(body?.neighborhood || "").trim();
+    const city = String(body?.city || "").trim();
+    const state = String(body?.state || "").trim().toUpperCase();
+    const referencePoint = String(body?.referencePoint || "").trim();
+
+    if (
+      postalCode.length !== 8 ||
+      !street ||
+      !addressNumber ||
+      !neighborhood ||
+      !city ||
+      state.length !== 2 ||
+      !referencePoint
+    ) {
+      return NextResponse.json(
+        { error: "Complete CEP, rua, número, bairro, cidade, UF e ponto de referência." },
+        { status: 400 }
+      );
     }
 
-    const authClient = createClient(supabaseUrl, anonKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const address = [
+      [street, addressNumber].filter(Boolean).join(", "),
+      complement,
+      neighborhood,
+      [city, state].join(" - "),
+      `CEP ${postalCode.replace(/^(\d{5})(\d{3})$/, "$1-$2")}`,
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
-    const { data, error } = await authClient.auth.signUp({
+    const { data: created, error: createError } = await supabaseServer.auth.admin.createUser({
       email,
       password,
-      options: {
-        emailRedirectTo: buildAuthCallbackUrl("/perfil"),
-        data: {
-          full_name: fullName,
-          whatsapp,
-        },
+      email_confirm: true,
+      user_metadata: {
+        full_name: fullName,
+        whatsapp,
       },
     });
 
-    if (error) throw error;
+    if (createError) throw createError;
+    if (!created.user?.id) throw new Error("Conta criada sem identificador de usuário.");
 
-    // If email confirmation is enabled, session is null and Supabase has accepted
-    // the confirmation email request. If it is disabled, the account is usable immediately.
-    const needsEmailConfirmation = !data.session;
+    const profilePayload = {
+      id: created.user.id,
+      email,
+      full_name: fullName,
+      whatsapp,
+      address,
+      postal_code: postalCode,
+      street,
+      address_number: addressNumber,
+      complement: complement || null,
+      neighborhood,
+      city,
+      state,
+      reference_point: referencePoint,
+      avatar_url: null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: profileError } = await supabaseServer
+      .from("customer_profiles")
+      .upsert(profilePayload, { onConflict: "id" });
+
+    if (profileError) {
+      await supabaseServer.auth.admin.deleteUser(created.user.id);
+      throw profileError;
+    }
 
     return NextResponse.json({
       success: true,
-      needs_email_confirmation: needsEmailConfirmation,
-      email_queued: needsEmailConfirmation,
-      message: needsEmailConfirmation
-        ? "Conta criada. Enviamos um e-mail de confirmação. Verifique também Spam, Lixo Eletrônico e Promoções."
-        : "Conta criada com sucesso. Você já pode entrar.",
+      needs_email_confirmation: false,
+      email_queued: false,
+      message: "Conta criada com sucesso. Sua senha já está ativa e você pode entrar agora.",
     });
   } catch (error: any) {
     const raw = String(error?.message || "");
