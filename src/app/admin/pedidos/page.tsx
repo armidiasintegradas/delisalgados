@@ -14,7 +14,8 @@ import {
   Download,
   AlertCircle,
   Maximize2,
-  FileText
+  FileText,
+  Trash2
 } from "lucide-react";
 import { Order, OrderStatus, PaymentStatus } from "@/types";
 import { formatCurrency, buildWhatsAppLink } from "@/lib/formatters";
@@ -26,6 +27,7 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
 
   async function loadRealOrders() {
     setLoading(true);
@@ -119,6 +121,36 @@ export default function AdminOrdersPage() {
     } catch (e) {
       console.error("Error updating payment status:", e);
       loadRealOrders();
+    }
+  };
+
+  const handleDeleteOrder = async (order: Order) => {
+    const confirmed = window.confirm(
+      `Excluir definitivamente o pedido ${order.public_code}?\n\nEssa ação também remove os itens vinculados ao pedido e não pode ser desfeita.`
+    );
+    if (!confirmed) return;
+
+    setDeletingOrderId(order.id);
+
+    try {
+      const res = await fetch(`/api/orders/${order.public_code}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Falha ao excluir pedido");
+      }
+
+      const remaining = orders.filter((o) => o.id !== order.id);
+      setOrders(remaining);
+      setSelectedOrder(remaining[0] || null);
+    } catch (e) {
+      console.error("Error deleting order:", e);
+      window.alert("Não foi possível excluir o pedido. Tente novamente.");
+      loadRealOrders();
+    } finally {
+      setDeletingOrderId(null);
     }
   };
 
@@ -450,7 +482,8 @@ export default function AdminOrdersPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+              <div className="flex flex-col gap-2 pt-1">
+                <div className="flex flex-col sm:flex-row gap-2">
                 {(() => {
                   const rawPhone = (selectedOrder.customer_phone || "").replace(/\D/g, "");
                   const isValid = rawPhone.length >= 10;
@@ -491,6 +524,23 @@ export default function AdminOrdersPage() {
                   <option value="completed">Concluído</option>
                   <option value="cancelled">Cancelado</option>
                 </select>
+              </div>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleDeleteOrder(selectedOrder)}
+                  disabled={deletingOrderId === selectedOrder.id}
+                  className="w-full py-3 px-4 rounded-xl border border-[#F3B8AA] bg-[#FFF4F2] hover:bg-[#FCE8E4] disabled:opacity-50 text-[#C04220] text-xs font-extrabold uppercase tracking-wide flex items-center justify-center gap-2 transition"
+                >
+                  <Trash2 size={16} />
+                  <span>
+                    {deletingOrderId === selectedOrder.id
+                      ? "Excluindo pedido..."
+                      : "Excluir pedido"}
+                  </span>
+                </button>
               </div>
 
               {/* Order Items Table */}
