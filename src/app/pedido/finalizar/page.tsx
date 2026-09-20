@@ -306,7 +306,16 @@ export default function CheckoutPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customer: customerData,
+          customer: {
+            ...customerData,
+            postalCode: addressFields.postalCode,
+            street: addressFields.street,
+            addressNumber: addressFields.number,
+            complement: addressFields.complement,
+            neighborhood: addressFields.neighborhood,
+            city: addressFields.city,
+            state: addressFields.state,
+          },
           paymentPlan,
           items: items.map((i) => ({
             productId: i.productId,
