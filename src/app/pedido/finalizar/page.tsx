@@ -10,7 +10,7 @@ import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, customerData, setCustomerData, totalAmount, clearCart } = useCart();
+  const { items, customerData, setCustomerData, totalAmount, clearCart, isInitialized } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -55,25 +55,35 @@ export default function CheckoutPage() {
       .catch(() => {});
   }, []);
 
-  if (!mounted) {
+  if (!mounted || !isInitialized) {
     return (
-      <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] mx-auto shadow-2xl" />
+      <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex items-center justify-center p-4">
+        <div className="w-full max-w-[440px] lg:max-w-[720px] bg-[#FFFDF6] rounded-3xl border border-[#EAD8C7] p-8 text-center shadow-xl">
+          <div className="w-9 h-9 border-3 border-[#DF5F45] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-bold text-[#7A6357] mt-3">Carregando seu pedido...</p>
+        </div>
+      </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
-        <h2 className="text-lg font-bold text-[#3C1F15]">Seu carrinho está vazio</h2>
-        <p className="text-xs text-[#7A6357] mt-1 mb-4">
-          Adicione itens ao seu pedido antes de finalizar.
-        </p>
-        <Link
-          href="/"
-          className="px-6 py-3 rounded-2xl bg-[#3C1F15] text-white text-xs font-bold shadow"
-        >
-          Voltar ao Cardápio
-        </Link>
+      <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex items-center justify-center p-4 lg:p-8">
+        <div className="w-full max-w-[440px] lg:max-w-[760px] bg-[#FFFDF6] rounded-3xl border border-[#EAD8C7] shadow-xl p-7 lg:p-12 text-center">
+          <div className="w-14 h-14 rounded-full bg-[#FFF4E8] text-[#E05A36] flex items-center justify-center mx-auto mb-4">
+            <ShoppingBag size={24} />
+          </div>
+          <h2 className="text-lg lg:text-xl font-bold text-[#3C1F15]">Seu carrinho está vazio</h2>
+          <p className="text-xs lg:text-sm text-[#7A6357] mt-1 mb-5">
+            Adicione itens ao seu pedido antes de finalizar.
+          </p>
+          <Link
+            href="/"
+            className="inline-flex px-7 py-3.5 rounded-2xl bg-[#3C1F15] text-white text-xs font-bold shadow hover:bg-[#27120A] transition"
+          >
+            Voltar ao Cardápio
+          </Link>
+        </div>
       </div>
     );
   }
