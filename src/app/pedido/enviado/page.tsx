@@ -341,9 +341,9 @@ function EnviadoContent() {
               className="h-8 w-auto object-contain select-none"
             />
             <div>
-              <h1 className="text-base font-bold leading-tight font-display">Quase lá!</h1>
+              <h1 className="text-base font-bold leading-tight font-display">Pedido registrado</h1>
               <span className="text-[10px] text-[#FCE9D8] tracking-wide block">
-                Pronto para envio
+                Pagamento e confirmação
               </span>
             </div>
           </div>
@@ -358,10 +358,47 @@ function EnviadoContent() {
                 <CheckCircle2 size={22} className="text-[#109E48]" />
               </div>
               <h2 className="font-display text-base lg:text-lg font-extrabold text-[#3C1F15] leading-snug px-2">
-                Seu pedido está pronto para ser enviado pelo WhatsApp.
+                Seu pedido foi registrado com sucesso.
               </h2>
               <p className="text-[11px] text-[#7A6357] px-4 leading-tight">
-                Ao clicar no botão abaixo, sua mensagem formatada será aberta no WhatsApp da Deli Salgados.
+                Confira o valor a pagar agora e use o WhatsApp para concluir o pagamento com a Deli.
+              </p>
+            </div>
+
+            <div className="bg-[#FFF4E8] rounded-[18px] p-4 border border-[#F0D5BE] shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] uppercase font-black tracking-wider text-[#8C7367]">Pagamento</div>
+                  <div className="text-sm font-black text-[#3C1F15]">
+                    {order.payment_plan === "full" ? "Pagamento integral no ato" : "Entrada obrigatória de 50%"}
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-[#FFFDF9] border border-[#E8D9CB] text-[10px] font-bold text-[#8C5237]">
+                  {order.payment_status === "paid"
+                    ? "Pago"
+                    : order.payment_status === "partially_paid"
+                      ? "Entrada paga"
+                      : "Aguardando pagamento"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-2 rounded-xl bg-white border border-[#F0E2D2]">
+                  <div className="text-[9px] uppercase font-bold text-[#9E8679]">Total</div>
+                  <div className="text-xs font-black">{formatCurrency(order.total)}</div>
+                </div>
+                <div className="p-2 rounded-xl bg-white border border-[#F0E2D2]">
+                  <div className="text-[9px] uppercase font-bold text-[#9E8679]">Agora</div>
+                  <div className="text-xs font-black text-[#E05A36]">{formatCurrency(order.amount_due_now ?? order.total)}</div>
+                </div>
+                <div className="p-2 rounded-xl bg-white border border-[#F0E2D2]">
+                  <div className="text-[9px] uppercase font-bold text-[#9E8679]">Na entrega</div>
+                  <div className="text-xs font-black">{formatCurrency(order.balance_due ?? 0)}</div>
+                </div>
+              </div>
+
+              <p className="text-[10px] text-[#7A6357] leading-relaxed">
+                A entrada de 50% é obrigatória para confirmar a encomenda. Se você escolheu pagar 100% agora, o saldo na entrega será zero.
               </p>
             </div>
 
@@ -419,6 +456,11 @@ function EnviadoContent() {
                       <span className="font-bold">Endereço:</span> {order.delivery_address}
                     </div>
                   )}
+                  {order.customer_reference_point && (
+                    <div>
+                      <span className="font-bold">Referência:</span> {order.customer_reference_point}
+                    </div>
+                  )}
                   {order.customer_note && (
                     <div>
                       <span className="font-bold">Observações:</span> {order.customer_note}
@@ -426,11 +468,19 @@ function EnviadoContent() {
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-[#E2F2E7] flex justify-between items-center">
-                  <span className="text-xs font-extrabold text-[#3C1F15]">Total Estimado:</span>
-                  <span className="text-sm font-black text-[#E05A36]">
-                    {formatCurrency(order.total)}
-                  </span>
+                <div className="pt-2 border-t border-[#E2F2E7] space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-extrabold text-[#3C1F15]">Total do pedido:</span>
+                    <span className="text-sm font-black text-[#E05A36]">{formatCurrency(order.total)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-[#6B5347]">{order.payment_plan === "full" ? "Pagamento agora" : "Entrada agora"}</span>
+                    <strong>{formatCurrency(order.amount_due_now ?? order.total)}</strong>
+                  </div>
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-[#6B5347]">Saldo na entrega</span>
+                    <strong>{formatCurrency(order.balance_due ?? 0)}</strong>
+                  </div>
                 </div>
               </div>
 
@@ -452,7 +502,7 @@ function EnviadoContent() {
                 className="w-full py-4 px-4 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-extrabold uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 transition transform active:scale-[0.98]"
               >
                 <MessageCircle size={18} className="fill-white stroke-none" />
-                <span>ABRIR WHATSAPP</span>
+                <span>ABRIR WHATSAPP E CONCLUIR PAGAMENTO</span>
               </a>
             ) : (
               <div className="w-full p-4 rounded-2xl bg-[#FFF4E8] border border-[#E8D9CB] text-center text-[#7A6357] text-xs font-bold">
