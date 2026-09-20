@@ -131,6 +131,49 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
   };
 
+  const handleRemoveImage = async () => {
+    if (!imageUrl) return;
+
+    const confirmed = window.confirm(
+      "Remover a imagem deste produto? O cardápio passará a exibir o item sem foto."
+    );
+    if (!confirmed) return;
+
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    // Unsaved products only need the local preview cleared.
+    if (isNew || !initialProduct?.id) {
+      setImageUrl("");
+      setSuccessMessage("Imagem removida do cadastro.");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const res = await fetch("/api/admin/products/image", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: initialProduct.id,
+          imageUrl,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Falha ao remover imagem.");
+      }
+
+      setImageUrl("");
+      setSuccessMessage("Imagem removida do produto e do cardápio.");
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Não foi possível remover a imagem.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErrorMessage(null);
@@ -672,17 +715,30 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6357] block">
                 Imagem do produto
               </label>
-              <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold cursor-pointer hover:bg-[#27120A] transition">
-                <Camera size={14} />
-                <span>{isUploadingImage ? "Enviando..." : "Enviar foto"}</span>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  disabled={isUploadingImage}
-                  onChange={(e) => handleImageUpload(e.target.files?.[0])}
-                  className="hidden"
-                />
-              </label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <label className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold cursor-pointer hover:bg-[#27120A] transition">
+                  <Camera size={14} />
+                  <span>{isUploadingImage ? "Enviando..." : imageUrl ? "Trocar foto" : "Enviar foto"}</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    disabled={isUploadingImage}
+                    onChange={(e) => handleImageUpload(e.target.files?.[0])}
+                    className="hidden"
+                  />
+                </label>
+                {imageUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    disabled={isUploadingImage}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-[#F0B9AD] bg-[#FFF4F2] text-[#C04220] text-xs font-bold hover:bg-[#FCE8E4] transition disabled:opacity-60"
+                  >
+                    <Trash2 size={14} />
+                    <span>Remover imagem</span>
+                  </button>
+                )}
+              </div>
 
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-wider text-[#9E8679] block mb-1">
@@ -1000,17 +1056,30 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   </div>
                 </div>
               )}
-              <label className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold cursor-pointer">
-                <Camera size={13} />
-                <span>{isUploadingImage ? "Enviando..." : "Enviar / trocar foto"}</span>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  disabled={isUploadingImage}
-                  onChange={(e) => handleImageUpload(e.target.files?.[0])}
-                  className="hidden"
-                />
-              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[#3C1F15] text-white text-xs font-bold cursor-pointer">
+                  <Camera size={13} />
+                  <span>{isUploadingImage ? "Enviando..." : imageUrl ? "Trocar foto" : "Enviar foto"}</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    disabled={isUploadingImage}
+                    onChange={(e) => handleImageUpload(e.target.files?.[0])}
+                    className="hidden"
+                  />
+                </label>
+                {imageUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    disabled={isUploadingImage}
+                    className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-[#F0B9AD] bg-[#FFF4F2] text-[#C04220] text-xs font-bold hover:bg-[#FCE8E4] transition disabled:opacity-60"
+                  >
+                    <Trash2 size={13} />
+                    <span>Remover imagem</span>
+                  </button>
+                )}
+              </div>
               <span className="text-[10px] text-[#9E8679] block text-center">
                 JPG, PNG ou WebP, até 5 MB. Arquivo salvo no Supabase Storage.
               </span>
