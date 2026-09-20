@@ -307,12 +307,12 @@ export default function CheckoutPage() {
       <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-3 py-4 sm:px-4 lg:p-8 flex-1 flex flex-col overflow-x-hidden landscape-full-width">
         <form noValidate onSubmit={handleSubmit} className="w-full min-w-0 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between landscape-order-layout">
           {/* Left Column: Form Fields */}
-          <div className="w-full min-w-0 space-y-3.5 bg-transparent lg:deli-surface lg:p-6 lg:rounded-3xl lg:border">
+          <div className="w-full min-w-0 space-y-3.5 bg-transparent deli-surface-desktop lg:p-6 lg:rounded-3xl lg:border">
             {/* Mobile Order Summary Mini Card */}
             <Link
               href="/pedido"
               id="checkout-summary"
-              className="lg:hidden landscape-hide deli-surface rounded-[18px] p-3.5 border flex items-center justify-between hover:deli-surface-soft transition"
+              className="lg:hidden landscape-hide deli-surface rounded-[18px] p-3.5 border flex items-center justify-between hover:bg-[#FFF8EE]/80 transition"
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-[#FFE8E0] text-[#E05A36] flex items-center justify-center shrink-0">
@@ -870,7 +870,7 @@ export default function CheckoutPage() {
               </button>
               <Link
                 href="/pedido"
-                className="w-full py-2.5 rounded-xl bg-white hover:deli-surface-soft border border-[#EAD8C7] text-[#3C1F15] text-[11px] font-bold text-center block uppercase transition"
+                className="w-full py-2.5 rounded-xl bg-white hover:bg-[#FFF8EE]/80 border border-[#EAD8C7] text-[#3C1F15] text-[11px] font-bold text-center block uppercase transition"
               >
                 Alterar itens do pedido
               </Link>
