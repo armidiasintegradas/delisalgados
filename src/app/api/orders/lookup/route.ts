@@ -66,6 +66,11 @@ export async function POST(request: Request) {
         note: item.note,
       })),
       total: order.total,
+      payment_plan: order.payment_plan,
+      payment_status: order.payment_status,
+      amount_due_now: order.amount_due_now,
+      amount_paid: order.amount_paid,
+      balance_due: order.balance_due,
       created_at: order.created_at,
     };
 
