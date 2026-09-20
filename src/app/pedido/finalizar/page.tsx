@@ -304,15 +304,15 @@ export default function CheckoutPage() {
       </header>
 
       {/* Form Content */}
-      <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-3 py-4 sm:px-4 lg:p-8 flex-1 flex flex-col overflow-x-hidden">
-        <form noValidate onSubmit={handleSubmit} className="w-full min-w-0 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between">
+      <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-3 py-4 sm:px-4 lg:p-8 flex-1 flex flex-col overflow-x-hidden landscape-full-width">
+        <form noValidate onSubmit={handleSubmit} className="w-full min-w-0 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between landscape-order-layout">
           {/* Left Column: Form Fields */}
           <div className="w-full min-w-0 space-y-3.5 bg-transparent lg:bg-[#FFFDF6] lg:p-6 lg:rounded-3xl lg:border lg:border-[#EAD8C7] lg:shadow-xs">
             {/* Mobile Order Summary Mini Card */}
             <Link
               href="/pedido"
               id="checkout-summary"
-              className="lg:hidden bg-[#FFFDF6] rounded-[18px] p-3.5 border border-[#EAD8C7] shadow-xs flex items-center justify-between hover:bg-[#FFF9E6] transition"
+              className="lg:hidden landscape-hide bg-[#FFFDF6] rounded-[18px] p-3.5 border border-[#EAD8C7] shadow-xs flex items-center justify-between hover:bg-[#FFF9E6] transition"
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-[#FFE8E0] text-[#E05A36] flex items-center justify-center shrink-0">
@@ -805,7 +805,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Right Column: Desktop Compact Order Summary & Sticky Submit */}
-          <div className="hidden lg:flex lg:flex-col lg:sticky lg:top-24 bg-[#FFFDF6] rounded-3xl p-5 border border-[#EAD8C7] shadow-sm space-y-4">
+          <div className="hidden lg:flex landscape-show-flex lg:flex-col lg:sticky lg:top-24 bg-[#FFFDF6] rounded-3xl p-5 border border-[#EAD8C7] shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-[#F0E2D4] pb-3">
               <div className="flex items-center gap-2">
                 <ShoppingBag size={18} className="text-[#E05A36]" />
