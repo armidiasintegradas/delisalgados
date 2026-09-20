@@ -80,13 +80,19 @@ export async function POST(request: Request) {
       });
       if (error) throw error;
       authUser = data.user;
+    } else if (!authUser.email_confirmed_at) {
+      const { data, error } = await supabaseServer.auth.admin.updateUserById(authUser.id, {
+        email_confirm: true,
+      });
+      if (error) throw error;
+      authUser = data.user;
+    }
 
-      if (authUser?.id) {
-        await supabaseServer
-          .from("orders")
-          .update({ customer_user_id: authUser.id, updated_at: new Date().toISOString() })
-          .eq("customer_email", email);
-      }
+    if (authUser?.id) {
+      await supabaseServer
+        .from("orders")
+        .update({ customer_user_id: authUser.id, updated_at: new Date().toISOString() })
+        .eq("customer_email", email);
     }
 
     const { error } = await supabaseServer.auth.resetPasswordForEmail(email, {
