@@ -54,6 +54,8 @@ export async function POST(request: Request) {
       amount_paid: order.amount_paid,
       balance_due: order.balance_due,
       payment_confirmed_at: order.payment_confirmed_at,
+      payment_provider: order.payment_provider,
+      payment_reference: order.payment_reference,
       created_at: order.created_at,
       items: order.items || [],
     };
