@@ -402,6 +402,16 @@ function EnviadoContent() {
               </p>
             </div>
 
+            {order.fulfillment_type === "delivery" && (
+              <div className="bg-[#FFF8EE] rounded-[18px] p-4 border border-[#F0D5BE] shadow-xs space-y-2.5">
+                <div className="text-[10px] uppercase font-black tracking-wider text-[#8C7367]">Entrega</div>
+                <div className="text-sm font-black text-[#3C1F15]">Valor da entrega a combinar</div>
+                <p className="text-[11px] text-[#7A6357] leading-relaxed">
+                  A taxa de entrega não faz parte do total do pedido. A Deli irá consultar uma estimativa para o endereço informado e enviar o valor pelo WhatsApp. A entrega só será solicitada após sua aprovação.
+                </p>
+              </div>
+            )}
+
             {/* Simulated WhatsApp Message Card */}
             <div className="bg-[#FFFDF6] rounded-[18px] p-3.5 border border-[#EAD8C7] shadow-xs space-y-2.5">
               <div className="flex items-center justify-between border-b border-[#F2E5D6] pb-2">
@@ -478,7 +488,7 @@ function EnviadoContent() {
                     <strong>{formatCurrency(order.amount_due_now ?? order.total)}</strong>
                   </div>
                   <div className="flex justify-between text-[10px]">
-                    <span className="text-[#6B5347]">Saldo na entrega</span>
+                    <span className="text-[#6B5347]">Saldo dos produtos na entrega</span>
                     <strong>{formatCurrency(order.balance_due ?? 0)}</strong>
                   </div>
                 </div>
@@ -502,7 +512,7 @@ function EnviadoContent() {
                 className="w-full py-4 px-4 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-extrabold uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 transition transform active:scale-[0.98]"
               >
                 <MessageCircle size={18} className="fill-white stroke-none" />
-                <span>ABRIR WHATSAPP E CONCLUIR PAGAMENTO</span>
+                <span>{order.fulfillment_type === "delivery" ? "ABRIR WHATSAPP E COMBINAR ENTREGA" : "ABRIR WHATSAPP"}</span>
               </a>
             ) : (
               <div className="w-full p-4 rounded-2xl bg-[#FFF4E8] border border-[#E8D9CB] text-center text-[#7A6357] text-xs font-bold">
