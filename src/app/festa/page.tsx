@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/public/Header";
 import { BottomNav } from "@/components/public/BottomNav";
+import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { Product, Settings } from "@/types";
 import { useCart } from "@/lib/cartContext";
 import { buildWhatsAppLink, formatCurrency, getFirstName } from "@/lib/formatters";
@@ -188,6 +189,7 @@ export default function FestaPage() {
       <Header searchQuery="" onSearchChange={() => {}} showSearch={false} title="Festa" />
 
       <main className="w-full max-w-[1180px] mx-auto px-4 lg:px-8 py-5 lg:py-8">
+        <CustomerGreeting className="mb-4 lg:mb-6" />
         <section className="grid lg:grid-cols-[1.05fr_.95fr] gap-5 lg:gap-7 items-start">
           <div className="space-y-4">
             <div className="bg-[#3C1F15] text-white rounded-3xl p-5 lg:p-7 overflow-hidden relative">
