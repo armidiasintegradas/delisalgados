@@ -166,6 +166,7 @@ export interface CustomerProfile {
   whatsapp: string;
   address: string;
   reference_point: string;
+  avatar_url?: string | null;
   created_at?: string;
   updated_at?: string;
 }
