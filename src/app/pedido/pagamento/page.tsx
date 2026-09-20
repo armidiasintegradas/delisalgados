@@ -209,15 +209,17 @@ function PaymentContent() {
     // WhatsApp does not permit a website to silently send a message.
     // Opening the prefilled conversation is therefore the mandatory final step.
     if (paymentReportedWhatsappUrl && typeof window !== "undefined") {
-      const whatsappWindow = window.open(
-        paymentReportedWhatsappUrl,
-        "_blank",
-        "noopener,noreferrer"
-      );
+      const whatsappWindow = window.open(paymentReportedWhatsappUrl, "_blank");
 
-      // Mobile browsers can reject a new tab. In that case, navigate directly
-      // to WhatsApp so the handoff cannot be skipped.
-      if (!whatsappWindow) {
+      if (whatsappWindow) {
+        try {
+          whatsappWindow.opener = null;
+        } catch {
+          // Cross-origin window; no further action needed.
+        }
+      } else {
+        // Mobile browsers can reject a new tab. In that case, navigate directly
+        // to WhatsApp so the handoff cannot be skipped.
         window.location.assign(paymentReportedWhatsappUrl);
         return;
       }
