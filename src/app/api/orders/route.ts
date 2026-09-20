@@ -52,31 +52,25 @@ export async function POST(request: Request) {
     }
 
     if (supabaseServer) {
-      // Existing customers must authenticate before placing another order.
-      // Match either e-mail or normalized WhatsApp so a duplicate identity cannot create a second account.
-      const [{ data: profiles }, { data: previousOrders }] = await Promise.all([
-        supabaseServer
-          .from("customer_profiles")
-          .select("id,email,whatsapp")
-          .or(`email.ilike.${customerEmail},whatsapp.eq.${customerPhone}`),
-        supabaseServer
-          .from("orders")
-          .select("customer_user_id,customer_email,customer_phone")
-          .or(`customer_email.ilike.${customerEmail},customer_phone.eq.${customerPhone}`)
-          .limit(20),
-      ]);
-
-      const matchesPhone = (value?: string | null) =>
-        String(value || "").replace(/\D/g, "") === phoneDigits;
-
-      const matchingProfiles = (profiles || []).filter(
-        (p: any) => String(p.email || "").toLowerCase() === customerEmail || matchesPhone(p.whatsapp)
-      );
-      const matchingOrders = (previousOrders || []).filter(
-        (o: any) => String(o.customer_email || "").toLowerCase() === customerEmail || matchesPhone(o.customer_phone)
+      const { data: identityState, error: identityError } = await supabaseServer.rpc(
+        "check_deli_customer_identity",
+        {
+          p_email: customerEmail,
+          p_phone: customerPhone,
+          p_user_id: user?.id || null,
+        }
       );
 
-      const hasKnownIdentity = matchingProfiles.length > 0 || matchingOrders.length > 0;
+      if (identityError) {
+        console.error("Customer identity guard failed:", identityError);
+        return NextResponse.json(
+          { error: "Não foi possível validar seu cadastro agora. Tente novamente.", code: "CUSTOMER_IDENTITY_CHECK_FAILED" },
+          { status: 503 }
+        );
+      }
+
+      const hasKnownIdentity = Boolean(identityState?.known);
+      const hasIdentityConflict = Boolean(identityState?.conflict);
 
       if (!user && hasKnownIdentity) {
         return NextResponse.json(
@@ -100,12 +94,7 @@ export async function POST(request: Request) {
           );
         }
 
-        const conflictingProfile = matchingProfiles.find((p: any) => p.id !== user.id);
-        const conflictingOrder = matchingOrders.find(
-          (o: any) => o.customer_user_id && o.customer_user_id !== user.id
-        );
-
-        if (conflictingProfile || conflictingOrder) {
+        if (hasIdentityConflict) {
           return NextResponse.json(
             {
               error: "Este WhatsApp ou e-mail já está vinculado a outra conta Deli.",
