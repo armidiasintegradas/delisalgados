@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { DbService } from "@/lib/db";
 import { verifyAdminSession } from "@/lib/auth/adminAuth";
-import { isServerSupabaseConfigured } from "@/lib/supabase/server";
+import { isServerSupabaseConfigured, createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
@@ -19,8 +19,17 @@ export async function POST(request: Request) {
       );
     }
 
+    const sessionClient = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = sessionClient ? await sessionClient.auth.getUser() : { data: { user: null } };
+
     // SERVER-SIDE AUTHORITY: calculate prices, snapshots, validation, transactional RPC
-    const result = await DbService.createOrder({ customer, items });
+    const result = await DbService.createOrder({
+      customer,
+      items,
+      customerUserId: user?.id || null,
+    });
     const { handoffToken, ...orderData } = result;
 
     return NextResponse.json(
