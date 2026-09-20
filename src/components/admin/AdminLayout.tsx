@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   Sliders,
   Settings as SettingsIcon,
+  Users,
   ExternalLink,
   LogOut,
   Menu,
@@ -58,6 +59,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     { label: "Produtos", href: `${basePath}/produtos`, icon: UtensilsCrossed },
     { label: "Categorias", href: `${basePath}/categorias`, icon: Layers },
     { label: "Pedidos", href: `${basePath}/pedidos`, icon: ShoppingBag },
+    { label: "Clientes", href: `${basePath}/clientes`, icon: Users },
     { label: "Cardápio", href: `${basePath}/cardapio`, icon: Sliders },
     { label: "Configurações", href: `${basePath}/configuracoes`, icon: SettingsIcon },
   ];
