@@ -257,7 +257,7 @@ export default function CatalogPage() {
       </div>
 
       {/* Main Workspace: Centered, max-w-[1280px] on desktop */}
-      <div className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-4 lg:px-8 pt-3 flex-1 flex flex-col lg:flex-row lg:items-start lg:gap-8">
+      <div className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-4 lg:px-8 pt-3 flex-1 flex flex-col lg:flex-row lg:items-start lg:gap-8 landscape-full-width">
         {/* Left: Main Content Area (~880px on desktop) */}
         <main className="w-full lg:flex-1 lg:max-w-[880px] min-w-0">
           <CustomerGreeting className="mb-4" />
@@ -333,7 +333,7 @@ export default function CatalogPage() {
             </div>
           ) : selectedCategorySlug || searchQuery ? (
             // Flat list for filtered or single category
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 pt-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 landscape-grid-2 gap-3.5 pt-2">
               {filteredProducts.map((prod) => (
                 <ProductCard
                   key={prod.id}
@@ -362,7 +362,7 @@ export default function CatalogPage() {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 landscape-grid-2 gap-3.5">
                       {items.map((prod) => (
                         <ProductCard
                           key={prod.id}
