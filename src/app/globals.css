@@ -75,3 +75,34 @@ nextjs-portal,
 
 
 
+
+
+/* Mobile/tablet landscape responsiveness
+   Prevent portrait-width shells from remaining artificially narrow after device rotation. */
+@media (orientation: landscape) and (min-width: 640px) and (max-width: 1023px) {
+  [class*="max-w-[440px]"] {
+    max-width: 100% !important;
+  }
+
+  [class*="max-w-[430px]"] {
+    max-width: min(92vw, 720px) !important;
+  }
+
+  .landscape-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .landscape-row {
+    flex-direction: row !important;
+  }
+
+  .landscape-compact {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  /* Fixed mobile navigation must span the rotated viewport. */
+  nav[class*="max-w-[440px]"] {
+    max-width: 100% !important;
+  }
+}
