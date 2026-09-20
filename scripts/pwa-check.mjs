@@ -29,6 +29,10 @@ assert.ok(prompt.includes("/Android/i"));
 assert.ok(prompt.includes("Adicionar à Tela de Início"));
 assert.ok(prompt.includes("Instalar app"));
 assert.ok(prompt.includes("Deli Salgados"));
+assert.ok(prompt.includes("INSTALAR DELI SALGADOS"));
+assert.ok(prompt.includes("COMO INSTALAR DELI SALGADOS"));
+assert.ok(prompt.includes("androidFallbackReady"));
+assert.ok(prompt.includes("4500"));
 
 assert.ok(layout.includes('manifest: "/manifest.webmanifest"'));
 assert.ok(layout.includes('applicationName: "Deli Salgados"'));
