@@ -123,7 +123,7 @@ export default function MeusPedidosPage() {
       <main className="w-full max-w-[440px] lg:max-w-[720px] mx-auto p-4 lg:p-8 space-y-4 flex-1">
         {!accountLoading && accountAuthenticated && <CustomerGreeting />}
         {!accountLoading && accountAuthenticated && (
-          <div className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-4">
+          <div className="deli-surface p-5 rounded-3xl border space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-base font-black text-[#3C1F15]">
@@ -141,13 +141,13 @@ export default function MeusPedidosPage() {
             </div>
 
             {accountOrders.length === 0 ? (
-              <div className="p-4 rounded-2xl bg-[#FFF9E6] text-xs text-[#7A6357]">
+              <div className="deli-surface-soft p-4 rounded-2xl text-xs text-[#7A6357]">
                 Você ainda não possui pedidos vinculados a esta conta.
               </div>
             ) : (
               <div className="space-y-3">
                 {accountOrders.map((order) => (
-                  <div key={order.id} className="p-4 rounded-2xl bg-[#FFFDF9] border border-[#EFE2D5] space-y-2">
+                  <div key={order.id} className="deli-surface-soft p-4 rounded-2xl border space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <div className="text-base font-black text-[#E05A36]">{order.public_code}</div>
@@ -187,13 +187,13 @@ export default function MeusPedidosPage() {
         )}
 
         {!accountLoading && !accountAuthenticated && (
-          <div className="bg-[#FFF4E8] border border-[#F0D5BE] rounded-3xl p-4 text-xs text-[#7A4B36]">
+          <div className="deli-surface-soft border rounded-3xl p-4 text-xs text-[#7A4B36]">
             Para ver todo o seu histórico automaticamente, <Link href="/perfil" className="font-black underline">acesse sua conta</Link> com o e-mail usado no pedido.
           </div>
         )}
 
         {/* Search input */}
-        <form onSubmit={handleSearch} className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-3">
+        <form onSubmit={handleSearch} className="deli-surface p-5 rounded-3xl border space-y-3">
           <div className="space-y-1">
             <label className="text-[11px] font-black uppercase tracking-wider text-[#3C1F15] block">
               Código do Pedido
@@ -203,7 +203,7 @@ export default function MeusPedidosPage() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Ex: DL-0001"
-              className="w-full bg-[#FFFBF7] border border-[#EBDCCF] rounded-2xl px-4 py-3 text-sm uppercase text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
+              className="w-full deli-field border rounded-2xl px-4 py-3 text-sm uppercase text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
             />
           </div>
 
@@ -216,7 +216,7 @@ export default function MeusPedidosPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Ex: (81) 98765-4321"
-              className="w-full bg-[#FFFBF7] border border-[#EBDCCF] rounded-2xl px-4 py-3 text-sm text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
+              className="w-full deli-field border rounded-2xl px-4 py-3 text-sm text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
             />
           </div>
 
@@ -230,7 +230,7 @@ export default function MeusPedidosPage() {
         </form>
 
         {errorMessage && (
-          <div className="p-4 bg-white rounded-2xl border border-[#F0DCBE] text-center">
+          <div className="deli-surface-soft p-4 rounded-2xl border text-center">
             <p className="text-xs text-[#7A6357]">
               {errorMessage}
             </p>
@@ -238,7 +238,7 @@ export default function MeusPedidosPage() {
         )}
 
         {searchedOrder && (
-          <div className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-4 animate-in fade-in">
+          <div className="deli-surface p-5 rounded-3xl border space-y-4 animate-in fade-in">
             <div className="flex items-center justify-between border-b border-[#F4E8DB] pb-3">
               <div>
                 <span className="text-xs text-[#8C7367]">Código:</span>
