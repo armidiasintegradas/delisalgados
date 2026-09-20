@@ -934,6 +934,25 @@ export class DbService {
     return true;
   }
 
+  static async deleteOrder(orderId: string): Promise<boolean> {
+    if (isServerSupabaseConfigured && supabaseServer) {
+      const { error } = await supabaseServer
+        .from("orders")
+        .delete()
+        .eq("id", orderId);
+      return !error;
+    }
+
+    const state = loadLocalState();
+    const before = state.orders.length;
+    state.orders = state.orders.filter((o) => o.id !== orderId);
+    if (state.orders.length !== before) {
+      saveLocalState(state);
+      return true;
+    }
+    return false;
+  }
+
   static async updateOrderWhatsAppStatus(orderId: string, whatsapp_status: "pending" | "opened" | "contacted"): Promise<boolean> {
     const updatePayload: any = {
       whatsapp_status,
