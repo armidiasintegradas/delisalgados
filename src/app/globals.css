@@ -130,3 +130,63 @@ nextjs-portal,
     max-width: 100% !important;
   }
 }
+
+
+/* Deli unified translucent surface system */
+:root {
+  --deli-surface-strong: rgba(255, 248, 238, 0.92);
+  --deli-surface: rgba(255, 248, 238, 0.82);
+  --deli-surface-soft: rgba(255, 248, 238, 0.70);
+  --deli-surface-white: rgba(255, 255, 255, 0.74);
+  --deli-border: rgba(234, 216, 199, 0.94);
+  --deli-shadow: 0 8px 24px rgba(60, 31, 21, 0.06);
+}
+
+.deli-surface,
+.deli-surface-strong,
+.deli-surface-soft {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-color: var(--deli-border) !important;
+}
+
+.deli-surface {
+  background: var(--deli-surface) !important;
+  box-shadow: var(--deli-shadow);
+}
+
+.deli-surface-strong {
+  background: var(--deli-surface-strong) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--deli-shadow);
+}
+
+.deli-surface-soft {
+  background: var(--deli-surface-soft) !important;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.deli-field {
+  background: var(--deli-surface-white) !important;
+  border-color: var(--deli-border) !important;
+}
+
+.deli-nav-surface {
+  background: rgba(255, 253, 249, 0.90) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .deli-surface,
+  .deli-surface-strong,
+  .deli-surface-soft,
+  .deli-field,
+  .deli-nav-surface {
+    background: #FFF8EE !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
