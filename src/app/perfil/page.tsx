@@ -231,7 +231,7 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="w-full max-w-[440px] lg:max-w-none mx-auto min-h-screen bg-[#FFFDF9] shadow-2xl lg:shadow-none flex flex-col pb-24 lg:pb-16 relative">
+    <div className="w-full max-w-[440px] lg:max-w-none mx-auto min-h-screen catalog-bg-pattern shadow-2xl lg:shadow-none flex flex-col pb-24 lg:pb-16 relative">
       <header className="sticky top-0 z-20 bg-gradient-to-b from-[#E25C37] via-[#DF532E] to-[#D5451F] text-white shadow-md">
         <div className="w-full max-w-[900px] mx-auto px-4 lg:px-8 py-3.5 flex items-center gap-3">
           <Link href="/" className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
