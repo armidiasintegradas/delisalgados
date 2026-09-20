@@ -994,9 +994,17 @@ export class DbService {
     const unavailableProducts = products.filter((p) => p.availability === "unavailable").length;
     const hiddenProducts = products.filter((p) => !p.is_visible).length;
 
-    // Today's orders
-    const today = new Date().toISOString().slice(0, 10);
-    const todayOrders = orders.filter((o) => o.created_at.slice(0, 10) === today).length;
+    // "Today" must follow Deli's operating timezone (Recife), not UTC.
+    const recifeDate = (value: Date | string) =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Recife",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(typeof value === "string" ? new Date(value) : value);
+
+    const today = recifeDate(new Date());
+    const todayOrders = orders.filter((o) => recifeDate(o.created_at) === today).length;
 
     return {
       availableProducts,
