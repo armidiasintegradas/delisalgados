@@ -103,7 +103,7 @@ export async function PUT(request: Request) {
     neighborhood: String(body.neighborhood || "").trim() || null,
     city: String(body.city || "").trim() || null,
     state: String(body.state || "").trim().toUpperCase() || null,
-    reference_point: String(body.reference_point || "").trim(),
+    reference_point: String(body.reference_point || "").trim() || null,
     avatar_url: body.avatar_url ? String(body.avatar_url).trim() : null,
     updated_at: new Date().toISOString(),
   };
@@ -121,7 +121,6 @@ export async function PUT(request: Request) {
     !profile.full_name ||
     !profile.whatsapp ||
     !profile.address ||
-    !profile.reference_point ||
     (structuredAddressStarted &&
       (
         !profile.postal_code ||
