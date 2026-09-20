@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { DbService } from "@/lib/db";
-import { supabaseServer } from "@/lib/supabase/server";
+import { createSupabaseServerClient, supabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -36,11 +36,31 @@ export async function POST(
     const amount = Number(order.amount_due_now || 0);
     const now = new Date().toISOString();
 
+    let authenticatedCustomerId: string | null = null;
+    try {
+      const authClient = await createSupabaseServerClient();
+      const { data: authData } = authClient
+        ? await authClient.auth.getUser()
+        : { data: { user: null } as any };
+      const user = authData?.user;
+      if (
+        user?.id &&
+        user?.email &&
+        order.customer_email &&
+        user.email.toLowerCase() === String(order.customer_email).toLowerCase()
+      ) {
+        authenticatedCustomerId = user.id;
+      }
+    } catch {
+      // The handoff token is still the authority for this action.
+    }
+
     const { data, error } = await supabaseServer!
       .from("orders")
       .update({
         payment_reported_at: now,
         payment_reported_amount: amount,
+        customer_user_id: authenticatedCustomerId || order.customer_user_id || null,
         updated_at: now,
       })
       .eq("id", order.id)
