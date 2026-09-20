@@ -141,18 +141,20 @@ export default function CheckoutPage() {
         const p = data.profile;
         setCustomerData((prev) => ({
           ...prev,
-          customerName: prev.customerName || p.full_name || "",
-          customerPhone: prev.customerPhone || p.whatsapp || "",
-          customerEmail: prev.customerEmail || p.email || "",
-          deliveryAddress: prev.deliveryAddress || p.address || "",
-          postalCode: prev.postalCode || p.postal_code || "",
-          street: prev.street || p.street || "",
-          addressNumber: prev.addressNumber || p.address_number || "",
-          complement: prev.complement || p.complement || "",
-          neighborhood: prev.neighborhood || p.neighborhood || "",
-          city: prev.city || p.city || "",
-          state: prev.state || p.state || "",
-          referencePoint: prev.referencePoint || p.reference_point || "",
+          // Authenticated account identity is authoritative. Never preserve
+          // stale identity values left in the cart by a previous session.
+          customerName: p.full_name || "",
+          customerPhone: p.whatsapp || "",
+          customerEmail: p.email || "",
+          deliveryAddress: p.address || "",
+          postalCode: p.postal_code || "",
+          street: p.street || "",
+          addressNumber: p.address_number || "",
+          complement: p.complement || "",
+          neighborhood: p.neighborhood || "",
+          city: p.city || "",
+          state: p.state || "",
+          referencePoint: p.reference_point || "",
         }));
         setAddressFields((current) => {
           const next = {
