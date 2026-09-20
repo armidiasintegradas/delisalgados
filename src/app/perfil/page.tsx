@@ -249,7 +249,7 @@ export default function PerfilPage() {
         {loading ? (
           <div className="py-16 text-center text-xs text-[#7A6357]">Carregando...</div>
         ) : !authenticated ? (
-          <form onSubmit={signInWithPassword} className="bg-white p-6 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-4">
+          <form onSubmit={signInWithPassword} className="deli-surface p-6 rounded-3xl border space-y-4">
             <div className="w-12 h-12 rounded-full bg-[#FFF0E2] text-[#E05A36] flex items-center justify-center">
               <User size={22} />
             </div>
@@ -274,7 +274,7 @@ export default function PerfilPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seuemail@exemplo.com"
-                  className="w-full pl-9 pr-3 py-3 bg-[#FFFDF9] border border-[#E8D9CB] rounded-2xl text-sm text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
+                  className="w-full pl-9 pr-3 py-3 deli-field border rounded-2xl text-sm text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
                 />
               </div>
             </div>
@@ -292,7 +292,7 @@ export default function PerfilPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Sua senha"
-                  className="w-full pl-9 pr-11 py-3 bg-[#FFFDF9] border border-[#E8D9CB] rounded-2xl text-sm text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
+                  className="w-full pl-9 pr-11 py-3 deli-field border rounded-2xl text-sm text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
                 />
                 <button
                   type="button"
@@ -335,7 +335,7 @@ export default function PerfilPage() {
         ) : (
           <div className="space-y-4">
             <CustomerGreeting />
-            <div className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-3">
+            <div className="deli-surface p-5 rounded-3xl border space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="relative shrink-0">
@@ -424,7 +424,7 @@ export default function PerfilPage() {
               <Link href="/meus-pedidos" className="p-4 rounded-3xl bg-[#3C1F15] text-white text-center font-bold text-xs flex flex-col items-center gap-2">
                 <ShoppingBag size={20} /> MEUS PEDIDOS
               </Link>
-              <Link href="/" className="p-4 rounded-3xl bg-[#FFF4E8] border border-[#F0D5BE] text-[#3C1F15] text-center font-bold text-xs flex flex-col items-center gap-2">
+              <Link href="/" className="deli-surface-soft p-4 rounded-3xl border text-[#3C1F15] text-center font-bold text-xs flex flex-col items-center gap-2">
                 <ShoppingBag size={20} /> NOVO PEDIDO
               </Link>
             </div>
