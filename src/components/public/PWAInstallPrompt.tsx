@@ -32,12 +32,12 @@ export function PWAInstallPrompt() {
       /iPad|iPhone|iPod/.test(ua) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const android = /Android/i.test(ua);
-    const mobileViewport = window.matchMedia("(max-width: 1023px)").matches;
 
     setIsIOS(ios);
     setIsAndroid(android);
 
-    if (!mobileViewport || (!ios && !android)) return;
+    // Mobile/tablet operating systems only; desktop browsers keep the normal website UI.
+    if (!ios && !android) return;
 
     const dismissedAt = Number(localStorage.getItem("deli_pwa_dismissed_at") || 0);
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
@@ -196,7 +196,9 @@ export function PWAInstallPrompt() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-lg font-black text-[#3C1F15]">Adicionar “Deli Salgados”</div>
-                <p className="text-xs text-[#7A6357] mt-1">No iPhone, faça isso pelo Safari:</p>
+                <p className="text-xs text-[#7A6357] mt-1">
+                  No iPhone ou iPad, use Compartilhar. Se a opção não aparecer no navegador atual, abra o site no Safari.
+                </p>
               </div>
               <button
                 type="button"
