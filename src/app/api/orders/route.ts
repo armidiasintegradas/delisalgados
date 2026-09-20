@@ -6,7 +6,7 @@ import { isServerSupabaseConfigured, createSupabaseServerClient } from "@/lib/su
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { customer, items, paymentPlan, deliverySelection } = body;
+    const { customer, items, paymentPlan } = body;
 
     if (!customer || !items) {
       return NextResponse.json({ error: "Dados incompletos para criação do pedido." }, { status: 400 });
@@ -29,11 +29,7 @@ export async function POST(request: Request) {
       customer,
       items,
       customerUserId: user?.id || null,
-      paymentPlan: paymentPlan === "full" ? "full" : "deposit_50",
-      deliverySelection:
-        customer?.fulfillmentType === "delivery" && deliverySelection
-          ? deliverySelection
-          : null,
+      paymentPlan: paymentPlan === "full" ? "full" : "deposit_50"
     });
     const { handoffToken, ...orderData } = result;
 
