@@ -27,7 +27,9 @@ export async function POST(request: Request) {
     const customerName = String(customer.customerName || "").trim();
     const customerPhone = String(customer.customerPhone || "").trim();
     const phoneDigits = customerPhone.replace(/\D/g, "");
-    const customerEmail = String(customer.customerEmail || "").trim().toLowerCase();
+    const submittedCustomerEmail = String(customer.customerEmail || "").trim().toLowerCase();
+    const authEmail = String(user?.email || "").trim().toLowerCase();
+    const customerEmail = authEmail || submittedCustomerEmail;
     const deliveryAddress = String(customer.deliveryAddress || "").trim();
     const referencePoint = String(customer.referencePoint || "").trim();
     const desiredDate = String(customer.desiredDate || "").trim();
@@ -104,11 +106,10 @@ export async function POST(request: Request) {
       }
 
       if (user) {
-        const authEmail = String(user.email || "").trim().toLowerCase();
-        if (!authEmail || authEmail !== customerEmail) {
+        if (!authEmail) {
           return NextResponse.json(
             {
-              error: "O e-mail do pedido deve ser o mesmo da conta Deli conectada.",
+              error: "Não foi possível identificar o e-mail da conta Deli conectada.",
               code: "CUSTOMER_IDENTITY_MISMATCH",
             },
             { status: 409 }
@@ -128,8 +129,13 @@ export async function POST(request: Request) {
     }
 
     // SERVER-SIDE AUTHORITY: calculate prices, snapshots, validation, transactional RPC
+    const normalizedCustomer = {
+      ...customer,
+      customerEmail,
+    };
+
     const result = await DbService.createOrder({
-      customer,
+      customer: normalizedCustomer,
       items,
       customerUserId: user?.id || null,
       paymentPlan: paymentPlan === "full" ? "full" : "deposit_50"
