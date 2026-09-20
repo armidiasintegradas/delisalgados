@@ -26,7 +26,7 @@ function getCategoryBadge(items: Product[]): string | null {
   if (!allSame) return null;
 
   const first = items[0];
-  if (first.minimum_quantity >= 100) {
+  if (first.minimum_quantity >= 25) {
     return `A PARTIR DE ${first.minimum_quantity} UN.`;
   }
   if (first.unit_label?.toLowerCase().includes("kg")) {
