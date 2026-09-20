@@ -7,7 +7,6 @@ import { BottomNav } from "@/components/public/BottomNav";
 import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { createClient } from "@/lib/supabase/client";
 import { CustomerProfile } from "@/types";
-import { getFirstName } from "@/lib/formatters";
 
 export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
