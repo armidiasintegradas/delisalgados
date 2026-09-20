@@ -90,7 +90,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       const savedCart = localStorage.getItem("deli_cart_v1");
       if (savedCart) {
-        setItems(JSON.parse(savedCart));
+        const parsed = JSON.parse(savedCart) as CartItem[];
+        const normalized = parsed.map((item) => ({
+          ...item,
+          minimumQuantity:
+            (item.unitLabel || "").trim().toUpperCase() === "UND" &&
+            item.minimumQuantity >= 25
+              ? 25
+              : item.minimumQuantity,
+        }));
+        setItems(normalized);
       }
       const savedCustomer = localStorage.getItem("deli_customer_v1");
       if (savedCustomer) {
