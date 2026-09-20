@@ -14,6 +14,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  Trash2,
+  ShieldCheck,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 
@@ -40,6 +42,9 @@ type CustomerRow = {
   last_order_code?: string | null;
   last_order_status?: string | null;
   last_payment_status?: string | null;
+  auth_email_confirmed?: boolean;
+  auth_last_sign_in_at?: string | null;
+  auth_status?: "active" | "pending_confirmation" | "missing_auth";
 };
 
 const statusLabels: Record<string, string> = {
@@ -57,6 +62,8 @@ export default function AdminCustomersPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [resettingId, setResettingId] = useState<string | null>(null);
+  const [activatingId, setActivatingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   async function loadCustomers() {
@@ -125,6 +132,53 @@ export default function AdminCustomersPage() {
       setMessage({ type: "error", text: error?.message || "Não foi possível enviar o link." });
     } finally {
       setResettingId(null);
+    }
+  }
+
+
+  async function activateAccess(customer: CustomerRow) {
+    const confirmed = window.confirm(
+      `Ativar o acesso de ${customer.full_name || customer.email}?\n\nIsso confirma o e-mail no sistema e repara a ligação entre Auth, perfil e pedidos.`
+    );
+    if (!confirmed) return;
+
+    setActivatingId(customer.id);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/customers/${customer.id}/activate`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Não foi possível ativar o acesso.");
+      setMessage({ type: "success", text: data.message || "Acesso ativado." });
+      await loadCustomers();
+    } catch (error: any) {
+      setMessage({ type: "error", text: error?.message || "Não foi possível ativar o acesso." });
+    } finally {
+      setActivatingId(null);
+    }
+  }
+
+  async function deleteCustomer(customer: CustomerRow) {
+    const confirmed = window.confirm(
+      `Excluir o usuário ${customer.full_name || customer.email}?\n\nO login e o cadastro serão removidos. O histórico comercial dos pedidos será preservado. Esta ação não pode ser desfeita.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(customer.id);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/customers/${customer.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Não foi possível excluir o usuário.");
+      setCustomers((current) => current.filter((item) => item.id !== customer.id));
+      setMessage({ type: "success", text: data.message || "Usuário excluído." });
+    } catch (error: any) {
+      setMessage({ type: "error", text: error?.message || "Não foi possível excluir o usuário." });
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -218,6 +272,16 @@ export default function AdminCustomersPage() {
                     <Phone size={12} className="shrink-0" />
                     <span>{customer.whatsapp}</span>
                   </div>
+                  <div className="mt-2">
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wide border ${
+                      customer.auth_status === "active"
+                        ? "bg-[#EAF7EE] border-[#BFE7CC] text-[#1E7A45]"
+                        : "bg-[#FFF0CC] border-[#F3D083] text-[#8C6D1F]"
+                    }`}>
+                      <ShieldCheck size={11} />
+                      {customer.auth_status === "active" ? "Acesso ativo" : "Acesso pendente"}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -266,19 +330,51 @@ export default function AdminCustomersPage() {
                 )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => sendReset(customer)}
-                disabled={resettingId === customer.id}
-                className="w-full py-3 rounded-2xl bg-[#3C1F15] text-white text-[10px] font-black uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                {resettingId === customer.id ? (
-                  <Loader2 size={15} className="animate-spin" />
-                ) : (
-                  <KeyRound size={15} />
+              <div className="space-y-2">
+                {customer.auth_status !== "active" && (
+                  <button
+                    type="button"
+                    onClick={() => activateAccess(customer)}
+                    disabled={activatingId === customer.id}
+                    className="w-full py-3 rounded-2xl bg-[#E05A36] text-white text-[10px] font-black uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-60"
+                  >
+                    {activatingId === customer.id ? (
+                      <Loader2 size={15} className="animate-spin" />
+                    ) : (
+                      <ShieldCheck size={15} />
+                    )}
+                    {activatingId === customer.id ? "ATIVANDO..." : "ATIVAR ACESSO"}
+                  </button>
                 )}
-                {resettingId === customer.id ? "ENVIANDO LINK..." : "ENVIAR LINK PARA NOVA SENHA"}
-              </button>
+
+                <button
+                  type="button"
+                  onClick={() => sendReset(customer)}
+                  disabled={resettingId === customer.id}
+                  className="w-full py-3 rounded-2xl bg-[#3C1F15] text-white text-[10px] font-black uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {resettingId === customer.id ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <KeyRound size={15} />
+                  )}
+                  {resettingId === customer.id ? "ENVIANDO LINK..." : "ENVIAR LINK PARA NOVA SENHA"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => deleteCustomer(customer)}
+                  disabled={deletingId === customer.id}
+                  className="w-full py-3 rounded-2xl border border-[#E8BFB5] bg-[#FFF0EE] text-[#A33D29] text-[10px] font-black uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {deletingId === customer.id ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={15} />
+                  )}
+                  {deletingId === customer.id ? "EXCLUINDO..." : "EXCLUIR USUÁRIO"}
+                </button>
+              </div>
             </article>
           ))}
         </div>
