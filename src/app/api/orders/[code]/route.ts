@@ -35,6 +35,17 @@ export async function PATCH(request: Request, context: { params: Promise<{ code:
     }
 
     if (body.status) {
+      if (
+        (body.status === "confirmed" || body.status === "preparing") &&
+        order.payment_status !== "paid" &&
+        order.payment_status !== "partially_paid"
+      ) {
+        return NextResponse.json(
+          { error: "Confirme o recebimento do Pix antes de confirmar ou preparar o pedido." },
+          { status: 409 }
+        );
+      }
+
       await DbService.updateOrderStatus(order.id, body.status);
     }
 
