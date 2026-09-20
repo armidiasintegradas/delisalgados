@@ -16,8 +16,20 @@ export function generateWhatsAppMessage(order: Order, settings: Settings): strin
 
   const lines: string[] = [];
 
-  // Opening
-  lines.push(settings.whatsapp_opening_message || "Olá, Deli Salgados! Gostaria de enviar uma solicitação de pedido:");
+  // Opening — personalize with the customer's first name.
+  const firstName = (order.customer_name || "").trim().split(/\s+/)[0] || "Cliente";
+  const openingTemplate =
+    settings.whatsapp_opening_message ||
+    "Olá, Deli Salgados! Gostaria de enviar uma solicitação de pedido pelo cardápio digital:";
+
+  const personalizedOpening = openingTemplate.includes("Olá, Deli Salgados!")
+    ? openingTemplate.replace(
+        "Olá, Deli Salgados!",
+        `Olá, Deli Salgados! Aqui é ${firstName}.`
+      )
+    : `Olá, Deli Salgados! Aqui é ${firstName}. ${openingTemplate}`;
+
+  lines.push(personalizedOpening);
   lines.push("");
   lines.push(`📋 *Pedido:* ${order.public_code}`);
   lines.push(`👤 *Cliente:* ${order.customer_name}`);
