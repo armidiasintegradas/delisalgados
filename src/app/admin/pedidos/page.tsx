@@ -155,8 +155,30 @@ export default function AdminOrdersPage() {
         if (!res.ok) throw new Error("Falha ao atualizar pagamento");
         const data = await res.json();
         if (data.order) {
-          setOrders((prev) => prev.map((o) => (o.id === orderId ? data.order : o)));
-          setSelectedOrder(data.order);
+          let finalOrder = data.order;
+
+          if (
+            (paymentStatus === "paid" || paymentStatus === "partially_paid") &&
+            (data.order.status === "generated" || data.order.status === "contacted")
+          ) {
+            const statusRes = await fetch(`/api/orders/${data.order.public_code}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: "confirmed" }),
+            });
+            const statusData = await statusRes.json();
+            if (statusRes.ok && statusData.order) {
+              finalOrder = statusData.order;
+            }
+          }
+
+          setOrders((prev) => prev.map((o) => (o.id === orderId ? finalOrder : o)));
+          setSelectedOrder(finalOrder);
+          setStatusMessage(
+            paymentStatus === "paid" || paymentStatus === "partially_paid"
+              ? "Pagamento confirmado e pedido marcado como recebido. O cliente verá a atualização em Meus Pedidos."
+              : "Status de pagamento atualizado."
+          );
         }
       }
     } catch (e) {
