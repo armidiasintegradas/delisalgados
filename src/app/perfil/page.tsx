@@ -132,23 +132,22 @@ export default function PerfilPage() {
       const { data } = client.storage.from("customer-avatars").getPublicUrl(path);
       const avatarUrl = `${data.publicUrl}?v=${Date.now()}`;
 
-      const updatedProfile = { ...profile, avatar_url: avatarUrl };
-
-      const res = await fetch("/api/customer/profile", {
-        method: "PUT",
+      const res = await fetch("/api/customer/profile/avatar", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedProfile),
+        body: JSON.stringify({ avatar_url: avatarUrl }),
       });
       const saved = await res.json();
       if (!res.ok) throw new Error(saved.error || "Falha ao salvar a foto.");
 
-      setProfile(saved.profile);
+      const nextProfile = saved.profile || { ...profile, avatar_url: avatarUrl };
+      setProfile(nextProfile);
       setPendingAvatarFile(null);
       setMessage("Foto de perfil atualizada.");
 
       window.dispatchEvent(
         new CustomEvent("deli-profile-updated", {
-          detail: { avatar_url: saved.profile?.avatar_url || avatarUrl },
+          detail: { avatar_url: nextProfile.avatar_url || avatarUrl },
         })
       );
     } catch (err: any) {
@@ -180,16 +179,15 @@ export default function PerfilPage() {
           ]);
       }
 
-      const updatedProfile = { ...profile, avatar_url: null };
-      const res = await fetch("/api/customer/profile", {
-        method: "PUT",
+      const res = await fetch("/api/customer/profile/avatar", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedProfile),
+        body: JSON.stringify({ avatar_url: null }),
       });
       const saved = await res.json();
       if (!res.ok) throw new Error(saved.error || "Falha ao remover foto.");
 
-      setProfile(saved.profile);
+      setProfile(saved.profile || { ...profile, avatar_url: null });
       setMessage("Foto de perfil removida.");
       window.dispatchEvent(
         new CustomEvent("deli-profile-updated", {
