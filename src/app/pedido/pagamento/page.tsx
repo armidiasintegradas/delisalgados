@@ -28,13 +28,8 @@ function PaymentContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [providerPix, setProviderPix] = useState<{
-    mode: "mercadopago" | "static";
-    qrCode: string;
-    qrCodeBase64: string;
-    ticketUrl: string;
-  } | null>(null);
-  const [providerLoading, setProviderLoading] = useState(false);
+  const [reportingPayment, setReportingPayment] = useState(false);
+  const [paymentReportError, setPaymentReportError] = useState<string | null>(null);
 
   async function load() {
     if (!orderCode) {
@@ -83,103 +78,13 @@ function PaymentContent() {
     }
   }
 
-  async function loadProviderPix(currentOrder: Order, activeToken: string) {
-    if (currentOrder.payment_status === "paid" || currentOrder.payment_status === "partially_paid") {
-      return;
-    }
-
-    setProviderLoading(true);
-    try {
-      const res = await fetch("/api/payments/pix", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: currentOrder.public_code,
-          token: activeToken,
-        }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Não foi possível preparar o Pix.");
-      }
-
-      if (data.mode === "mercadopago") {
-        setProviderPix({
-          mode: "mercadopago",
-          qrCode: data.qr_code || "",
-          qrCodeBase64: data.qr_code_base64 || "",
-          ticketUrl: data.ticket_url || "",
-        });
-      } else {
-        setProviderPix({
-          mode: "static",
-          qrCode: "",
-          qrCodeBase64: "",
-          ticketUrl: "",
-        });
-      }
-
-      if (data.confirmed) {
-        await load();
-      }
-    } catch (err) {
-      console.warn("Automatic Pix unavailable, keeping static fallback:", err);
-      setProviderPix({
-        mode: "static",
-        qrCode: "",
-        qrCodeBase64: "",
-        ticketUrl: "",
-      });
-    } finally {
-      setProviderLoading(false);
-    }
-  }
-
   useEffect(() => {
     load();
   }, [orderCode, handoffToken]);
 
-  useEffect(() => {
-    if (!order) return;
 
-    const activeToken =
-      handoffToken ||
-      (typeof window !== "undefined" ? sessionStorage.getItem("deli_handoff_token") : null);
 
-    if (!activeToken) return;
-    loadProviderPix(order, activeToken);
-  }, [order?.id]);
-
-  useEffect(() => {
-    if (!order || order.payment_status === "paid" || order.payment_status === "partially_paid") {
-      return;
-    }
-
-    const activeToken =
-      handoffToken ||
-      (typeof window !== "undefined" ? sessionStorage.getItem("deli_handoff_token") : null);
-    if (!activeToken) return;
-
-    const timer = window.setInterval(async () => {
-      try {
-        const res = await fetch("/api/orders/handoff", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: order.public_code, token: activeToken }),
-          cache: "no-store",
-        });
-        const data = await res.json();
-        if (res.ok && data.order) {
-          setOrder(data.order);
-        }
-      } catch {}
-    }, 4000);
-
-    return () => window.clearInterval(timer);
-  }, [order?.public_code, order?.payment_status, handoffToken]);
-
-  const staticPixPayload = useMemo(() => {
+  const pixPayload = useMemo(() => {
     if (!order || !settings?.pix_key) return "";
     return buildPixPayload({
       key: settings.pix_key,
@@ -191,23 +96,53 @@ function PaymentContent() {
     });
   }, [order, settings]);
 
-  const pixPayload =
-    providerPix?.mode === "mercadopago" && providerPix.qrCode
-      ? providerPix.qrCode
-      : staticPixPayload;
-
-  const qrUrl =
-    providerPix?.mode === "mercadopago" && providerPix.qrCodeBase64
-      ? `data:image/png;base64,${providerPix.qrCodeBase64}`
-      : pixPayload
-        ? `https://quickchart.io/qr?size=300&margin=2&ecLevel=M&text=${encodeURIComponent(pixPayload)}`
-        : "";
+  const qrUrl = pixPayload
+    ? `https://quickchart.io/qr?size=300&margin=2&ecLevel=M&text=${encodeURIComponent(pixPayload)}`
+    : "";
 
   async function copyPix() {
     if (!pixPayload) return;
     await navigator.clipboard.writeText(pixPayload);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
+  }
+
+  async function reportPayment() {
+    if (!order?.public_code) return;
+
+    const activeToken =
+      handoffToken ||
+      (typeof window !== "undefined" ? sessionStorage.getItem("deli_handoff_token") : null);
+
+    if (!activeToken) {
+      setPaymentReportError("Não foi possível validar este pedido.");
+      return;
+    }
+
+    setReportingPayment(true);
+    setPaymentReportError(null);
+
+    try {
+      const res = await fetch(`/api/orders/${order.public_code}/payment-reported`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: activeToken }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.order) {
+        throw new Error(data.error || "Não foi possível informar o pagamento.");
+      }
+
+      setOrder(data.order);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("deli_last_order", JSON.stringify(data.order));
+      }
+    } catch (err: any) {
+      setPaymentReportError(err?.message || "Não foi possível informar o pagamento.");
+    } finally {
+      setReportingPayment(false);
+    }
   }
 
   function markWhatsappOpened() {
@@ -296,7 +231,7 @@ function PaymentContent() {
               <div className="text-sm font-black text-[#E05A36]">{formatCurrency(dueNow)}</div>
             </div>
             <div className="p-3 rounded-2xl bg-white border border-[#F0E2D2] text-center">
-              <div className="text-[9px] uppercase font-bold text-[#9E8679]">Na entrega</div>
+              <div className="text-[9px] uppercase font-bold text-[#9E8679]">Saldo produtos</div>
               <div className="text-sm font-black text-[#3C1F15]">{formatCurrency(balance)}</div>
             </div>
           </div>
@@ -315,21 +250,14 @@ function PaymentContent() {
             </div>
           )}
 
-          {providerLoading && !paymentAlreadyConfirmed ? (
-            <div className="p-5 rounded-3xl bg-white border border-[#EAD8C7] text-center space-y-2">
-              <RefreshCw size={24} className="mx-auto animate-spin text-[#E05A36]" />
-              <div className="text-xs font-bold text-[#7A6357]">Gerando Pix seguro...</div>
-            </div>
-          ) : paymentAlreadyConfirmed ? (
+          {paymentAlreadyConfirmed ? (
             <div className="p-5 rounded-3xl bg-[#EAF7EE] border border-[#CDEEDB] text-center space-y-2">
               <ShieldCheck size={28} className="mx-auto text-[#1FAA52]" />
               <div className="font-black text-[#1E5631]">
                 {order.payment_status === "paid" ? "Pagamento confirmado" : "Entrada confirmada"}
               </div>
               <p className="text-xs text-[#52765E]">
-                {order.payment_provider === "mercadopago"
-                  ? "O pagamento foi identificado automaticamente pelo sistema."
-                  : "O financeiro da Deli já registrou este pagamento."}
+                A Deli conferiu o recebimento do Pix e confirmou seu pagamento.
               </p>
             </div>
           ) : pixPayload ? (
@@ -359,17 +287,37 @@ function PaymentContent() {
                 {copied ? "PIX COPIADO" : "COPIAR PIX COPIA E COLA"}
               </button>
 
-              <div className="p-3 rounded-2xl bg-[#FFF9E6] border border-[#EFE2C4] text-[10px] text-[#7A6357] leading-relaxed">
-                {providerPix?.mode === "mercadopago" ? (
-                  <>
-                    O pedido permanece como <strong>aguardando pagamento</strong> até o banco confirmar a transação. Depois do pagamento, esta tela é atualizada automaticamente — não é necessário enviar comprovante.
-                  </>
-                ) : (
-                  <>
-                    O pedido permanece como <strong>aguardando pagamento</strong> até a Deli confirmar o recebimento.
-                  </>
-                )}
-              </div>
+              {order.payment_reported_at ? (
+                <div className="p-4 rounded-2xl bg-[#FFF4D9] border border-[#FDE0A2] text-center space-y-1.5">
+                  <ShieldCheck size={22} className="mx-auto text-[#B85D19]" />
+                  <div className="text-xs font-black text-[#7A4A13]">Pagamento informado</div>
+                  <p className="text-[10px] text-[#8C6D1F] leading-relaxed">
+                    Recebemos seu aviso. A Deli fará a conferência do Pix e atualizará o pedido assim que o crédito for localizado.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={reportPayment}
+                    disabled={reportingPayment}
+                    className="w-full py-3.5 rounded-2xl bg-[#E05A36] disabled:opacity-60 text-white text-xs font-black flex items-center justify-center gap-2"
+                  >
+                    <ShieldCheck size={16} />
+                    {reportingPayment ? "INFORMANDO..." : "JÁ FIZ O PIX"}
+                  </button>
+
+                  <div className="p-3 rounded-2xl bg-[#FFF9E6] border border-[#EFE2C4] text-[10px] text-[#7A6357] leading-relaxed">
+                    Depois de pagar, toque em <strong>JÁ FIZ O PIX</strong>. A Deli receberá o aviso e fará a conferência manual no Nubank. O pedido só será marcado como pago depois dessa conferência.
+                  </div>
+
+                  {paymentReportError && (
+                    <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-[10px] text-rose-700">
+                      {paymentReportError}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           ) : (
             <div className="p-5 rounded-3xl bg-[#FFF4E8] border border-[#F0D5BE] space-y-2">
