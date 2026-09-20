@@ -90,10 +90,9 @@ export default function CriarContaPage() {
       !address.addressNumber.trim() ||
       !address.neighborhood.trim() ||
       !address.city.trim() ||
-      address.state.trim().length !== 2 ||
-      !address.referencePoint.trim()
+      address.state.trim().length !== 2
     ) {
-      setMessage("Complete CEP, rua, número, bairro, cidade, UF e ponto de referência.");
+      setMessage("Complete CEP, rua, número, bairro, cidade e UF.");
       return;
     }
 
@@ -179,7 +178,7 @@ export default function CriarContaPage() {
               <MapPin size={16} className="text-[#E05A36]" />
               <div>
                 <div className="text-xs font-black text-[#3C1F15]">Seu endereço</div>
-                <div className="text-[10px] text-[#8C7367]">Busque pelo CEP para preencher automaticamente.</div>
+                <div className="text-[10px] text-[#8C7367]">Busque pelo CEP para preencher o endereço. Você pode corrigir os campos manualmente.</div>
               </div>
             </div>
 
@@ -242,7 +241,7 @@ export default function CriarContaPage() {
             </div>
 
             <label className="block">
-              <span className="text-[10px] font-black uppercase text-[#7A6357]">Ponto de referência *</span>
+              <span className="text-[10px] font-black uppercase text-[#7A6357]">Ponto de referência <span className="normal-case font-semibold">(opcional)</span></span>
               <input value={address.referencePoint} onChange={(e) => setAddress({ ...address, referencePoint: e.target.value })} className="deli-field mt-1 w-full p-3 rounded-2xl border text-sm" />
             </label>
           </div>
