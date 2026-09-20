@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { DbService } from "@/lib/db";
+import { isServerSupabaseConfigured, supabaseServer } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   try {
@@ -18,10 +19,34 @@ export async function GET(request: Request) {
       }),
     ]);
 
+    let enrichedProducts = products;
+
+    if (isServerSupabaseConfigured && supabaseServer) {
+      const { data: salesRows, error: salesError } = await supabaseServer
+        .from("order_items")
+        .select("product_id, quantity");
+
+      if (!salesError && salesRows) {
+        const salesMap = new Map<string, number>();
+        for (const row of salesRows) {
+          if (!row.product_id) continue;
+          salesMap.set(
+            row.product_id,
+            (salesMap.get(row.product_id) || 0) + Number(row.quantity || 0)
+          );
+        }
+
+        enrichedProducts = products.map((product) => ({
+          ...product,
+          sales_count: salesMap.get(product.id) || 0,
+        }));
+      }
+    }
+
     return NextResponse.json({
       settings,
       categories: categories.filter((c) => c.is_active),
-      products,
+      products: enrichedProducts,
     });
   } catch (error: any) {
     console.error("Error fetching catalog:", error);
