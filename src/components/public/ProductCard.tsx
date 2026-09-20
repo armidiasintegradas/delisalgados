@@ -79,10 +79,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div
       onClick={() => onOpenOptions(product)}
-      className="bg-[#FFF9E6] rounded-[18px] p-4 shadow-[0_2px_6px_rgba(60,31,21,0.04)] border border-[#F0DEC0] hover:border-[#E05A36]/40 transition-all cursor-pointer flex items-center justify-between gap-3 group"
+      className="deli-surface rounded-[18px] p-4 border hover:border-[#E05A36]/40 transition-all cursor-pointer flex items-center justify-between gap-3 group"
     >
       {product.image_url && (
-        <div className="w-[84px] h-[84px] sm:w-[92px] sm:h-[92px] shrink-0 rounded-[14px] overflow-hidden border border-[#E8D9CB] bg-[#FFFDF9]">
+        <div className="deli-field w-[84px] h-[84px] sm:w-[92px] sm:h-[92px] shrink-0 rounded-[14px] overflow-hidden border">
           <img
             src={product.image_url}
             alt={product.name}
