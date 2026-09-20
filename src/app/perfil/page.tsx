@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, User, LogOut, ShoppingBag, Save, Camera, Trash2 } from "lucide-react";
+import { ArrowLeft, Mail, User, LogOut, ShoppingBag, Save, Camera, Trash2, LockKeyhole, Eye, EyeOff } from "lucide-react";
 import { BottomNav } from "@/components/public/BottomNav";
 import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { createClient } from "@/lib/supabase/client";
@@ -15,6 +15,8 @@ export default function PerfilPage() {
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -35,28 +37,44 @@ export default function PerfilPage() {
     loadProfile();
   }, []);
 
-  async function sendAccessLink(e: React.FormEvent) {
+  async function signInWithPassword(e: React.FormEvent) {
     e.preventDefault();
     setMessage(null);
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+      setMessage("Informe um e-mail válido.");
+      return;
+    }
+    if (!password) {
+      setMessage("Informe sua senha.");
+      return;
+    }
+
     setSending(true);
     try {
       const client = createClient();
       if (!client) throw new Error("Autenticação indisponível.");
-      const { error } = await client.auth.signInWithOtp({
-        email: email.trim().toLowerCase(),
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/perfil`,
-        },
+
+      const { error } = await client.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
       });
-      if (error) throw error;
-      setMessage("Enviamos um link de acesso para o seu e-mail.");
+
+      if (error) {
+        setMessage("E-mail ou senha inválidos. Se não lembrar a senha, use “Esqueci minha senha”.");
+        return;
+      }
+
+      setPassword("");
+      await loadProfile();
     } catch (err: any) {
-      setMessage(err?.message || "Não foi possível enviar o link de acesso.");
+      setMessage(err?.message || "Não foi possível entrar na sua conta.");
     } finally {
       setSending(false);
     }
   }
+
 
   async function uploadAvatar(file: File) {
     if (!profile) return;
@@ -200,37 +218,88 @@ export default function PerfilPage() {
         {loading ? (
           <div className="py-16 text-center text-xs text-[#7A6357]">Carregando...</div>
         ) : !authenticated ? (
-          <form onSubmit={sendAccessLink} className="bg-white p-6 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-4">
+          <form onSubmit={signInWithPassword} className="bg-white p-6 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-4">
             <div className="w-12 h-12 rounded-full bg-[#FFF0E2] text-[#E05A36] flex items-center justify-center">
               <User size={22} />
             </div>
+
             <div>
-              <h2 className="text-xl font-black text-[#3C1F15]">Acesse sua conta Deli</h2>
+              <h2 className="text-xl font-black text-[#3C1F15]">Entrar na sua conta Deli</h2>
               <p className="text-xs text-[#7A6357] mt-1 leading-relaxed">
-                Use o mesmo e-mail informado nos seus pedidos. Você receberá um link seguro de acesso, sem precisar criar senha.
+                Use o e-mail cadastrado no seu primeiro pedido e sua senha para acessar seu perfil e histórico.
               </p>
             </div>
 
             <div>
-              <label className="text-[11px] font-black uppercase tracking-wider text-[#3C1F15] block mb-1">E-mail</label>
+              <label className="text-[11px] font-black uppercase tracking-wider text-[#3C1F15] block mb-1">
+                Login (e-mail)
+              </label>
               <div className="relative">
                 <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E8679]" />
                 <input
                   type="email"
                   required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seuemail@exemplo.com"
-                  className="w-full pl-9 pr-3 py-3 bg-[#FFFDF9] border border-[#E8D9CB] rounded-2xl text-sm text-[#3C1F15]"
+                  className="w-full pl-9 pr-3 py-3 bg-[#FFFDF9] border border-[#E8D9CB] rounded-2xl text-sm text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
                 />
               </div>
             </div>
 
-            {message && <div className="text-xs p-3 rounded-2xl bg-[#FFF4E8] text-[#7A4B36]">{message}</div>}
+            <div>
+              <label className="text-[11px] font-black uppercase tracking-wider text-[#3C1F15] block mb-1">
+                Senha
+              </label>
+              <div className="relative">
+                <LockKeyhole size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E8679]" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Sua senha"
+                  className="w-full pl-9 pr-11 py-3 bg-[#FFFDF9] border border-[#E8D9CB] rounded-2xl text-sm text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9E8679] hover:text-[#3C1F15]"
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+            </div>
 
-            <button disabled={sending} className="w-full py-3.5 rounded-2xl bg-[#3C1F15] text-white font-bold text-xs">
-              {sending ? "Enviando..." : "ENVIAR LINK DE ACESSO"}
+            <div className="flex justify-end">
+              <Link
+                href="/auth/redefinir-senha"
+                className="text-[11px] font-black text-[#E05A36] hover:text-[#C94724]"
+              >
+                ESQUECI MINHA SENHA
+              </Link>
+            </div>
+
+            {message && (
+              <div className="text-xs p-3 rounded-2xl bg-[#FFF4E8] text-[#7A4B36] border border-[#F0D5BE]">
+                {message}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={sending}
+              className="w-full py-3.5 rounded-2xl bg-[#3C1F15] text-white font-bold text-xs disabled:opacity-60"
+            >
+              {sending ? "ENTRANDO..." : "ENTRAR"}
             </button>
+
+            <p className="text-[10px] text-center text-[#9E8679] leading-relaxed">
+              Primeiro acesso sem senha? Use “Esqueci minha senha” para criar uma senha segura para sua conta.
+            </p>
           </form>
         ) : (
           <div className="space-y-4">
