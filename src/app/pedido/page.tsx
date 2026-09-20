@@ -6,6 +6,7 @@ import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
+import { PublicFooter } from "@/components/public/PublicFooter";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, totalAmount, clearCart, isInitialized } = useCart();
@@ -223,6 +224,7 @@ export default function CartPage() {
           </div>
         )}
       </main>
+      <PublicFooter />
     </div>
   );
 }
