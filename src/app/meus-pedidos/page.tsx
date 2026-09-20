@@ -262,6 +262,17 @@ export default function MeusPedidosPage() {
                           : statusLabels[order.status] || order.status}
                       </span>
                     </div>
+                    {order.payment_status === "pending" && order.payment_reported_at && (
+                      <div className="rounded-2xl bg-[#FFF0CC] border border-[#F3D083] px-3 py-2 text-[10px] font-bold text-[#8C6D1F]">
+                        Pix informado · aguardando conferência da Deli
+                      </div>
+                    )}
+                    {(order.payment_status === "paid" || order.payment_status === "partially_paid") && (
+                      <div className="rounded-2xl bg-[#EAF7EE] border border-[#BFE7CC] px-3 py-2 text-[10px] font-bold text-[#1E7A45]">
+                        Pagamento confirmado pela Deli
+                      </div>
+                    )}
+
                     <div className="rounded-2xl deli-surface-soft border overflow-hidden">
                       <div className="px-3 py-2 border-b border-[#F0E2D4] text-[10px] font-black uppercase tracking-wider text-[#8C7367]">
                         Itens comprados ({order.items?.length || 0})
