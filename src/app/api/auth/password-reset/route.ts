@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         .maybeSingle(),
       supabaseServer
         .from("orders")
-        .select("id,customer_email")
+        .select("id,customer_email,customer_name,customer_phone")
         .eq("customer_email", email)
         .order("created_at", { ascending: false })
         .limit(1)
