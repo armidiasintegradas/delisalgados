@@ -54,16 +54,26 @@ export default function AdminOrdersPage() {
   }, []);
 
   const handleCopyOrderText = (order: Order) => {
+    const itemLines = (order.items || []).map((item) => {
+      const variant = item.variant_name_snapshot ? ` (${item.variant_name_snapshot})` : "";
+      const note = item.note ? ` · Obs: ${item.note}` : "";
+      return `- ${item.quantity} ${item.unit_label_snapshot || "un."} × ${item.product_name_snapshot}${variant} — ${formatCurrency(item.subtotal)}${note}`;
+    });
+
     const text = [
       `SOLICITAÇÃO: ${order.public_code}`,
       `CLIENTE: ${order.customer_name}`,
       `WHATSAPP: ${order.customer_phone}`,
       `DATA: ${order.desired_date}`,
       `MODALIDADE: ${order.fulfillment_type === "pickup" ? "Retirada" : order.fulfillment_type === "delivery" ? "Entrega" : "A combinar"}`,
+      "",
+      `ITENS DO PEDIDO (${order.items?.length || 0}):`,
+      ...itemLines,
+      "",
       order.customer_note ? `OBS: ${order.customer_note}` : null,
       `TOTAL: ${formatCurrency(order.total)}`,
     ]
-      .filter(Boolean)
+      .filter((line) => line !== null)
       .join("\n");
 
     navigator.clipboard.writeText(text);
@@ -330,6 +340,25 @@ export default function AdminOrdersPage() {
                       {getPaymentBadge(ord.payment_status, ord.payment_reported_at).label}
                     </span>
                   </div>
+
+                  {(ord.items || []).length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-[#F0E2D2] space-y-0.5">
+                      {(ord.items || []).slice(0, 3).map((item, itemIndex) => (
+                        <div key={item.id || itemIndex} className="text-[10px] text-[#614439] flex justify-between gap-2">
+                          <span className="truncate">
+                            {item.quantity} {item.unit_label_snapshot || "un."} · {item.product_name_snapshot}
+                            {item.variant_name_snapshot ? ` (${item.variant_name_snapshot})` : ""}
+                          </span>
+                          <span className="font-bold shrink-0">{formatCurrency(item.subtotal)}</span>
+                        </div>
+                      ))}
+                      {(ord.items || []).length > 3 && (
+                        <div className="text-[9px] font-bold text-[#8C7367]">
+                          + {(ord.items || []).length - 3} {(ord.items || []).length - 3 === 1 ? "item" : "itens"}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -547,7 +576,7 @@ export default function AdminOrdersPage() {
               {/* Order Items Table */}
               <div className="border-t border-[#F4E8DB] pt-3 space-y-2">
                 <span className="text-[11px] font-black uppercase tracking-wider text-[#8C7367] block">
-                  Itens do Pedido ({selectedOrder.items?.length || 0})
+                  O que foi comprado ({selectedOrder.items?.length || 0} itens)
                 </span>
 
                 <div className="divide-y divide-[#F7EFE6] border border-[#F0E2D2] rounded-2xl overflow-hidden">
