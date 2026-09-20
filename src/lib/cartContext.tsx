@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { CartItem, Product, ProductVariant, CustomerData } from "@/types";
+import { quantityStep } from "@/lib/orderRules";
 
 interface CartContextType {
   items: CartItem[];
@@ -47,9 +48,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             productName: "Coxinha",
             unitPrice: 1.7,
             unitLabel: "UND",
-            minimumQuantity: 100,
-            quantity: 100,
-            subtotal: 170.0,
+            minimumQuantity: 25,
+            quantity: 25,
+            subtotal: 42.5,
           },
           {
             id: "p0000000-0000-0000-0000-000000000038",
@@ -57,9 +58,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             productName: "Bolinho de Queijo",
             unitPrice: 2.0,
             unitLabel: "UND",
-            minimumQuantity: 100,
-            quantity: 100,
-            subtotal: 200.0,
+            minimumQuantity: 25,
+            quantity: 25,
+            subtotal: 50.0,
           },
           {
             id: "p0000000-0000-0000-0000-000000000036",
@@ -133,7 +134,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (existingIdx > -1) {
         const updated = [...prev];
         const currentItem = updated[existingIdx];
-        const step = minQty >= 100 ? 100 : 1;
+        const step = quantityStep(minQty, unitLabel);
         const newQty = currentItem.quantity + (quantity || step);
         updated[existingIdx] = {
           ...currentItem,
@@ -166,7 +167,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return prev
         .map((item) => {
           if (item.id !== id) return item;
-          const step = item.minimumQuantity >= 100 ? (delta > 0 ? 100 : -100) : (delta > 0 ? 1 : -1);
+          const baseStep = quantityStep(item.minimumQuantity, item.unitLabel);
+          const step = delta > 0 ? baseStep : -baseStep;
           const newQty = item.quantity + step;
 
           // If lowered below minimum quantity, remove the item
