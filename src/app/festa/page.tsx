@@ -190,7 +190,7 @@ export default function FestaPage() {
 
       <main className="w-full max-w-[1180px] mx-auto px-4 lg:px-8 py-5 lg:py-8">
         <CustomerGreeting className="mb-4 lg:mb-6" />
-        <section className="grid lg:grid-cols-[1.05fr_.95fr] gap-5 lg:gap-7 items-start">
+        <section className="grid lg:grid-cols-[1.05fr_.95fr] landscape-order-layout gap-5 lg:gap-7 items-start">
           <div className="space-y-4">
             <div className="bg-[#3C1F15] text-white rounded-3xl p-5 lg:p-7 overflow-hidden relative">
               <div className="absolute -right-8 -top-10 opacity-10">
