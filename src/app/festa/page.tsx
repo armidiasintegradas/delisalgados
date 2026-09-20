@@ -188,11 +188,12 @@ export default function FestaPage() {
     <div className="min-h-screen bg-[#FFFDF9] catalog-bg-pattern pb-24 lg:pb-12">
       <Header searchQuery="" onSearchChange={() => {}} showSearch={false} title="Festa" />
 
-      <main className="w-full max-w-[1180px] mx-auto px-3 sm:px-4 lg:px-8 py-5 lg:py-8 overflow-x-hidden">
-        <CustomerGreeting className="mb-4 lg:mb-6" />
-        <section className="grid lg:grid-cols-[1.05fr_.95fr] landscape-order-layout gap-5 lg:gap-7 items-start">
-          <div className="space-y-4">
-            <div className="bg-[#3C1F15] text-white rounded-3xl p-5 lg:p-7 overflow-hidden relative">
+      <main className="w-full max-w-[1180px] mx-auto py-5 lg:py-8 overflow-x-clip box-border">
+        <div className="w-full box-border px-3 sm:px-4 lg:px-8 min-w-0">
+        <CustomerGreeting className="mb-4 lg:mb-6 w-full max-w-full box-border" />
+        <section className="grid min-w-0 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)] landscape-order-layout gap-5 lg:gap-7 items-start">
+          <div className="space-y-4 min-w-0 w-full max-w-full">
+            <div className="w-full max-w-full box-border bg-[#3C1F15] text-white rounded-3xl p-5 lg:p-7 overflow-hidden relative">
               <div className="absolute -right-8 -top-10 opacity-10">
                 <PartyPopper size={160} />
               </div>
@@ -211,13 +212,13 @@ export default function FestaPage() {
               </div>
             </div>
 
-            <div className="bg-transparent border-0 p-0 space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-2xl deli-surface border px-4 py-3 shadow-sm">
+            <div className="w-full max-w-full min-w-0 box-border bg-transparent border-0 p-0 space-y-4">
+              <div className="inline-flex max-w-full box-border items-center gap-2 rounded-2xl deli-surface border px-4 py-3 shadow-sm">
                 <Calculator size={18} className="text-[#E05A36]" />
                 <h2 className="font-black text-[#3C1F15]">1. Monte sua Festa</h2>
               </div>
 
-              <label className="block space-y-1.5 rounded-2xl deli-surface border p-3.5">
+              <label className="block w-full max-w-full min-w-0 box-border space-y-1.5 rounded-2xl deli-surface border p-3.5">
                 <span className="text-[11px] font-black uppercase tracking-wide text-[#7A6357]">
                   Seu nome
                 </span>
@@ -228,11 +229,11 @@ export default function FestaPage() {
                     setCustomerData((prev) => ({ ...prev, customerName: e.target.value }))
                   }
                   placeholder="Ex: Alessandre Ribeiro"
-                  className="w-full h-12 rounded-2xl border border-[#EAD8C7] bg-[#FFFDF9] px-4 text-base font-bold text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
+                  className="w-full min-w-0 max-w-full box-border h-12 rounded-2xl border border-[#EAD8C7] bg-[#FFFDF9] px-4 text-base font-bold text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
                 />
               </label>
 
-              <div className="grid grid-cols-2 gap-3 rounded-2xl deli-surface border p-3.5">
+              <div className="grid w-full max-w-full min-w-0 grid-cols-2 gap-3 rounded-2xl deli-surface border p-3.5 box-border">
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-black uppercase tracking-wide text-[#7A6357] flex items-center gap-1.5">
                     <Users size={13} /> Adultos
@@ -243,7 +244,7 @@ export default function FestaPage() {
                     max={500}
                     value={adults}
                     onChange={(e) => setAdults(Math.max(0, Math.min(500, Number(e.target.value) || 0)))}
-                    className="w-full h-12 rounded-2xl border border-[#EAD8C7] bg-[#FFFDF9] px-4 text-lg font-black text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
+                    className="w-full min-w-0 max-w-full box-border h-12 rounded-2xl border border-[#EAD8C7] bg-[#FFFDF9] px-4 text-lg font-black text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
                   />
                 </label>
 
@@ -257,12 +258,12 @@ export default function FestaPage() {
                     max={500}
                     value={children}
                     onChange={(e) => setChildren(Math.max(0, Math.min(500, Number(e.target.value) || 0)))}
-                    className="w-full h-12 rounded-2xl border border-[#EAD8C7] bg-[#FFFDF9] px-4 text-lg font-black text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
+                    className="w-full min-w-0 max-w-full box-border h-12 rounded-2xl border border-[#EAD8C7] bg-[#FFFDF9] px-4 text-lg font-black text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
                   />
                 </label>
               </div>
 
-              <div className="grid gap-2">
+              <div className="grid w-full max-w-full min-w-0 gap-2">
                 {(Object.keys(PARTY_RULES) as PartyMode[]).map((mode) => {
                   const rule = PARTY_RULES[mode];
                   const active = partyMode === mode;
@@ -271,14 +272,14 @@ export default function FestaPage() {
                       type="button"
                       key={mode}
                       onClick={() => setPartyMode(mode)}
-                      className={`text-left p-3.5 rounded-2xl border transition ${
+                      className={`w-full max-w-full min-w-0 box-border text-left p-3.5 rounded-2xl border transition ${
                         active
                           ? "bg-[#FFF0E2] border-[#E05A36] ring-1 ring-[#E05A36]/20"
                           : "bg-white border-[#EAD8C7]"
                       }`}
                     >
-                      <div className="flex flex-col min-[390px]:flex-row min-[390px]:items-center min-[390px]:justify-between gap-1 min-[390px]:gap-3">
-                        <span className="font-black text-sm text-[#3C1F15] min-w-0">{rule.label}</span>
+                      <div className="flex min-w-0 flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-1 min-[480px]:gap-3">
+                        <span className="font-black text-sm text-[#3C1F15] min-w-0 break-words">{rule.label}</span>
                         <span className="text-[10px] font-black text-[#E05A36] whitespace-nowrap shrink-0">
                           {rule.adult}/adulto · {rule.child}/criança
                         </span>
@@ -289,17 +290,17 @@ export default function FestaPage() {
                 })}
               </div>
 
-              <div className="grid grid-cols-3 gap-2 min-w-0">
-                <div className="rounded-2xl bg-[#FFF8EE] border border-[#F0D5BE] p-3 text-center">
+              <div className="grid w-full max-w-full grid-cols-3 gap-2 min-w-0">
+                <div className="min-w-0 rounded-2xl bg-[#FFF8EE] border border-[#F0D5BE] p-3 text-center box-border">
                   <div className="text-[9px] uppercase font-black text-[#8C7367]">Convidados</div>
                   <div className="text-xl font-black text-[#3C1F15]">{guestCount}</div>
                 </div>
-                <div className="rounded-2xl bg-[#FFF8EE] border border-[#F0D5BE] p-3 text-center">
+                <div className="min-w-0 rounded-2xl bg-[#FFF8EE] border border-[#F0D5BE] p-3 text-center box-border">
                   <div className="text-[9px] uppercase font-black text-[#8C7367]">Sugestão</div>
                   <div className="text-xl font-black text-[#E05A36]">{recommendedUnits}</div>
                   <div className="text-[9px] text-[#8C7367]">unidades</div>
                 </div>
-                <div className="rounded-2xl bg-[#FFF8EE] border border-[#F0D5BE] p-3 text-center">
+                <div className="min-w-0 rounded-2xl bg-[#FFF8EE] border border-[#F0D5BE] p-3 text-center box-border">
                   <div className="text-[9px] uppercase font-black text-[#8C7367]">Média</div>
                   <div className="text-xl font-black text-[#3C1F15]">{averagePerGuest.toFixed(1)}</div>
                   <div className="text-[9px] text-[#8C7367]">por pessoa</div>
@@ -313,8 +314,8 @@ export default function FestaPage() {
             </div>
           </div>
 
-          <div className="space-y-4 lg:sticky lg:top-5">
-            <div className="deli-surface rounded-3xl border p-4 lg:p-5 space-y-4">
+          <div className="space-y-4 min-w-0 w-full max-w-full lg:sticky lg:top-5">
+            <div className="deli-surface w-full max-w-full min-w-0 box-border rounded-3xl border p-4 lg:p-5 space-y-4">
               <div>
                 <div className="text-[10px] uppercase font-black tracking-wider text-[#8C7367]">
                   2. Escolha o perfil do combo
@@ -324,7 +325,7 @@ export default function FestaPage() {
                 </h2>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 min-[390px]:grid-cols-3 gap-2 min-w-0">
                 <button
                   type="button"
                   onClick={() => setComboMode("balanced")}
@@ -457,6 +458,7 @@ export default function FestaPage() {
             </div>
           </div>
         </section>
+        </div>
       </main>
 
       <BottomNav />
