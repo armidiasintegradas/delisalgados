@@ -3,9 +3,12 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export const metadata: Metadata = {
   title: "Deli Salgados — Admin",
-  icons: {
-    icon: "/admin-favicon.svg",
-    shortcut: "/admin-favicon.svg",
+  applicationName: "Deli Salgados Admin",
+  manifest: "/delisalgados/admin/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Deli Salgados Admin",
+    statusBarStyle: "default",
   },
 };
 
