@@ -3,6 +3,8 @@ export type Availability = 'available' | 'unavailable' | 'on_request';
 export type PreparationType = 'fried' | 'baked' | 'frozen' | 'ready' | 'variants';
 export type FulfillmentType = 'pickup' | 'delivery' | 'to_agree';
 export type OrderStatus = 'generated' | 'contacted' | 'confirmed' | 'preparing' | 'completed' | 'cancelled';
+export type PaymentPlan = 'deposit_50' | 'full';
+export type PaymentStatus = 'pending' | 'partially_paid' | 'paid' | 'failed' | 'refunded';
 
 export interface Category {
   id: string;
@@ -81,6 +83,16 @@ export interface Order {
   total: number;
   status: OrderStatus;
   whatsapp_status: string;
+  payment_plan?: PaymentPlan;
+  payment_method?: 'pix';
+  payment_status?: PaymentStatus;
+  deposit_percentage?: number;
+  amount_due_now?: number;
+  amount_paid?: number;
+  balance_due?: number;
+  payment_provider?: string | null;
+  payment_reference?: string | null;
+  payment_confirmed_at?: string | null;
   handoff_token_hash?: string | null;
   handoff_token_expires_at?: string | null;
   created_at: string;
