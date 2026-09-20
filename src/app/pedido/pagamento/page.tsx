@@ -194,6 +194,40 @@ function PaymentContent() {
     }).catch(() => {});
   }
 
+  function closeSuccessModal(destination?: "/" | "/meus-pedidos") {
+    setShowSuccessModal(false);
+
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(
+        `deli_final_payment_popup_${order?.public_code || orderCode || "pedido"}`,
+        "dismissed"
+      );
+    }
+
+    markWhatsappOpened();
+
+    // WhatsApp does not permit a website to silently send a message.
+    // Opening the prefilled conversation is therefore the mandatory final step.
+    if (paymentReportedWhatsappUrl && typeof window !== "undefined") {
+      const whatsappWindow = window.open(
+        paymentReportedWhatsappUrl,
+        "_blank",
+        "noopener,noreferrer"
+      );
+
+      // Mobile browsers can reject a new tab. In that case, navigate directly
+      // to WhatsApp so the handoff cannot be skipped.
+      if (!whatsappWindow) {
+        window.location.assign(paymentReportedWhatsappUrl);
+        return;
+      }
+    }
+
+    if (destination && typeof window !== "undefined") {
+      window.location.assign(destination);
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex items-center justify-center p-4">
@@ -328,17 +362,9 @@ function PaymentContent() {
                   <p className="text-[10px] text-[#8C6D1F] leading-relaxed">
                     {firstName}, recebemos seu aviso. A Deli fará a conferência do Pix no Nubank e atualizará seu pedido assim que o crédito for localizado.
                   </p>
-                  {paymentReportedWhatsappUrl && (
-                    <a
-                      href={paymentReportedWhatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex mt-2 px-4 py-2.5 rounded-xl bg-[#25D366] text-white text-[10px] font-black items-center justify-center gap-1.5"
-                    >
-                      <MessageCircle size={14} />
-                      AVISAR TAMBÉM PELO WHATSAPP
-                    </a>
-                  )}
+                  <p className="text-[10px] text-[#8C6D1F] leading-relaxed">
+                    Ao fechar a mensagem de agradecimento, o WhatsApp será aberto automaticamente com o aviso do pagamento já preenchido.
+                  </p>
                 </div>
               ) : (
                 <>
@@ -421,15 +447,7 @@ function PaymentContent() {
       {showSuccessModal && (
         <PaymentSuccessModal
           firstName={firstName}
-          onClose={() => {
-            setShowSuccessModal(false);
-            if (typeof window !== "undefined") {
-              sessionStorage.setItem(
-                `deli_final_payment_popup_${order.public_code}`,
-                "dismissed"
-              );
-            }
-          }}
+          onClose={closeSuccessModal}
         />
       )}
     </div>
