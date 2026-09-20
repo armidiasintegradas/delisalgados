@@ -74,8 +74,7 @@ export default function RedefinirSenhaPage() {
     }
   }
 
-  async function createPasswordFromOrder(e: React.FormEvent) {
-    e.preventDefault();
+  async function createPasswordFromOrder() {
     setMessage(null);
     setSuccess(false);
 
@@ -323,7 +322,7 @@ export default function RedefinirSenhaPage() {
             </button>
 
             {showOrderFallback && (
-              <form onSubmit={createPasswordFromOrder} className="deli-surface-soft border rounded-3xl p-4 space-y-3">
+              <div className="deli-surface-soft border rounded-3xl p-4 space-y-3">
                 <div>
                   <div className="text-xs font-black text-[#3C1F15]">Criar senha sem depender do e-mail</div>
                   <div className="text-[10px] text-[#7A6357] mt-1 leading-relaxed">
@@ -382,13 +381,14 @@ export default function RedefinirSenhaPage() {
                 </div>
 
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={createPasswordFromOrder}
                   disabled={creatingPassword}
                   className="w-full py-3.5 rounded-2xl bg-[#E05A36] text-white text-xs font-black disabled:opacity-60"
                 >
                   {creatingPassword ? "CRIANDO SENHA..." : "CRIAR SENHA AGORA"}
                 </button>
-              </form>
+              </div>
             )}
 
             <Link
