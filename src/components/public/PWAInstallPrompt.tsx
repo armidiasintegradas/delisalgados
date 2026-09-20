@@ -12,7 +12,9 @@ export function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [showIOSHelp, setShowIOSHelp] = useState(false);
+  const [showAndroidHelp, setShowAndroidHelp] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
@@ -26,8 +28,16 @@ export function PWAInstallPrompt() {
     if (standalone) return;
 
     const ua = window.navigator.userAgent;
-    const ios = /iPad|iPhone|iPod/.test(ua);
+    const ios =
+      /iPad|iPhone|iPod/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const android = /Android/i.test(ua);
+    const mobileViewport = window.matchMedia("(max-width: 1023px)").matches;
+
     setIsIOS(ios);
+    setIsAndroid(android);
+
+    if (!mobileViewport || (!ios && !android)) return;
 
     const dismissedAt = Number(localStorage.getItem("deli_pwa_dismissed_at") || 0);
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
@@ -43,12 +53,23 @@ export function PWAInstallPrompt() {
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    if (ios && canShow) {
+    // iOS has no beforeinstallprompt. Some Android browsers also omit it,
+    // so still expose a manual home-screen guide on mobile.
+    if ((ios || android) && canShow) {
       window.setTimeout(() => setShowBanner(true), 1800);
     }
 
+    const handleInstalled = () => {
+      setShowBanner(false);
+      setDeferredPrompt(null);
+      setIsStandalone(true);
+    };
+
+    window.addEventListener("appinstalled", handleInstalled);
+
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstalled);
     };
   }, []);
 
@@ -79,6 +100,11 @@ export function PWAInstallPrompt() {
 
     if (isIOS) {
       setShowIOSHelp(true);
+      return;
+    }
+
+    if (isAndroid) {
+      setShowAndroidHelp(true);
     }
   }
 
@@ -117,6 +143,52 @@ export function PWAInstallPrompt() {
           {isIOS ? "COMO ADICIONAR À TELA INICIAL" : "INSTALAR DELI SALGADOS"}
         </button>
       </div>
+
+      {showAndroidHelp && (
+        <div className="fixed inset-0 z-[70] bg-black/45 p-4 flex items-end justify-center">
+          <div className="w-full max-w-[440px] rounded-3xl bg-[#FFFDF9] border border-[#EAD8C7] p-5 space-y-4 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-lg font-black text-[#3C1F15]">Adicionar “Deli Salgados”</div>
+                <p className="text-xs text-[#7A6357] mt-1">
+                  No Android, use o menu do navegador caso a instalação automática não apareça.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAndroidHelp(false)}
+                className="w-9 h-9 rounded-full bg-[#FFF0E2] text-[#7A6357] flex items-center justify-center"
+                aria-label="Fechar instruções"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-sm text-[#3C1F15]">
+              <div className="flex gap-3">
+                <div className="w-7 h-7 rounded-full bg-[#3C1F15] text-white flex items-center justify-center text-xs font-black shrink-0">1</div>
+                <div>Abra o menu <strong>⋮</strong> ou o menu principal do navegador.</div>
+              </div>
+              <div className="flex gap-3">
+                <div className="w-7 h-7 rounded-full bg-[#3C1F15] text-white flex items-center justify-center text-xs font-black shrink-0">2</div>
+                <div>Escolha <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</div>
+              </div>
+              <div className="flex gap-3">
+                <div className="w-7 h-7 rounded-full bg-[#3C1F15] text-white flex items-center justify-center text-xs font-black shrink-0">3</div>
+                <div>Confirme o nome <strong>Deli Salgados</strong>.</div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowAndroidHelp(false)}
+              className="w-full py-3 rounded-2xl bg-[#3C1F15] text-white text-xs font-black"
+            >
+              ENTENDI
+            </button>
+          </div>
+        </div>
+      )}
 
       {showIOSHelp && (
         <div className="fixed inset-0 z-[70] bg-black/45 p-4 flex items-end justify-center">
