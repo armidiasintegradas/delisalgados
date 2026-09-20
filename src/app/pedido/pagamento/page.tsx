@@ -16,6 +16,7 @@ import {
 import { Order, Settings } from "@/types";
 import { formatCurrency, getFirstName } from "@/lib/formatters";
 import { buildPixPayload } from "@/lib/pix";
+import { PaymentSuccessModal } from "@/components/public/PaymentSuccessModal";
 
 function PaymentContent() {
   const searchParams = useSearchParams();
@@ -30,15 +31,17 @@ function PaymentContent() {
   const [copied, setCopied] = useState(false);
   const [reportingPayment, setReportingPayment] = useState(false);
   const [paymentReportError, setPaymentReportError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  async function load() {
+  async function load(options?: { silent?: boolean }) {
+    const silent = Boolean(options?.silent);
     if (!orderCode) {
       setError("Código do pedido não informado.");
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(null);
 
     const activeToken =
@@ -74,13 +77,32 @@ function PaymentContent() {
     } catch (err: any) {
       setError(err?.message || "Não foi possível carregar o pagamento.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
   useEffect(() => {
     load();
   }, [orderCode, handoffToken]);
+
+  useEffect(() => {
+    if (!order || order.payment_status === "paid") return;
+
+    const interval = window.setInterval(() => {
+      load({ silent: true });
+    }, 10000);
+
+    return () => window.clearInterval(interval);
+  }, [order?.id, order?.payment_status, orderCode, handoffToken]);
+
+  useEffect(() => {
+    if (!order || order.payment_status !== "paid" || typeof window === "undefined") return;
+
+    const storageKey = `deli_final_payment_popup_${order.public_code}`;
+    if (sessionStorage.getItem(storageKey) === "dismissed") return;
+
+    setShowSuccessModal(true);
+  }, [order?.payment_status, order?.public_code]);
 
 
 
@@ -394,6 +416,20 @@ function PaymentContent() {
           </Link>
         </aside>
       </main>
+      {showSuccessModal && order.payment_status === "paid" && (
+        <PaymentSuccessModal
+          firstName={firstName}
+          onClose={() => {
+            setShowSuccessModal(false);
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem(
+                `deli_final_payment_popup_${order.public_code}`,
+                "dismissed"
+              );
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
