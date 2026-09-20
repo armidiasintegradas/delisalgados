@@ -18,6 +18,16 @@ export interface Category {
   updated_at?: string;
 }
 
+export interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  sort_order: number;
+  is_primary: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ProductVariant {
   id: string;
   product_id: string;
@@ -50,6 +60,7 @@ export interface Product {
   sales_count?: number;
   sort_order: number;
   image_url: string | null;
+  images?: ProductImage[];
   preparation_type?: PreparationType | null;
   created_at?: string;
   updated_at?: string;
