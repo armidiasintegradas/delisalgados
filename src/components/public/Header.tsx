@@ -35,63 +35,59 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-30 bg-gradient-to-b from-[#F56649] via-[#F46447] to-[#EF6E54] text-white shadow-xs w-full">
-      <div className="w-full max-w-[1280px] mx-auto px-4 pt-3 pb-3 lg:px-8 lg:py-3.5">
-        {/* Mobile View (< lg) */}
-        <div className="lg:hidden flex flex-col">
-          {/* Top row: 200% Logo (88px) + Action buttons */}
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center shrink-0">
-              <img
-                src="/deli-logo-cream-official.png"
-                alt="Deli Salgados"
-                className="h-[88px] w-auto object-contain shrink-0 select-none drop-shadow-xs"
-              />
-            </Link>
+      <div className="w-full max-w-[1280px] mx-auto px-3 py-2.5 sm:px-4 lg:px-8 lg:py-3.5">
+        {/* Mobile View (< lg): logo, title and actions in one horizontal row */}
+        <div className="lg:hidden grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          <Link href="/" className="flex items-center shrink-0 min-w-0">
+            <img
+              src="/deli-logo-cream-official.png"
+              alt="Deli Salgados"
+              className="h-[64px] sm:h-[72px] w-auto max-w-[82px] sm:max-w-[96px] object-contain shrink-0 select-none drop-shadow-xs"
+            />
+          </Link>
 
-            <div className="flex items-center gap-2.5 shrink-0">
-              {showSearch && (
-                <button
-                  onClick={() => setIsSearchOpen(!isSearchOpen)}
-                  aria-label="Buscar produtos"
-                  className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition active:scale-95"
-                >
-                  {isSearchOpen ? <X size={20} /> : <Search size={20} />}
-                </button>
-              )}
-
-              <Link
-                href="/pedido"
-                aria-label="Ver carrinho"
-                className="relative w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition active:scale-95"
-              >
-                <ShoppingBag size={20} />
-                {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#3C1F15] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-extrabold shadow-xs">
-                    {itemCount > 9 ? "9+" : itemCount}
-                  </span>
-                )}
-              </Link>
-
-              <Link
-                href="/perfil"
-                aria-label="Perfil do cliente"
-                className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition active:scale-95"
-              >
-                <User size={20} />
-              </Link>
-            </div>
-          </div>
-
-          {/* Center: Large Cardápio Title */}
-          <div className="text-center pt-1.5 pb-0.5">
+          <div className="min-w-0 px-1 text-center">
             <h1
-              className="font-display text-[32px] font-bold text-white tracking-normal leading-none"
+              className="font-display text-[24px] sm:text-[28px] font-bold text-white tracking-normal leading-none whitespace-nowrap"
               style={{
                 textShadow: "0 3px 6px rgba(74, 48, 34, 0.4), 0 1px 2px rgba(74, 48, 34, 0.6)",
               }}
             >
               {title}
             </h1>
+          </div>
+
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {showSearch && (
+              <button
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                aria-label="Buscar produtos"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition active:scale-95"
+              >
+                {isSearchOpen ? <X size={18} /> : <Search size={18} />}
+              </button>
+            )}
+
+            <Link
+              href="/pedido"
+              aria-label="Ver carrinho"
+              className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition active:scale-95"
+            >
+              <ShoppingBag size={18} />
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#3C1F15] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-extrabold shadow-xs">
+                  {itemCount > 9 ? "9+" : itemCount}
+                </span>
+              )}
+            </Link>
+
+            <Link
+              href="/perfil"
+              aria-label="Perfil do cliente"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition active:scale-95"
+            >
+              <User size={18} />
+            </Link>
           </div>
         </div>
 
