@@ -4,19 +4,19 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 export const metadata: Metadata = {
   title: "Deli Salgados — Admin",
   applicationName: "Deli Salgados Admin",
-  manifest: "/delisalgados/admin/manifest.webmanifest?v=20260920-3",
+  manifest: "/delisalgados/admin/manifest.webmanifest?v=20260920-4",
   icons: {
     icon: [
       {
-        url: "/delisalgados/admin/icon?v=20260920-3",
+        url: "/deli-admin-icon-512.png?v=20260920-4",
         type: "image/png",
         sizes: "512x512",
       },
     ],
-    shortcut: "/delisalgados/admin/icon?v=20260920-3",
+    shortcut: "/deli-admin-icon-512.png?v=20260920-4",
     apple: [
       {
-        url: "/delisalgados/admin/apple-icon?v=20260920-3",
+        url: "/deli-admin-apple-touch-icon.png?v=20260920-4",
         type: "image/png",
         sizes: "180x180",
       },
