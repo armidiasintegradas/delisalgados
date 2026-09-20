@@ -852,6 +852,69 @@ export class DbService {
     return false;
   }
 
+  static async updateOrderPaymentStatus(
+    orderId: string,
+    paymentStatus: "pending" | "partially_paid" | "paid" | "failed" | "refunded"
+  ): Promise<boolean> {
+    if (isServerSupabaseConfigured && supabaseServer) {
+      const { data: order, error: readError } = await supabaseServer
+        .from("orders")
+        .select("total, amount_due_now, payment_plan")
+        .eq("id", orderId)
+        .single();
+
+      if (readError || !order) return false;
+
+      const total = Number(order.total || 0);
+      const dueNow = Number(order.amount_due_now || 0);
+      const amountPaid =
+        paymentStatus === "paid"
+          ? total
+          : paymentStatus === "partially_paid"
+            ? dueNow
+            : 0;
+      const balanceDue = Math.max(0, Number((total - amountPaid).toFixed(2)));
+
+      const { error } = await supabaseServer
+        .from("orders")
+        .update({
+          payment_status: paymentStatus,
+          amount_paid: amountPaid,
+          balance_due: balanceDue,
+          payment_confirmed_at:
+            paymentStatus === "paid" || paymentStatus === "partially_paid"
+              ? new Date().toISOString()
+              : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
+
+      return !error;
+    }
+
+    const state = loadLocalState();
+    const ord = state.orders.find((o) => o.id === orderId);
+    if (!ord) return false;
+
+    ord.payment_status = paymentStatus;
+    const total = Number(ord.total || 0);
+    const dueNow = Number(ord.amount_due_now || 0);
+    ord.amount_paid =
+      paymentStatus === "paid"
+        ? total
+        : paymentStatus === "partially_paid"
+          ? dueNow
+          : 0;
+    ord.balance_due = Math.max(0, Number((total - (ord.amount_paid || 0)).toFixed(2)));
+    ord.payment_confirmed_at =
+      paymentStatus === "paid" || paymentStatus === "partially_paid"
+        ? new Date().toISOString()
+        : null;
+    ord.updated_at = new Date().toISOString();
+    saveLocalState(state);
+    return true;
+  }
+
   static async updateOrderWhatsAppStatus(orderId: string, whatsapp_status: "pending" | "opened" | "contacted"): Promise<boolean> {
     const updatePayload: any = {
       whatsapp_status,
