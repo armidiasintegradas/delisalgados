@@ -85,7 +85,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[440px] lg:max-w-[560px] bg-[#FFFDF6] rounded-t-[32px] lg:rounded-[32px] shadow-2xl border-t lg:border border-[#EAD8C7] flex flex-col overflow-hidden pb-5 max-h-[92vh] lg:max-h-[85vh] animate-in slide-in-from-bottom-6 lg:zoom-in-95 duration-300 relative"
+        className="deli-surface-strong w-full max-w-[440px] lg:max-w-[560px] rounded-t-[32px] lg:rounded-[32px] shadow-2xl border-t lg:border flex flex-col overflow-hidden pb-5 max-h-[92vh] lg:max-h-[85vh] animate-in slide-in-from-bottom-6 lg:zoom-in-95 duration-300 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Handle - Mobile only */}
@@ -124,7 +124,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         {/* Scrollable Content */}
         <div className="px-5 py-1 overflow-y-auto space-y-3.5 flex-1">
           {product.image_url && (
-            <div className="w-full max-w-[320px] aspect-square mx-auto rounded-[22px] overflow-hidden border border-[#EAD8C7] bg-[#FFF9E6]">
+            <div className="w-full max-w-[320px] aspect-square mx-auto rounded-[22px] overflow-hidden border border-[#EAD8C7] deli-surface-soft">
               <img
                 src={product.image_url}
                 alt={product.name}
@@ -153,8 +153,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                       }}
                       className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                         isChecked
-                          ? "border-2 border-[#FF7A59] bg-[#FFF4D9] shadow-xs"
-                          : "border border-[#EFE5D5] bg-[#FFF9E6] hover:border-[#DFCBB5]"
+                          ? "border-2 border-[#FF7A59] deli-surface-soft shadow-xs"
+                          : "border border-[#EFE5D5] deli-surface-soft hover:border-[#DFCBB5]"
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
@@ -200,7 +200,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 bg-[#FFF4D9] px-2.5 py-1.5 rounded-2xl border border-[#E8D9CB]">
+              <div className="flex items-center gap-2 deli-surface-soft px-2.5 py-1.5 rounded-2xl border border-[#E8D9CB]">
                 <button
                   type="button"
                   onClick={handleDecrement}
@@ -237,13 +237,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Alguma observação para este item?"
                 rows={2}
-                className="w-full bg-[#FFF9E6] border border-[#EAD9C3] rounded-2xl p-2.5 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition"
+                className="w-full deli-surface-soft border border-[#EAD9C3] rounded-2xl p-2.5 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition"
               />
             </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#FFF6DC] border-t border-[#EAD8C7] mt-1">
+        <div className="deli-surface-soft p-4 border-t mt-1">
           <div className="flex items-center justify-between mb-3 px-2">
             <span className="text-xs font-extrabold uppercase tracking-wider text-[#3C1F15]">
               Subtotal:
