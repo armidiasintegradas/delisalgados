@@ -1,0 +1,21 @@
+{
+  "name": "Deli Salgados",
+  "short_name": "Deli Salgados",
+  "description": "Cardápio digital e pedidos da Deli Salgados.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FFFDF9",
+  "theme_color": "#E05A36",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "categories": ["food", "shopping"],
+  "icons": [
+    {
+      "src": "/logo-square.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
