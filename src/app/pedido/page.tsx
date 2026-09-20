@@ -189,7 +189,7 @@ export default function CartPage() {
                     href="/pedido/finalizar"
                     className="w-full py-3.5 rounded-2xl bg-[#3C1F15] hover:bg-[#27120A] text-white text-xs font-extrabold tracking-wide uppercase shadow-md flex items-center justify-center gap-2 transition active:scale-[0.98]"
                   >
-                    <span>Continuar Pedido</span>
+                    <span>Finalizar Pedido</span>
                     <ArrowRight size={16} />
                   </Link>
                 ) : (
