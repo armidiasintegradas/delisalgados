@@ -1,12 +1,11 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { Check, Heart, X } from "lucide-react";
 
 interface PaymentSuccessModalProps {
   firstName: string;
-  onClose: () => void;
+  onClose: (destination?: "/" | "/meus-pedidos") => void;
 }
 
 export function PaymentSuccessModal({ firstName, onClose }: PaymentSuccessModalProps) {
@@ -22,7 +21,7 @@ export function PaymentSuccessModal({ firstName, onClose }: PaymentSuccessModalP
           <div className="absolute -bottom-8 left-[-5%] w-[110%] h-16 sm:h-20 rounded-[50%] bg-[#FFFDF6]" />
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => onClose()}
             aria-label="Fechar mensagem"
             className="absolute top-3 right-3 z-10 w-10 h-10 rounded-full bg-[#FFF7EA] text-[#3C1F15] flex items-center justify-center shadow-sm hover:scale-105 transition"
           >
@@ -70,21 +69,21 @@ export function PaymentSuccessModal({ firstName, onClose }: PaymentSuccessModalP
           </div>
 
           <div className="mt-5 space-y-2.5">
-            <Link
-              href="/"
-              onClick={onClose}
+            <button
+              type="button"
+              onClick={() => onClose("/")}
               className="w-full min-h-12 rounded-2xl bg-[#F05A3E] hover:bg-[#DE4E34] text-white font-display font-black text-sm sm:text-base flex items-center justify-center transition shadow-md"
             >
               VOLTAR AO CARDÁPIO
-            </Link>
+            </button>
 
-            <Link
-              href="/meus-pedidos"
-              onClick={onClose}
+            <button
+              type="button"
+              onClick={() => onClose("/meus-pedidos")}
               className="w-full min-h-12 rounded-2xl border-2 border-[#5A2E20] bg-transparent text-[#3C1F15] font-display font-black text-sm flex items-center justify-center hover:bg-[#FFF5EA] transition"
             >
               VER MEUS PEDIDOS
-            </Link>
+            </button>
           </div>
         </div>
       </div>
