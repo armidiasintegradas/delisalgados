@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { buildAuthCallbackUrl } from "@/lib/appUrl";
 
 export default function RedefinirSenhaPage() {
   const [email, setEmail] = useState("");
@@ -44,22 +43,23 @@ export default function RedefinirSenhaPage() {
       return;
     }
 
-    const client = createClient();
-    if (!client) {
-      setMessage("Recuperação de senha indisponível no momento.");
-      return;
-    }
-
     setSending(true);
     try {
-      const { error } = await client.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo: buildAuthCallbackUrl("/auth/redefinir-senha"),
+      const res = await fetch("/api/auth/password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
       });
-      if (error) throw error;
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Não foi possível enviar o link de redefinição.");
+      }
 
       setSuccess(true);
       setMessage(
-        "Enviamos um link para seu e-mail. Abra esse link para criar uma nova senha."
+        data.message ||
+          "Enviamos um link para seu e-mail. Verifique também Spam, Lixo Eletrônico e Promoções."
       );
     } catch (err: any) {
       setMessage(err?.message || "Não foi possível enviar o link de redefinição.");
