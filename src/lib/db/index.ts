@@ -564,6 +564,7 @@ export class DbService {
   // 4. Server-Side Order Creation (CRITICAL ATOMICITY & AUTHORITY)
   static async createOrder(orderInput: {
     customer: CustomerData;
+    customerUserId?: string | null;
     items: { productId: string; variantId?: string; quantity: number; note?: string }[];
   }): Promise<Order & { handoffToken: string }> {
     if (process.env.NODE_ENV === "production" && !isServerSupabaseConfigured && process.env.DELI_ALLOW_LOCAL_DB !== "true") {
@@ -575,8 +576,14 @@ export class DbService {
     if (!orderInput.items || orderInput.items.length === 0) {
       throw new Error("O pedido não possui itens.");
     }
-    if (!orderInput.customer.customerName?.trim() || !orderInput.customer.customerPhone?.trim()) {
-      throw new Error("Nome e WhatsApp são obrigatórios.");
+    if (
+      !orderInput.customer.customerName?.trim() ||
+      !orderInput.customer.customerPhone?.trim() ||
+      !orderInput.customer.customerEmail?.trim() ||
+      !orderInput.customer.deliveryAddress?.trim() ||
+      !orderInput.customer.referencePoint?.trim()
+    ) {
+      throw new Error("Nome, WhatsApp, e-mail, endereço completo e ponto de referência são obrigatórios.");
     }
 
     // Read full products list to validate from server authority
@@ -665,9 +672,12 @@ export class DbService {
         id: orderId,
         customer_name: orderInput.customer.customerName.trim(),
         customer_phone: orderInput.customer.customerPhone.trim(),
+        customer_email: orderInput.customer.customerEmail.trim().toLowerCase(),
+        customer_user_id: orderInput.customerUserId || null,
         desired_date: orderInput.customer.desiredDate,
         fulfillment_type: orderInput.customer.fulfillmentType,
-        delivery_address: orderInput.customer.deliveryAddress?.trim() || null,
+        delivery_address: orderInput.customer.deliveryAddress.trim(),
+        customer_reference_point: orderInput.customer.referencePoint.trim(),
         customer_note: orderInput.customer.customerNote?.trim() || null,
         total: Number(calculatedTotal.toFixed(2)),
       };
