@@ -66,7 +66,7 @@ export function PaymentSuccessModal({ firstName, onClose }: PaymentSuccessModalP
           </div>
 
           <div className="mt-4 rounded-full bg-[#FFF0DE] px-4 py-2 text-[11px] sm:text-xs font-bold text-[#5E3626]">
-            Pagamento final confirmado com sucesso.
+            Recebemos seu aviso de pagamento. A Deli fará a conferência do Pix.
           </div>
 
           <div className="mt-5 space-y-2.5">
