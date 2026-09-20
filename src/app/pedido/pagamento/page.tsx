@@ -28,6 +28,13 @@ function PaymentContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [providerPix, setProviderPix] = useState<{
+    mode: "mercadopago" | "static";
+    qrCode: string;
+    qrCodeBase64: string;
+    ticketUrl: string;
+  } | null>(null);
+  const [providerLoading, setProviderLoading] = useState(false);
 
   async function load() {
     if (!orderCode) {
@@ -76,11 +83,103 @@ function PaymentContent() {
     }
   }
 
+  async function loadProviderPix(currentOrder: Order, activeToken: string) {
+    if (currentOrder.payment_status === "paid" || currentOrder.payment_status === "partially_paid") {
+      return;
+    }
+
+    setProviderLoading(true);
+    try {
+      const res = await fetch("/api/payments/pix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: currentOrder.public_code,
+          token: activeToken,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Não foi possível preparar o Pix.");
+      }
+
+      if (data.mode === "mercadopago") {
+        setProviderPix({
+          mode: "mercadopago",
+          qrCode: data.qr_code || "",
+          qrCodeBase64: data.qr_code_base64 || "",
+          ticketUrl: data.ticket_url || "",
+        });
+      } else {
+        setProviderPix({
+          mode: "static",
+          qrCode: "",
+          qrCodeBase64: "",
+          ticketUrl: "",
+        });
+      }
+
+      if (data.confirmed) {
+        await load();
+      }
+    } catch (err) {
+      console.warn("Automatic Pix unavailable, keeping static fallback:", err);
+      setProviderPix({
+        mode: "static",
+        qrCode: "",
+        qrCodeBase64: "",
+        ticketUrl: "",
+      });
+    } finally {
+      setProviderLoading(false);
+    }
+  }
+
   useEffect(() => {
     load();
   }, [orderCode, handoffToken]);
 
-  const pixPayload = useMemo(() => {
+  useEffect(() => {
+    if (!order) return;
+
+    const activeToken =
+      handoffToken ||
+      (typeof window !== "undefined" ? sessionStorage.getItem("deli_handoff_token") : null);
+
+    if (!activeToken) return;
+    loadProviderPix(order, activeToken);
+  }, [order?.id]);
+
+  useEffect(() => {
+    if (!order || order.payment_status === "paid" || order.payment_status === "partially_paid") {
+      return;
+    }
+
+    const activeToken =
+      handoffToken ||
+      (typeof window !== "undefined" ? sessionStorage.getItem("deli_handoff_token") : null);
+    if (!activeToken) return;
+
+    const timer = window.setInterval(async () => {
+      try {
+        const res = await fetch("/api/orders/handoff", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: order.public_code, token: activeToken }),
+          cache: "no-store",
+        });
+        const data = await res.json();
+        if (res.ok && data.order) {
+          setOrder(data.order);
+        }
+      } catch {}
+    }, 4000);
+
+    return () => window.clearInterval(timer);
+  }, [order?.public_code, order?.payment_status, handoffToken]);
+
+  const staticPixPayload = useMemo(() => {
     if (!order || !settings?.pix_key) return "";
     return buildPixPayload({
       key: settings.pix_key,
@@ -92,9 +191,17 @@ function PaymentContent() {
     });
   }, [order, settings]);
 
-  const qrUrl = pixPayload
-    ? `https://quickchart.io/qr?size=300&margin=2&ecLevel=M&text=${encodeURIComponent(pixPayload)}`
-    : "";
+  const pixPayload =
+    providerPix?.mode === "mercadopago" && providerPix.qrCode
+      ? providerPix.qrCode
+      : staticPixPayload;
+
+  const qrUrl =
+    providerPix?.mode === "mercadopago" && providerPix.qrCodeBase64
+      ? `data:image/png;base64,${providerPix.qrCodeBase64}`
+      : pixPayload
+        ? `https://quickchart.io/qr?size=300&margin=2&ecLevel=M&text=${encodeURIComponent(pixPayload)}`
+        : "";
 
   async function copyPix() {
     if (!pixPayload) return;
@@ -208,14 +315,21 @@ function PaymentContent() {
             </div>
           )}
 
-          {paymentAlreadyConfirmed ? (
+          {providerLoading && !paymentAlreadyConfirmed ? (
+            <div className="p-5 rounded-3xl bg-white border border-[#EAD8C7] text-center space-y-2">
+              <RefreshCw size={24} className="mx-auto animate-spin text-[#E05A36]" />
+              <div className="text-xs font-bold text-[#7A6357]">Gerando Pix seguro...</div>
+            </div>
+          ) : paymentAlreadyConfirmed ? (
             <div className="p-5 rounded-3xl bg-[#EAF7EE] border border-[#CDEEDB] text-center space-y-2">
               <ShieldCheck size={28} className="mx-auto text-[#1FAA52]" />
               <div className="font-black text-[#1E5631]">
                 {order.payment_status === "paid" ? "Pagamento confirmado" : "Entrada confirmada"}
               </div>
               <p className="text-xs text-[#52765E]">
-                O financeiro da Deli já registrou este pagamento.
+                {order.payment_provider === "mercadopago"
+                  ? "O pagamento foi identificado automaticamente pelo sistema."
+                  : "O financeiro da Deli já registrou este pagamento."}
               </p>
             </div>
           ) : pixPayload ? (
@@ -246,7 +360,15 @@ function PaymentContent() {
               </button>
 
               <div className="p-3 rounded-2xl bg-[#FFF9E6] border border-[#EFE2C4] text-[10px] text-[#7A6357] leading-relaxed">
-                O pedido permanece como <strong>aguardando pagamento</strong> até a Deli confirmar o recebimento. Não é necessário enviar comprovante se a equipe conseguir identificar o pagamento.
+                {providerPix?.mode === "mercadopago" ? (
+                  <>
+                    O pedido permanece como <strong>aguardando pagamento</strong> até o banco confirmar a transação. Depois do pagamento, esta tela é atualizada automaticamente — não é necessário enviar comprovante.
+                  </>
+                ) : (
+                  <>
+                    O pedido permanece como <strong>aguardando pagamento</strong> até a Deli confirmar o recebimento.
+                  </>
+                )}
               </div>
             </div>
           ) : (
