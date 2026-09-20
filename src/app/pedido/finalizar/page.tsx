@@ -7,7 +7,6 @@ import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCir
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
-import { DeliveryQuoteOption, DeliveryProvider } from "@/types";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -17,10 +16,6 @@ export default function CheckoutPage() {
   const [mounted, setMounted] = useState(false);
   const [paymentPlan, setPaymentPlan] = useState<"deposit_50" | "full">("deposit_50");
   const [pickupAddress, setPickupAddress] = useState("");
-  const [deliveryQuotes, setDeliveryQuotes] = useState<DeliveryQuoteOption[]>([]);
-  const [selectedDelivery, setSelectedDelivery] = useState<DeliveryQuoteOption | null>(null);
-  const [deliveryQuotesLoading, setDeliveryQuotesLoading] = useState(false);
-  const [deliveryQuotesError, setDeliveryQuotesError] = useState<string | null>(null);
 
   const qualifyingUnitTotal = items
     .filter((item) => isUnitBasedMinimum(item.minimumQuantity, item.unitLabel))
@@ -93,37 +88,6 @@ export default function CheckoutPage() {
     );
   }
 
-  const loadDeliveryQuotes = async () => {
-    if (!customerData.deliveryAddress.trim()) {
-      setDeliveryQuotesError("Informe primeiro o endereço completo de entrega.");
-      return;
-    }
-
-    setDeliveryQuotesLoading(true);
-    setDeliveryQuotesError(null);
-    setSelectedDelivery(null);
-
-    try {
-      const res = await fetch("/api/delivery/quotes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dropoffAddress: customerData.deliveryAddress.trim() }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Não foi possível consultar as opções de entrega.");
-      }
-
-      setDeliveryQuotes(Array.isArray(data.options) ? data.options : []);
-    } catch (err: any) {
-      setDeliveryQuotes([]);
-      setDeliveryQuotesError(err?.message || "Não foi possível consultar as opções de entrega.");
-    } finally {
-      setDeliveryQuotesLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -163,10 +127,6 @@ export default function CheckoutPage() {
       setErrorMessage("Por favor, selecione a data desejada.");
       return;
     }
-    if (customerData.fulfillmentType === "delivery" && !selectedDelivery) {
-      setErrorMessage("Escolha uma opção de entrega antes de finalizar o pedido.");
-      return;
-    }
     setIsSubmitting(true);
 
     try {
@@ -177,17 +137,6 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           customer: customerData,
           paymentPlan,
-          deliverySelection:
-            customerData.fulfillmentType === "delivery" && selectedDelivery
-              ? {
-                  provider: selectedDelivery.provider,
-                  price: selectedDelivery.price,
-                  currency: selectedDelivery.currency,
-                  etaMinutes: selectedDelivery.eta_minutes,
-                  quoteId: selectedDelivery.quote_id,
-                  expiresAt: selectedDelivery.expires_at,
-                }
-              : null,
           items: items.map((i) => ({
             productId: i.productId,
             variantId: i.variantId,
@@ -409,10 +358,7 @@ export default function CheckoutPage() {
                         setCustomerData((prev) => ({
                           ...prev,
                           fulfillmentType: m.id as any,
-                        }));
-                        setDeliveryQuotes([]);
-                        setSelectedDelivery(null);
-                        setDeliveryQuotesError(null)
+                        }))
                       }
                       className={`py-2.5 px-2 rounded-xl text-xs font-bold transition text-center ${
                         isSelected
@@ -429,7 +375,7 @@ export default function CheckoutPage() {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#E05A36] inline-block shrink-0" />
                 <span>
                   {customerData.fulfillmentType === "pickup" && "Retirada em nosso balcão de atendimento no horário combinado."}
-                  {customerData.fulfillmentType === "delivery" && "Os detalhes da entrega serão confirmados pela Deli no WhatsApp."}
+                  {customerData.fulfillmentType === "delivery" && "A taxa de entrega não está incluída no pedido. A Deli fará uma estimativa e combinará tudo com você pelo WhatsApp."}
                   {customerData.fulfillmentType === "to_agree" && "Os detalhes da entrega serão confirmados pela Deli no WhatsApp."}
                 </span>
               </p>
@@ -516,122 +462,41 @@ export default function CheckoutPage() {
             </div>
 
             {customerData.fulfillmentType === "delivery" && (
-              <div className="bg-white rounded-3xl border border-[#EAD8C7] p-4 space-y-3 shadow-xs">
-                <div className="flex items-start justify-between gap-3">
+              <div className="bg-[#FFF8EE] rounded-3xl border border-[#F0D5BE] p-4 space-y-3 shadow-xs">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full bg-white border border-[#F0D5BE] text-[#E05A36] flex items-center justify-center shrink-0">
+                    <MessageSquare size={17} />
+                  </div>
                   <div>
-                    <h3 className="text-sm font-black text-[#3C1F15]">Opções de entrega</h3>
-                    <p className="text-[10px] text-[#7A6357] mt-0.5 leading-relaxed">
-                      Consultamos a rota entre a Deli e o seu endereço. Tarifas oficiais aparecem quando a integração do serviço está disponível.
+                    <h3 className="text-sm font-black text-[#3C1F15]">Entrega combinada pelo WhatsApp</h3>
+                    <p className="text-[11px] text-[#7A6357] mt-1 leading-relaxed">
+                      A entrega <strong>não está incluída no valor deste pedido</strong>. A Deli vai consultar uma estimativa de frete para o endereço informado e enviar o valor pelo WhatsApp.
                     </p>
                   </div>
-                  <MapPin size={18} className="text-[#E05A36] shrink-0 mt-0.5" />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={loadDeliveryQuotes}
-                  disabled={deliveryQuotesLoading || !customerData.deliveryAddress.trim()}
-                  className="w-full py-3 rounded-2xl bg-[#3C1F15] disabled:bg-[#B9AAA2] text-white text-xs font-black flex items-center justify-center gap-2"
-                >
-                  {deliveryQuotesLoading ? "CONSULTANDO..." : deliveryQuotes.length ? "ATUALIZAR COTAÇÕES" : "CALCULAR OPÇÕES DE ENTREGA"}
-                </button>
-
-                {deliveryQuotesError && (
-                  <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-[11px] text-red-700">
-                    {deliveryQuotesError}
+                <div className="rounded-2xl bg-white border border-[#EAD8C7] p-3 space-y-2 text-[11px] text-[#614439]">
+                  <div className="flex gap-2">
+                    <span className="font-black text-[#E05A36]">1.</span>
+                    <span>Você finaliza e paga apenas os produtos conforme a opção de pagamento escolhida.</span>
                   </div>
-                )}
-
-                {deliveryQuotes.length > 0 && (
-                  <div className="space-y-2">
-                    {deliveryQuotes.map((option) => {
-                      const selected = selectedDelivery?.provider === option.provider;
-                      const canSelect = option.status === "available" || option.status === "external";
-
-                      return (
-                        <div
-                          key={option.provider}
-                          className={`rounded-2xl border p-3 transition ${
-                            selected
-                              ? "border-[#E05A36] bg-[#FFF4E8] ring-2 ring-[#E05A36]/10"
-                              : "border-[#EAD8C7] bg-[#FFFDF9]"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-xs font-black text-[#3C1F15]">{option.provider_label}</div>
-                              <div className="text-[10px] text-[#7A6357] mt-0.5 leading-relaxed">{option.note}</div>
-                            </div>
-                            <div className="text-right shrink-0">
-                              {option.price !== null ? (
-                                <>
-                                  <div className="text-sm font-black text-[#E05A36]">
-                                    {new Intl.NumberFormat("pt-BR", {
-                                      style: "currency",
-                                      currency: option.currency || "BRL",
-                                    }).format(option.price)}
-                                  </div>
-                                  {option.eta_minutes && (
-                                    <div className="text-[9px] font-bold text-[#8C7367]">
-                                      ~{option.eta_minutes} min
-                                    </div>
-                                  )}
-                                </>
-                              ) : (
-                                <div className="text-[10px] font-black text-[#8C7367] uppercase">
-                                  Consultar
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="mt-2 flex gap-2">
-                            {canSelect && (
-                              <button
-                                type="button"
-                                onClick={() => setSelectedDelivery(option)}
-                                className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition ${
-                                  selected
-                                    ? "bg-[#E05A36] text-white"
-                                    : "bg-[#3C1F15] text-white"
-                                }`}
-                              >
-                                {selected ? "SELECIONADO" : "ESCOLHER"}
-                              </button>
-                            )}
-
-                            {option.action_url && (
-                              <a
-                                href={option.action_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3 py-2.5 rounded-xl border border-[#E8D9CB] bg-white text-[#3C1F15] text-[10px] font-black flex items-center justify-center gap-1"
-                              >
-                                <ExternalLink size={12} />
-                                ABRIR
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="flex gap-2">
+                    <span className="font-black text-[#E05A36]">2.</span>
+                    <span>A Deli consulta o valor estimado da entrega para o seu endereço.</span>
                   </div>
-                )}
-
-                {selectedDelivery && (
-                  <div className="p-3 rounded-2xl bg-[#EAF7EE] border border-[#CDEEDB] text-[11px] text-[#1E5631]">
-                    <strong>{selectedDelivery.provider_label}</strong> selecionado.
-                    {selectedDelivery.price !== null
-                      ? ` Estimativa atual: ${new Intl.NumberFormat("pt-BR", {
-                          style: "currency",
-                          currency: selectedDelivery.currency || "BRL",
-                        }).format(selectedDelivery.price)}.`
-                      : " A tarifa será confirmada no serviço escolhido."}
-                    <div className="text-[10px] mt-1 text-[#52765E]">
-                      A taxa de entrega não altera o valor dos produtos e pode variar até a contratação efetiva do serviço.
-                    </div>
+                  <div className="flex gap-2">
+                    <span className="font-black text-[#E05A36]">3.</span>
+                    <span>O valor e as condições da entrega são enviados pelo WhatsApp para sua aprovação.</span>
                   </div>
-                )}
+                  <div className="flex gap-2">
+                    <span className="font-black text-[#E05A36]">4.</span>
+                    <span>A entrega só é contratada depois que você concordar com o valor.</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-[#FFF1D6] border border-[#F4D7A2] text-[10px] font-semibold text-[#805328] leading-relaxed">
+                  Importante: o Pix gerado nesta etapa corresponde somente aos produtos. Qualquer taxa de entrega será tratada separadamente com a Deli.
+                </div>
               </div>
             )}
 
@@ -643,7 +508,7 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-[#3C1F15]">Pagamento</h3>
-                  <p className="text-[10px] text-[#7A6357]">A entrada mínima de 50% é obrigatória para confirmar a encomenda.</p>
+                  <p className="text-[10px] text-[#7A6357]">A entrada mínima de 50% é obrigatória para confirmar a encomenda. A taxa de entrega, quando houver, é combinada separadamente pelo WhatsApp.</p>
                 </div>
               </div>
 
@@ -694,7 +559,7 @@ export default function CheckoutPage() {
               <div className="rounded-2xl bg-[#F8F4EF] p-3 text-[11px] space-y-1">
                 <div className="flex justify-between"><span className="text-[#7A6357]">Total do pedido</span><strong>{formatCurrency(totalAmount)}</strong></div>
                 <div className="flex justify-between"><span className="text-[#7A6357]">A pagar agora</span><strong className="text-[#E05A36]">{formatCurrency(amountDueNow)}</strong></div>
-                <div className="flex justify-between"><span className="text-[#7A6357]">Saldo na entrega</span><strong>{formatCurrency(balanceOnDelivery)}</strong></div>
+                <div className="flex justify-between"><span className="text-[#7A6357]">Saldo dos produtos na entrega</span><strong>{formatCurrency(balanceOnDelivery)}</strong></div>
               </div>
             </div>
 
@@ -780,7 +645,7 @@ export default function CheckoutPage() {
                 <strong className="text-[#E05A36]">{formatCurrency(amountDueNow)}</strong>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#7A6357]">Saldo na entrega</span>
+                <span className="text-[#7A6357]">Saldo dos produtos na entrega</span>
                 <strong>{formatCurrency(balanceOnDelivery)}</strong>
               </div>
             </div>
