@@ -10,12 +10,14 @@ interface HeaderProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   showSearch?: boolean;
+  title?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   searchQuery,
   onSearchChange,
   showSearch = true,
+  title = "Cardápio",
 }) => {
   const pathname = usePathname();
   const { totalUnits, items } = useCart();
@@ -88,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({
                 textShadow: "0 3px 6px rgba(74, 48, 34, 0.4), 0 1px 2px rgba(74, 48, 34, 0.6)",
               }}
             >
-              Cardápio
+              {title}
             </h1>
           </div>
         </div>
