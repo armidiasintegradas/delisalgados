@@ -34,13 +34,13 @@ export function generateWhatsAppMessage(order: Order, settings: Settings): strin
     const hadFirstNameToken = /\{primeiro_nome\}/i.test(configuredOpening);
     const withToken = configuredOpening.replace(/\{primeiro_nome\}/gi, firstName);
 
-    if (/^Olá, Deli Salgados![\s:]*/i.test(withToken)) {
+    if (hadFirstNameToken) {
+      personalizedOpening = withToken;
+    } else if (/^Olá, Deli Salgados![\s:]*/i.test(withToken)) {
       personalizedOpening = withToken.replace(
         /^Olá, Deli Salgados![\s:]*/i,
         `Olá, Deli Salgados! Meu nome é ${firstName}. `
       );
-    } else if (hadFirstNameToken) {
-      personalizedOpening = withToken;
     } else {
       personalizedOpening = `Olá, Deli Salgados! Meu nome é ${firstName}. ${withToken}`;
     }
