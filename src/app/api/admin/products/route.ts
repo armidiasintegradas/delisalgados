@@ -28,10 +28,13 @@ export async function POST(request: Request) {
       const duplicated = await DbService.duplicateProduct(body.id);
       return NextResponse.json({ success: true, product: duplicated });
     }
-    const { variants, category, ...productInput } = body;
+    const { variants, images, category, ...productInput } = body;
     const product = await DbService.createProduct(productInput);
     if (Array.isArray(variants)) {
       await DbService.syncProductVariants(product.id, variants);
+    }
+    if (Array.isArray(images)) {
+      await DbService.syncProductImages(product.id, images);
     }
     const reloaded = await DbService.getProductById(product.id);
     return NextResponse.json({ success: true, product: reloaded || product }, { status: 201 });
@@ -71,10 +74,13 @@ export async function PUT(request: Request) {
     }
 
     if (body.id) {
-      const { id, variants, category, ...productUpdates } = body;
+      const { id, variants, images, category, ...productUpdates } = body;
       const updated = await DbService.updateProduct(id, productUpdates);
       if (Array.isArray(variants)) {
         await DbService.syncProductVariants(id, variants);
+      }
+      if (Array.isArray(images)) {
+        await DbService.syncProductImages(id, images);
       }
       const reloaded = await DbService.getProductById(id);
       return NextResponse.json({
