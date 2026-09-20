@@ -59,7 +59,7 @@ export async function POST(
       const { data: matchingProfile } = await supabaseServer!
         .from("customer_profiles")
         .select("id")
-        .ilike("email", String(order.customer_email))
+        .eq("email", String(order.customer_email).toLowerCase())
         .maybeSingle();
 
       if (matchingProfile?.id) {
