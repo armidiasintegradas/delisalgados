@@ -212,12 +212,12 @@ export default function FestaPage() {
             </div>
 
             <div className="bg-transparent border-0 p-0 space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-2xl bg-[#FFF8EE]/92 border border-[#EAD8C7] px-4 py-3 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-2xl deli-surface border px-4 py-3 shadow-sm">
                 <Calculator size={18} className="text-[#E05A36]" />
                 <h2 className="font-black text-[#3C1F15]">1. Monte sua Festa</h2>
               </div>
 
-              <label className="block space-y-1.5 rounded-2xl bg-[#FFF8EE]/92 border border-[#EAD8C7] p-3.5">
+              <label className="block space-y-1.5 rounded-2xl deli-surface border p-3.5">
                 <span className="text-[11px] font-black uppercase tracking-wide text-[#7A6357]">
                   Seu nome
                 </span>
@@ -232,7 +232,7 @@ export default function FestaPage() {
                 />
               </label>
 
-              <div className="grid grid-cols-2 gap-3 rounded-2xl bg-[#FFF8EE]/92 border border-[#EAD8C7] p-3.5">
+              <div className="grid grid-cols-2 gap-3 rounded-2xl deli-surface border p-3.5">
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-black uppercase tracking-wide text-[#7A6357] flex items-center gap-1.5">
                     <Users size={13} /> Adultos
@@ -306,7 +306,7 @@ export default function FestaPage() {
                 </div>
               </div>
 
-              <p className="text-[10px] text-[#7A6357] leading-relaxed rounded-2xl bg-[#FFF8EE]/80 border border-[#EAD8C7] px-3.5 py-3">
+              <p className="text-[10px] text-[#7A6357] leading-relaxed rounded-2xl deli-surface-soft border px-3.5 py-3">
                 Estimativa de planejamento: o consumo real varia conforme duração, bebidas e outros alimentos.
                 O cálculo arredonda em blocos de 25 unidades para respeitar a venda mínima da Deli.
               </p>
@@ -314,7 +314,7 @@ export default function FestaPage() {
           </div>
 
           <div className="space-y-4 lg:sticky lg:top-5">
-            <div className="bg-white rounded-3xl border border-[#EAD8C7] p-4 lg:p-5 space-y-4 shadow-sm">
+            <div className="deli-surface rounded-3xl border p-4 lg:p-5 space-y-4">
               <div>
                 <div className="text-[10px] uppercase font-black tracking-wider text-[#8C7367]">
                   2. Escolha o perfil do combo
@@ -368,9 +368,9 @@ export default function FestaPage() {
                   {combo.map((line, index) => (
                     <div
                       key={line.product.id}
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-[#FFF9E6] border border-[#EFE2C4]"
+                      className="flex items-center gap-3 p-3 rounded-2xl deli-surface-soft border"
                     >
-                      <div className="w-8 h-8 rounded-full bg-white border border-[#EAD8C7] flex items-center justify-center text-[11px] font-black text-[#E05A36] shrink-0">
+                      <div className="w-8 h-8 rounded-full deli-surface-soft border flex items-center justify-center text-[11px] font-black text-[#E05A36] shrink-0">
                         {index + 1}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -379,7 +379,7 @@ export default function FestaPage() {
                         </div>
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {Number(line.product.sales_count || 0) > 0 && (
-                            <span className="text-[9px] font-black bg-white border border-[#EAD8C7] px-2 py-0.5 rounded-full text-[#7A6357]">
+                            <span className="text-[9px] font-black deli-surface-soft border px-2 py-0.5 rounded-full text-[#7A6357]">
                               {line.product.sales_count} un. vendidas
                             </span>
                           )}
@@ -450,7 +450,7 @@ export default function FestaPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-3xl bg-[#FFF8EE] border border-[#F0D5BE] text-[11px] text-[#7A6357] leading-relaxed">
+            <div className="deli-surface-soft p-4 rounded-3xl border text-[11px] text-[#7A6357] leading-relaxed">
               <strong className="text-[#3C1F15]">Como a sugestão funciona:</strong> “Mais pedidos”
               usa o histórico real de vendas; “Menor preço” prioriza o custo unitário; “Equilibrado”
               combina popularidade, preço e promoções ativas. A calculadora nunca usa o produto teste Pix.
