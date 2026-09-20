@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCanonicalAppUrl } from "@/lib/appUrl";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") || "/perfil";
+  const requestedNext = url.searchParams.get("next") || "/perfil";
+  const next = requestedNext.startsWith("/") && !requestedNext.startsWith("//")
+    ? requestedNext
+    : "/perfil";
 
   if (code) {
     const supabase = await createSupabaseServerClient();
@@ -13,5 +17,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(new URL(next, url.origin));
+  return NextResponse.redirect(new URL(next, getCanonicalAppUrl()));
 }
