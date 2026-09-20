@@ -60,9 +60,9 @@ export default function AdminDashboardPage() {
           todayOrders: dashData.metrics.todayOrders ?? 0,
           totalOrders: dashData.metrics.totalOrders ?? 0,
         });
-        if (dashData.metrics.recentOrders && dashData.metrics.recentOrders.length > 0) {
-          setRecentOrders(dashData.metrics.recentOrders);
-        }
+        setRecentOrders(
+          Array.isArray(dashData.metrics.recentOrders) ? dashData.metrics.recentOrders : []
+        );
       }
 
       if (Array.isArray(prodsData.products)) {
@@ -98,7 +98,7 @@ export default function AdminDashboardPage() {
       prev.map((p) => (p.id === productId ? { ...p, availability: newAvailability } : p))
     );
     try {
-      await fetch("/api/admin/products", {
+      const res = await fetch("/api/admin/products", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -107,9 +107,16 @@ export default function AdminDashboardPage() {
           availability: newAvailability,
         }),
       });
+
+      if (!res.ok) {
+        throw new Error("Falha ao alterar disponibilidade");
+      }
+
+      await loadDashboardData();
     } catch (e) {
       console.error("Error toggling availability:", e);
-      loadDashboardData();
+      setLoadError("A alteração não foi salva. Os dados foram recarregados.");
+      await loadDashboardData();
     }
   };
 
