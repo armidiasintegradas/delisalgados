@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag, Mail } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
@@ -68,15 +68,26 @@ export default function CheckoutPage() {
       setErrorMessage("Por favor, informe seu número de WhatsApp.");
       return;
     }
+    if (!customerData.customerEmail.trim()) {
+      setErrorMessage("Por favor, informe seu e-mail.");
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(customerData.customerEmail.trim())) {
+      setErrorMessage("Informe um e-mail válido.");
+      return;
+    }
+    if (!customerData.deliveryAddress.trim()) {
+      setErrorMessage("Por favor, informe seu endereço completo.");
+      return;
+    }
+    if (!customerData.referencePoint.trim()) {
+      setErrorMessage("Por favor, informe um ponto de referência.");
+      return;
+    }
     if (!customerData.desiredDate.trim()) {
       setErrorMessage("Por favor, selecione a data desejada.");
       return;
     }
-    if (customerData.fulfillmentType === "delivery" && !customerData.deliveryAddress?.trim()) {
-      setErrorMessage("Por favor, preencha o endereço completo para entrega.");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -98,6 +109,23 @@ export default function CheckoutPage() {
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Não foi possível registrar seu pedido agora. Seus itens continuam no carrinho. Tente novamente em instantes.");
+      }
+
+      // Create/reuse the customer login through passwordless e-mail access.
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const authClient = createClient();
+        if (authClient && customerData.customerEmail) {
+          await authClient.auth.signInWithOtp({
+            email: customerData.customerEmail.trim().toLowerCase(),
+            options: {
+              shouldCreateUser: true,
+              emailRedirectTo: `${window.location.origin}/auth/callback?next=/perfil`,
+            },
+          });
+        }
+      } catch (authError) {
+        console.warn("Customer access link could not be sent:", authError);
       }
 
       // Order created server-side! Store in session with handoff token
@@ -248,6 +276,28 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            <div>
+              <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1">
+                E-MAIL *
+              </label>
+              <div className="relative">
+                <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A89688]" />
+                <input
+                  type="email"
+                  required
+                  value={customerData.customerEmail}
+                  onChange={(e) =>
+                    setCustomerData((prev) => ({ ...prev, customerEmail: e.target.value }))
+                  }
+                  placeholder="seuemail@exemplo.com"
+                  className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl pl-9 pr-3 py-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
+                />
+              </div>
+              <p className="text-[10px] text-[#7A6357] mt-1">
+                Este e-mail será usado para acessar sua conta e seu histórico de pedidos.
+              </p>
+            </div>
+
             {/* Fulfillment Type */}
             <div>
               <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1.5">
@@ -291,27 +341,46 @@ export default function CheckoutPage() {
               </p>
             </div>
 
-            {/* Address (if delivery) */}
-            {customerData.fulfillmentType === "delivery" && (
-              <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Customer address — required for account and future orders */}
+            <div className="space-y-3">
+              <div>
                 <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1">
                   ENDEREÇO COMPLETO *
                 </label>
                 <textarea
                   required
                   rows={2}
-                  value={customerData.deliveryAddress || ""}
+                  value={customerData.deliveryAddress}
                   onChange={(e) =>
                     setCustomerData((prev) => ({
                       ...prev,
                       deliveryAddress: e.target.value,
                     }))
                   }
-                  placeholder="Rua, número, complemento, bairro e ponto de referência"
+                  placeholder="Rua, número, complemento, bairro, cidade e CEP"
                   className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl p-2.5 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
                 />
               </div>
-            )}
+
+              <div>
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1">
+                  PONTO DE REFERÊNCIA *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={customerData.referencePoint}
+                  onChange={(e) =>
+                    setCustomerData((prev) => ({
+                      ...prev,
+                      referencePoint: e.target.value,
+                    }))
+                  }
+                  placeholder="Ex: ao lado da farmácia, portão azul..."
+                  className="w-full bg-[#FFFDF6] border border-[#EAD8C7] rounded-2xl p-3 text-xs text-[#3C1F15] placeholder:text-[#A89688] focus:outline-none focus:ring-2 focus:ring-[#E05A36] focus:border-transparent transition shadow-2xs"
+                />
+              </div>
+            </div>
 
             {/* General Notes */}
             <div>
