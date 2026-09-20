@@ -76,6 +76,16 @@ export default function MeusPedidosPage() {
     cancelled: "Cancelado",
   };
 
+  const getCustomerStatusClasses = (status?: string) => {
+    if (status === "confirmed" || status === "preparing" || status === "completed") {
+      return "bg-[#EAF7EE] text-[#1E7A45] border border-[#BFE7CC]";
+    }
+    if (status === "cancelled") {
+      return "bg-[#FFF0EE] text-[#B5412A] border border-[#F2C5BC]";
+    }
+    return "bg-[#FFF4E8] text-[#8C5237] border border-[#F0D5BE]";
+  };
+
   return (
     <div className="w-full max-w-[440px] lg:max-w-none mx-auto min-h-screen bg-[#FFFDF9] shadow-2xl lg:shadow-none flex flex-col pb-24 lg:pb-16 relative">
       {/* Header */}
@@ -143,7 +153,7 @@ export default function MeusPedidosPage() {
                         <div className="text-base font-black text-[#E05A36]">{order.public_code}</div>
                         <div className="text-[10px] text-[#8C7367]">{new Date(order.created_at).toLocaleDateString("pt-BR")}</div>
                       </div>
-                      <span className="px-2.5 py-1 rounded-full bg-[#FFF4E8] text-[#8C5237] text-[10px] font-bold">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${getCustomerStatusClasses(order.status)}`}>
                         {statusLabels[order.status] || order.status}
                       </span>
                     </div>
@@ -236,7 +246,7 @@ export default function MeusPedidosPage() {
                   {searchedOrder.public_code}
                 </div>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#FFF4E8] text-[#8C5237]">
+              <span className={`px-3 py-1 rounded-full text-xs font-bold ${getCustomerStatusClasses(searchedOrder.status)}`}>
                 {statusLabels[searchedOrder.status] || searchedOrder.status}
               </span>
             </div>
