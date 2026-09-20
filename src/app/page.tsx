@@ -14,6 +14,7 @@ import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { Instagram, ShoppingBag, ArrowRight, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { PublicFooter } from "@/components/public/PublicFooter";
 
 function getCategoryBadge(items: Product[]): string | null {
   if (!items || items.length === 0) return null;
@@ -508,6 +509,8 @@ export default function CatalogPage() {
           )}
         </aside>
       </div>
+
+      <PublicFooter />
 
       {/* 03 — Product Options Modal */}
       <ProductModal
