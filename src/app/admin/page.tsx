@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   CheckCircle2,
   AlertCircle,
@@ -33,13 +32,23 @@ export default function AdminDashboardPage() {
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [quickProducts, setQuickProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const [greeting, setGreeting] = useState("Olá, Deli!");
 
   async function loadDashboardData() {
+    setLoading(true);
+    setLoadError(null);
     try {
       const [dashRes, prodsRes] = await Promise.all([
-        fetch("/api/admin/dashboard"),
-        fetch("/api/admin/products"),
+        fetch("/api/admin/dashboard", { cache: "no-store" }),
+        fetch("/api/admin/products", { cache: "no-store" }),
       ]);
+
+      if (!dashRes.ok || !prodsRes.ok) {
+        throw new Error("Não foi possível consultar os dados do painel.");
+      }
+
       const dashData = await dashRes.json();
       const prodsData = await prodsRes.json();
 
@@ -56,17 +65,30 @@ export default function AdminDashboardPage() {
         }
       }
 
-      if (prodsData.products && prodsData.products.length > 0) {
+      if (Array.isArray(prodsData.products)) {
         setQuickProducts(prodsData.products.slice(0, 6));
       }
+
+      setLastUpdatedAt(new Date());
     } catch (err) {
       console.error("Error loading dashboard data:", err);
+      setLoadError("Não foi possível atualizar os dados agora. Tente novamente.");
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
+    const now = new Date();
+    const hour = Number(
+      new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Recife",
+        hour: "2-digit",
+        hour12: false,
+      }).format(now)
+    );
+
+    setGreeting(hour < 12 ? "Bom dia, Deli!" : hour < 18 ? "Boa tarde, Deli!" : "Boa noite, Deli!");
     loadDashboardData();
   }, []);
 
@@ -106,10 +128,11 @@ export default function AdminDashboardPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => loadDashboardData()}
-            className="px-3 py-1.5 rounded-xl bg-white border border-[#EBDCCF] text-[#3C1F15] hover:bg-[#FAF3E8] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
+            disabled={loading}
+            className="px-3 py-1.5 rounded-xl bg-white border border-[#EBDCCF] text-[#3C1F15] hover:bg-[#FAF3E8] disabled:opacity-60 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
           >
-            <RefreshCw size={13} className="text-[#DF5F45]" />
-            <span>Atualizar Preços</span>
+            <RefreshCw size={13} className={`text-[#DF5F45] ${loading ? "animate-spin" : ""}`} />
+            <span>{loading ? "Atualizando..." : "Atualizar Dados"}</span>
           </button>
           <Link
             href="/"
@@ -120,7 +143,7 @@ export default function AdminDashboardPage() {
             <ExternalLink size={13} />
           </Link>
           <Link
-            href="/delisalgados/admin/produtos/novo"
+            href="/admin/produtos/novo"
             className="px-3 py-1.5 rounded-xl bg-[#3C1F15] text-white hover:bg-[#27120A] text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
           >
             <Plus size={14} />
@@ -132,17 +155,29 @@ export default function AdminDashboardPage() {
       {/* Greeting Title */}
       <div>
         <h1 className="text-2xl font-display font-black text-[#3C1F15] tracking-tight">
-          Bom dia, Deli!
+          {greeting}
         </h1>
         <p className="text-xs text-[#7A6357] mt-0.5 max-w-2xl leading-relaxed">
-          Aqui você acompanha os destaques do cardápio e a operação de hoje. Ajuste a disponibilidade dos itens com um clique e prepare sua produção com tranquilidade.
+          Aqui você acompanha os dados reais do cardápio e da operação. Use “Atualizar Dados” para consultar novamente o Supabase.
         </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {lastUpdatedAt && !loadError && (
+            <span className="text-[10px] font-bold text-[#2E7D47] bg-[#E5F7EB] px-2 py-1 rounded-full">
+              Dados atualizados às {lastUpdatedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Recife" })}
+            </span>
+          )}
+          {loadError && (
+            <span className="text-[10px] font-bold text-[#C04220] bg-[#FCECE8] px-2 py-1 rounded-full">
+              {loadError}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 4 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Card 1: Itens Ativos */}
-        <div className="bg-[#F2F8F4] p-3.5 rounded-2xl border border-[#D5EADB] shadow-2xs flex flex-col justify-between">
+        <Link href="/admin/produtos" className="bg-[#F2F8F4] p-3.5 rounded-2xl border border-[#D5EADB] shadow-2xs flex flex-col justify-between hover:shadow-sm transition">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase font-bold tracking-wider text-[#1FAA52]">
               Itens Ativos
@@ -157,10 +192,10 @@ export default function AdminDashboardPage() {
           <div className="text-[10px] text-[#2E7D47] font-medium bg-[#E3F4E9] px-2 py-0.5 rounded-md">
             Pronta-entrega e sob encomenda
           </div>
-        </div>
+        </Link>
 
         {/* Card 2: Pausados / Esgotados */}
-        <div className="bg-[#FFF4F2] p-3.5 rounded-2xl border border-[#FBD6CF] shadow-2xs flex flex-col justify-between">
+        <Link href="/admin/produtos" className="bg-[#FFF4F2] p-3.5 rounded-2xl border border-[#FBD6CF] shadow-2xs flex flex-col justify-between hover:shadow-sm transition">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase font-bold tracking-wider text-[#DF5F45]">
               Pausados / Esgotados
@@ -175,10 +210,10 @@ export default function AdminDashboardPage() {
           <div className="text-[10px] text-[#C04220] font-medium bg-[#FCE8E4] px-2 py-0.5 rounded-md">
             Itens indisponíveis no catálogo
           </div>
-        </div>
+        </Link>
 
         {/* Card 3: Produtos com Variação */}
-        <div className="bg-[#FFFBF2] p-3.5 rounded-2xl border border-[#F8E7C5] shadow-2xs flex flex-col justify-between">
+        <Link href="/admin/pedidos" className="bg-[#FFFBF2] p-3.5 rounded-2xl border border-[#F8E7C5] shadow-2xs flex flex-col justify-between hover:shadow-sm transition">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase font-bold tracking-wider text-[#B8860B]">
               Total de Pedidos
@@ -193,10 +228,10 @@ export default function AdminDashboardPage() {
           <div className="text-[10px] text-[#8C6D1F] font-medium bg-[#FAF2D8] px-2 py-0.5 rounded-md">
             Histórico registrado no sistema
           </div>
-        </div>
+        </Link>
 
         {/* Card 4: Solicitações Hoje (Solid Coral) */}
-        <div className="bg-[#DF5F45] text-white p-3.5 rounded-2xl shadow-xs flex flex-col justify-between">
+        <Link href="/admin/pedidos" className="bg-[#DF5F45] text-white p-3.5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-sm transition">
           <div className="flex items-center justify-between text-white/90">
             <span className="text-[10px] uppercase font-bold tracking-wider">
               Solicitações Hoje
@@ -214,7 +249,7 @@ export default function AdminDashboardPage() {
           <div className="text-[10px] font-bold text-white/95 bg-black/15 px-2 py-0.5 rounded-md">
             Solicitações geradas pelo cardápio
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Notice Banner */}
@@ -238,7 +273,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
         <Link
-          href="/delisalgados/admin/cardapio"
+          href="/admin/cardapio"
           className="px-2.5 py-1 rounded-xl bg-[#FFF8EE] border border-[#EBDCCF] text-xs font-bold text-[#3C1F15] hover:bg-[#F5ECE0] transition shrink-0"
         >
           Editar Aviso
@@ -339,7 +374,7 @@ export default function AdminDashboardPage() {
 
           <div className="pt-3 border-t border-[#F4E8DB] mt-3">
             <Link
-              href="/delisalgados/admin/produtos"
+              href="/admin/produtos"
               className="text-xs font-bold text-[#DF5F45] hover:underline flex items-center gap-1"
             >
               <span>Ver todos os produtos do cardápio</span>
@@ -444,7 +479,7 @@ export default function AdminDashboardPage() {
                       </div>
                       <div className="flex items-center gap-2 pt-1">
                         <Link
-                          href="/delisalgados/admin/pedidos"
+                          href="/admin/pedidos"
                           className="flex-1 py-1.5 rounded-xl bg-[#FDEAE4] text-[#DF5F45] text-center text-[10px] font-bold hover:bg-[#FADBD0] transition flex items-center justify-center gap-1"
                         >
                           <FileText size={12} />
@@ -478,7 +513,7 @@ export default function AdminDashboardPage() {
 
           <div className="pt-3 border-t border-[#F4E8DB] mt-3">
             <Link
-              href="/delisalgados/admin/pedidos"
+              href="/admin/pedidos"
               className="text-xs font-bold text-[#DF5F45] hover:underline flex items-center justify-between"
             >
               <span>Ver todos os Pedidos</span>
