@@ -107,7 +107,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       const savedCustomer = localStorage.getItem("deli_customer_v1");
       if (savedCustomer) {
-        setCustomerData(JSON.parse(savedCustomer));
+        setCustomerData({ ...defaultCustomerData, ...JSON.parse(savedCustomer) });
       }
     } catch (e) {
       console.warn("Could not parse saved cart/customer data", e);
