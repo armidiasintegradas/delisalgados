@@ -691,14 +691,18 @@ export class DbService {
     if (!orderInput.items || orderInput.items.length === 0) {
       throw new Error("O pedido não possui itens.");
     }
+    const requiresDeliveryAddress = orderInput.customer.fulfillmentType === "delivery";
     if (
       !orderInput.customer.customerName?.trim() ||
       !orderInput.customer.customerPhone?.trim() ||
       !orderInput.customer.customerEmail?.trim() ||
-      !orderInput.customer.deliveryAddress?.trim() ||
-      !orderInput.customer.referencePoint?.trim()
+      (requiresDeliveryAddress && !orderInput.customer.deliveryAddress?.trim())
     ) {
-      throw new Error("Nome, WhatsApp, e-mail, endereço completo e ponto de referência são obrigatórios.");
+      throw new Error(
+        requiresDeliveryAddress
+          ? "Nome, WhatsApp, e-mail e endereço completo são obrigatórios para entrega."
+          : "Nome, WhatsApp e e-mail são obrigatórios."
+      );
     }
 
     // Read full products list to validate from server authority
@@ -791,8 +795,8 @@ export class DbService {
         customer_user_id: orderInput.customerUserId || null,
         desired_date: orderInput.customer.desiredDate,
         fulfillment_type: orderInput.customer.fulfillmentType,
-        delivery_address: orderInput.customer.deliveryAddress.trim(),
-        customer_reference_point: orderInput.customer.referencePoint.trim(),
+        delivery_address: orderInput.customer.deliveryAddress?.trim() || null,
+        customer_reference_point: orderInput.customer.referencePoint?.trim() || null,
         customer_note: orderInput.customer.customerNote?.trim() || null,
         total: Number(calculatedTotal.toFixed(2)),
         payment_plan: orderInput.paymentPlan === "full" ? "full" : "deposit_50",
