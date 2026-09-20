@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Search, ClipboardList, Clock, CheckCircle2 } from "lucide-react";
 import { BottomNav } from "@/components/public/BottomNav";
@@ -13,6 +13,25 @@ export default function MeusPedidosPage() {
   const [searchedOrder, setSearchedOrder] = useState<any | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [accountOrders, setAccountOrders] = useState<any[]>([]);
+  const [accountLoading, setAccountLoading] = useState(true);
+  const [accountAuthenticated, setAccountAuthenticated] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/customer/orders", { cache: "no-store" })
+      .then(async (res) => {
+        if (res.status === 401) {
+          setAccountAuthenticated(false);
+          return { orders: [] };
+        }
+        const data = await res.json();
+        setAccountAuthenticated(true);
+        return data;
+      })
+      .then((data) => setAccountOrders(data.orders || []))
+      .catch(() => setAccountAuthenticated(false))
+      .finally(() => setAccountLoading(false));
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +110,60 @@ export default function MeusPedidosPage() {
       </header>
 
       <main className="w-full max-w-[440px] lg:max-w-[720px] mx-auto p-4 lg:p-8 space-y-4 flex-1">
+        {!accountLoading && accountAuthenticated && (
+          <div className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-black text-[#3C1F15]">Histórico de pedidos</h2>
+                <p className="text-[11px] text-[#7A6357]">Pedidos vinculados ao seu e-mail de acesso.</p>
+              </div>
+              <Link href="/" className="px-3 py-2 rounded-xl bg-[#3C1F15] text-white text-[10px] font-bold">
+                NOVO PEDIDO
+              </Link>
+            </div>
+
+            {accountOrders.length === 0 ? (
+              <div className="p-4 rounded-2xl bg-[#FFF9E6] text-xs text-[#7A6357]">
+                Você ainda não possui pedidos vinculados a esta conta.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {accountOrders.map((order) => (
+                  <div key={order.id} className="p-4 rounded-2xl bg-[#FFFDF9] border border-[#EFE2D5] space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-base font-black text-[#E05A36]">{order.public_code}</div>
+                        <div className="text-[10px] text-[#8C7367]">{new Date(order.created_at).toLocaleDateString("pt-BR")}</div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full bg-[#FFF4E8] text-[#8C5237] text-[10px] font-bold">
+                        {statusLabels[order.status] || order.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-[#614439]">
+                      {(order.items || []).map((item: any) => (
+                        <div key={item.id} className="flex justify-between gap-3 py-0.5">
+                          <span>{item.quantity} {item.unit_label_snapshot} — {item.product_name_snapshot}</span>
+                          <span className="font-semibold">{formatCurrency(item.subtotal)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="pt-2 border-t border-[#F0E2D4] flex justify-between text-xs font-bold">
+                      <span>Total</span>
+                      <span className="text-[#E05A36]">{formatCurrency(order.total)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!accountLoading && !accountAuthenticated && (
+          <div className="bg-[#FFF4E8] border border-[#F0D5BE] rounded-3xl p-4 text-xs text-[#7A4B36]">
+            Para ver todo o seu histórico automaticamente, <Link href="/perfil" className="font-black underline">acesse sua conta</Link> com o e-mail usado no pedido.
+          </div>
+        )}
+
         {/* Search input */}
         <form onSubmit={handleSearch} className="bg-white p-5 rounded-3xl border border-[#EBDCCF] shadow-xs space-y-3">
           <div className="space-y-1">
