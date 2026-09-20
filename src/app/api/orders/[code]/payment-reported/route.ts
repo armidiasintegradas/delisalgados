@@ -55,6 +55,18 @@ export async function POST(
       // The handoff token is still the authority for this action.
     }
 
+    if (!authenticatedCustomerId && order.customer_email) {
+      const { data: matchingProfile } = await supabaseServer!
+        .from("customer_profiles")
+        .select("id")
+        .ilike("email", String(order.customer_email))
+        .maybeSingle();
+
+      if (matchingProfile?.id) {
+        authenticatedCustomerId = matchingProfile.id;
+      }
+    }
+
     const { data, error } = await supabaseServer!
       .from("orders")
       .update({
