@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Minus, Plus, ShoppingBag } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
 import { Product, ProductVariant, PreparationType } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import { useCart } from "@/lib/cartContext";
@@ -22,6 +22,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [quantity, setQuantity] = useState(MIN_FLAVOR_QUANTITY);
   const [note, setNote] = useState("");
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const isVariants = product?.price_type === "variants";
   const activeVariants = (product?.variants || []).filter((v) => v.is_active);
@@ -44,6 +45,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         setQuantity(product.minimum_quantity);
       }
       setNote("");
+      setActiveImageIndex(0);
     }
   }, [product]);
 
@@ -59,6 +61,24 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     ? selectedVariant.unit_label
     : product.unit_label;
   const step = quantityStep(minQty, unitLabel);
+
+  const galleryImages = [
+    ...(product.images || [])
+      .filter((image) => Boolean(image.image_url))
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((image) => image.image_url),
+  ];
+
+  if (galleryImages.length === 0 && product.image_url) {
+    galleryImages.push(product.image_url);
+  } else if (
+    product.image_url &&
+    !galleryImages.includes(product.image_url)
+  ) {
+    galleryImages.unshift(product.image_url);
+  }
+
+  const activeImage = galleryImages[activeImageIndex] || galleryImages[0] || null;
 
   const subtotal = Number((unitPrice * quantity).toFixed(2));
 
@@ -123,13 +143,67 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
         {/* Scrollable Content */}
         <div className="px-5 py-1 overflow-y-auto space-y-3.5 flex-1">
-          {product.image_url && (
-            <div className="w-full max-w-[320px] aspect-square mx-auto rounded-[22px] overflow-hidden border border-[#EAD8C7] deli-surface-soft">
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
+          {activeImage && (
+            <div className="space-y-2.5">
+              <div className="relative w-full max-w-[320px] aspect-square mx-auto rounded-[22px] overflow-hidden border border-[#EAD8C7] deli-surface-soft">
+                <img
+                  src={activeImage}
+                  alt={`${product.name} — foto ${activeImageIndex + 1}`}
+                  className="w-full h-full object-cover"
+                />
+
+                {galleryImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveImageIndex((current) =>
+                          current === 0 ? galleryImages.length - 1 : current - 1
+                        )
+                      }
+                      aria-label="Foto anterior"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-[#FFFDF9]/90 backdrop-blur-sm border border-[#E8D9CB] text-[#3C1F15] flex items-center justify-center shadow"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveImageIndex((current) =>
+                          current === galleryImages.length - 1 ? 0 : current + 1
+                        )
+                      }
+                      aria-label="Próxima foto"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-[#FFFDF9]/90 backdrop-blur-sm border border-[#E8D9CB] text-[#3C1F15] flex items-center justify-center shadow"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                    <span className="absolute right-2 bottom-2 rounded-full bg-[#3C1F15]/80 text-white px-2.5 py-1 text-[9px] font-black">
+                      {activeImageIndex + 1}/{galleryImages.length}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {galleryImages.length > 1 && (
+                <div className="flex justify-center gap-2 overflow-x-auto pb-1">
+                  {galleryImages.map((image, index) => (
+                    <button
+                      key={`${image}-${index}`}
+                      type="button"
+                      onClick={() => setActiveImageIndex(index)}
+                      aria-label={`Ver foto ${index + 1}`}
+                      className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 shrink-0 transition ${
+                        index === activeImageIndex
+                          ? "border-[#E05A36]"
+                          : "border-[#E8D9CB] opacity-75"
+                      }`}
+                    >
+                      <img src={image} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           {/* Variants selector */}
