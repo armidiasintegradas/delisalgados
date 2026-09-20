@@ -114,3 +114,21 @@ export function buildWhatsAppLink(phoneNumber: string, message: string): string 
   if (!cleanPhone) return "";
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
+
+
+export function generateFirstCustomerWhatsAppResponse(order: Order): string {
+  const firstName = getFirstName(order.customer_name);
+
+  return [
+    `Olá, ${firstName}! 👋`,
+    "",
+    "Recebemos sua solicitação na Deli Salgados e vamos te atender o mais rápido possível.",
+    "",
+    "🕘 *Horário de atendimento:*",
+    "Segunda a sábado, das 9h às 19h.",
+    "",
+    "Se sua mensagem chegou fora desse horário, fique tranquilo(a): responderemos assim que possível no próximo período de atendimento.",
+    "",
+    `📋 *Pedido:* ${order.public_code}`,
+  ].join("\n");
+}
