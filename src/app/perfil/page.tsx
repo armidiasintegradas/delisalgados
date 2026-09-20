@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Mail, User, LogOut, ShoppingBag, Save, Camera, Trash2, LockKeyhole, Eye, EyeOff } from "lucide-react";
 import { BottomNav } from "@/components/public/BottomNav";
 import { CustomerGreeting } from "@/components/public/CustomerGreeting";
+import { AvatarCropModal } from "@/components/public/AvatarCropModal";
 import { createClient } from "@/lib/supabase/client";
 import { CustomerProfile } from "@/types";
 
@@ -19,6 +20,7 @@ export default function PerfilPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
 
   async function loadProfile() {
     setLoading(true);
@@ -76,18 +78,23 @@ export default function PerfilPage() {
   }
 
 
-  async function uploadAvatar(file: File) {
-    if (!profile) return;
-
+  function chooseAvatar(file: File) {
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       setMessage("Use uma imagem JPG, PNG ou WebP.");
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      setMessage("A foto deve ter no máximo 2 MB.");
+    if (file.size > 8 * 1024 * 1024) {
+      setMessage("A foto original deve ter no máximo 8 MB.");
       return;
     }
+
+    setMessage(null);
+    setPendingAvatarFile(file);
+  }
+
+  async function saveCroppedAvatar(blob: Blob) {
+    if (!profile) return;
 
     const client = createClient();
     if (!client) {
@@ -99,15 +106,23 @@ export default function PerfilPage() {
     setMessage(null);
 
     try {
-      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-      const path = `${profile.id}/avatar.${ext}`;
+      const path = `${profile.id}/avatar.jpg`;
+
+      // Remove legacy formats so only one canonical avatar remains.
+      await client.storage
+        .from("customer-avatars")
+        .remove([
+          `${profile.id}/avatar.png`,
+          `${profile.id}/avatar.webp`,
+          `${profile.id}/avatar.jpg`,
+        ]);
 
       const { error: uploadError } = await client.storage
         .from("customer-avatars")
-        .upload(path, file, {
-          cacheControl: "3600",
+        .upload(path, blob, {
+          cacheControl: "0",
           upsert: true,
-          contentType: file.type,
+          contentType: "image/jpeg",
         });
 
       if (uploadError) throw uploadError;
@@ -116,7 +131,6 @@ export default function PerfilPage() {
       const avatarUrl = `${data.publicUrl}?v=${Date.now()}`;
 
       const updatedProfile = { ...profile, avatar_url: avatarUrl };
-      setProfile(updatedProfile);
 
       const res = await fetch("/api/customer/profile", {
         method: "PUT",
@@ -127,13 +141,21 @@ export default function PerfilPage() {
       if (!res.ok) throw new Error(saved.error || "Falha ao salvar a foto.");
 
       setProfile(saved.profile);
+      setPendingAvatarFile(null);
       setMessage("Foto de perfil atualizada.");
+
+      window.dispatchEvent(
+        new CustomEvent("deli-profile-updated", {
+          detail: { avatar_url: saved.profile?.avatar_url || avatarUrl },
+        })
+      );
     } catch (err: any) {
       setMessage(err?.message || "Não foi possível enviar a foto.");
     } finally {
       setUploadingAvatar(false);
     }
   }
+
 
   async function removeAvatar() {
     if (!profile?.avatar_url) return;
@@ -149,7 +171,11 @@ export default function PerfilPage() {
       if (extMatch) {
         await client.storage
           .from("customer-avatars")
-          .remove([`${profile.id}/avatar.${extMatch[1]}`]);
+          .remove([
+            `${profile.id}/avatar.jpg`,
+            `${profile.id}/avatar.png`,
+            `${profile.id}/avatar.webp`,
+          ]);
       }
 
       const updatedProfile = { ...profile, avatar_url: null };
@@ -163,6 +189,11 @@ export default function PerfilPage() {
 
       setProfile(saved.profile);
       setMessage("Foto de perfil removida.");
+      window.dispatchEvent(
+        new CustomEvent("deli-profile-updated", {
+          detail: { avatar_url: null },
+        })
+      );
     } catch (err: any) {
       setMessage(err?.message || "Não foi possível remover a foto.");
     } finally {
@@ -328,7 +359,7 @@ export default function PerfilPage() {
                         disabled={uploadingAvatar}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (file) uploadAvatar(file);
+                          if (file) chooseAvatar(file);
                           e.currentTarget.value = "";
                         }}
                       />
@@ -400,6 +431,17 @@ export default function PerfilPage() {
           </div>
         )}
       </main>
+
+      {pendingAvatarFile && (
+        <AvatarCropModal
+          file={pendingAvatarFile}
+          saving={uploadingAvatar}
+          onCancel={() => {
+            if (!uploadingAvatar) setPendingAvatarFile(null);
+          }}
+          onConfirm={saveCroppedAvatar}
+        />
+      )}
 
       <BottomNav />
     </div>
