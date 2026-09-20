@@ -192,7 +192,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       </main>
 
       {/* Mobile Bottom Admin Navigation */}
-      <nav className="deli-nav-surface md:hidden fixed bottom-0 left-0 right-0 w-full border-t border-[#F0E2D2] px-4 py-2 flex items-center justify-around z-40 shadow-lg">
+      <nav className="deli-nav-surface md:hidden fixed bottom-0 left-0 right-0 w-full border-t border-[#F0E2D2] px-2 py-2 flex items-center justify-around z-40 shadow-lg">
         <Link
           href={`${basePath}/produtos`}
           className={`flex flex-col items-center gap-0.5 text-[10px] font-black ${
@@ -226,6 +226,15 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             )}
           </div>
           <span>PEDIDOS</span>
+        </Link>
+        <Link
+          href={`${basePath}/clientes`}
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-black ${
+            pathname.startsWith(`${basePath}/clientes`) ? "text-[#DF5F45]" : "text-[#8C7367]"
+          }`}
+        >
+          <Users size={18} />
+          <span>CLIENTES</span>
         </Link>
         <Link
           href={`${basePath}/configuracoes`}
