@@ -539,8 +539,8 @@ export default function PerfilPage() {
                     </div>
 
                     <label className="block">
-                      <span className="text-[10px] font-bold uppercase text-[#7A6357]">Ponto de referência *</span>
-                      <input value={profile.reference_point} onChange={(e) => setProfile({ ...profile, reference_point: e.target.value })} className="deli-field mt-1 w-full p-3 rounded-2xl border text-sm" />
+                      <span className="text-[10px] font-bold uppercase text-[#7A6357]">Ponto de referência <span className="normal-case font-semibold">(opcional)</span></span>
+                      <input value={profile.reference_point || ""} onChange={(e) => setProfile({ ...profile, reference_point: e.target.value })} className="deli-field mt-1 w-full p-3 rounded-2xl border text-sm" />
                     </label>
                   </div>
 
