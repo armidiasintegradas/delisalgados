@@ -27,13 +27,13 @@ export default function CheckoutPage() {
   const [loginMessage, setLoginMessage] = useState<string | null>(null);
   const [lookingUpCep, setLookingUpCep] = useState(false);
   const [addressFields, setAddressFields] = useState({
-    postalCode: "",
-    street: "",
-    number: "",
-    complement: "",
-    neighborhood: "",
-    city: "",
-    state: "",
+    postalCode: customerData.postalCode || "",
+    street: customerData.street || "",
+    number: customerData.addressNumber || "",
+    complement: customerData.complement || "",
+    neighborhood: customerData.neighborhood || "",
+    city: customerData.city || "",
+    state: customerData.state || "",
   });
 
   const composeCheckoutAddress = (fields: typeof addressFields) =>
@@ -55,6 +55,13 @@ export default function CheckoutPage() {
       setCustomerData((prev) => ({
         ...prev,
         deliveryAddress: composeCheckoutAddress(next),
+        postalCode: next.postalCode,
+        street: next.street,
+        addressNumber: next.number,
+        complement: next.complement,
+        neighborhood: next.neighborhood,
+        city: next.city,
+        state: next.state,
       }));
       return next;
     });
@@ -86,6 +93,13 @@ export default function CheckoutPage() {
         setCustomerData((prev) => ({
           ...prev,
           deliveryAddress: composeCheckoutAddress(next),
+          postalCode: next.postalCode,
+          street: next.street,
+          addressNumber: next.number,
+          complement: next.complement,
+          neighborhood: next.neighborhood,
+          city: next.city,
+          state: next.state,
         }));
         return next;
       });
@@ -129,6 +143,13 @@ export default function CheckoutPage() {
           customerPhone: prev.customerPhone || p.whatsapp || "",
           customerEmail: prev.customerEmail || p.email || "",
           deliveryAddress: prev.deliveryAddress || p.address || "",
+          postalCode: prev.postalCode || p.postal_code || "",
+          street: prev.street || p.street || "",
+          addressNumber: prev.addressNumber || p.address_number || "",
+          complement: prev.complement || p.complement || "",
+          neighborhood: prev.neighborhood || p.neighborhood || "",
+          city: prev.city || p.city || "",
+          state: prev.state || p.state || "",
           referencePoint: prev.referencePoint || p.reference_point || "",
         }));
         setAddressFields((current) => ({
