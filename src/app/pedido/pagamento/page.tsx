@@ -166,8 +166,10 @@ function PaymentContent() {
       }
 
       setOrder(data.order);
+      setShowSuccessModal(true);
       if (typeof window !== "undefined") {
         sessionStorage.setItem("deli_last_order", JSON.stringify(data.order));
+        sessionStorage.removeItem(`deli_final_payment_popup_${data.order.public_code}`);
       }
     } catch (err: any) {
       setPaymentReportError(err?.message || "Não foi possível informar o pagamento.");
@@ -416,7 +418,7 @@ function PaymentContent() {
           </Link>
         </aside>
       </main>
-      {showSuccessModal && order.payment_status === "paid" && (
+      {showSuccessModal && (
         <PaymentSuccessModal
           firstName={firstName}
           onClose={() => {
