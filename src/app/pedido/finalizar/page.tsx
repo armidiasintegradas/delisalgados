@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag, Mail, BadgeDollarSign, CheckCircle2, Navigation, ExternalLink, LogIn, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Send, MapPin, Calendar, User, Phone, MessageSquare, AlertCircle, ShoppingBag, Mail, BadgeDollarSign, CheckCircle2, Navigation, ExternalLink, LogIn, ShieldCheck, LockKeyhole, Eye, EyeOff } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
@@ -19,6 +19,8 @@ export default function CheckoutPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showExistingLogin, setShowExistingLogin] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [sendingLogin, setSendingLogin] = useState(false);
   const [loginMessage, setLoginMessage] = useState<string | null>(null);
 
@@ -94,13 +96,17 @@ export default function CheckoutPage() {
     );
   }
 
-  const sendExistingCustomerLink = async (e?: React.FormEvent) => {
+  const signInExistingCustomer = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setLoginMessage(null);
 
     const email = (loginEmail || customerData.customerEmail).trim().toLowerCase();
     if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setLoginMessage("Informe o e-mail usado no seu primeiro pedido.");
+      setLoginMessage("Informe o e-mail usado no seu cadastro.");
+      return;
+    }
+    if (!loginPassword) {
+      setLoginMessage("Informe sua senha.");
       return;
     }
 
@@ -110,22 +116,36 @@ export default function CheckoutPage() {
       const authClient = createClient();
       if (!authClient) throw new Error("Acesso temporariamente indisponível.");
 
-      const { error } = await authClient.auth.signInWithOtp({
+      const { error } = await authClient.auth.signInWithPassword({
         email,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/pedido/finalizar`,
-        },
+        password: loginPassword,
       });
 
       if (error) {
-        setLoginMessage("Não foi possível enviar o link de acesso para este e-mail. Tente novamente.");
+        setLoginMessage("E-mail ou senha inválidos. Se não lembrar, use “Esqueci minha senha”.");
         return;
       }
 
-      setLoginMessage("Enviamos um link de acesso para seu e-mail. Abra o link e você voltará para finalizar o pedido.");
+      const profileRes = await fetch("/api/customer/profile", { cache: "no-store" });
+      const profileData = await profileRes.json();
+      setIsAuthenticated(Boolean(profileData?.authenticated));
+
+      if (profileData?.profile) {
+        const p = profileData.profile;
+        setCustomerData((prev) => ({
+          ...prev,
+          customerName: p.full_name || prev.customerName,
+          customerPhone: p.whatsapp || prev.customerPhone,
+          customerEmail: p.email || email,
+          deliveryAddress: p.address || prev.deliveryAddress,
+          referencePoint: p.reference_point || prev.referencePoint,
+        }));
+      }
+
+      setLoginPassword("");
+      setLoginMessage("Login realizado. Seus dados foram carregados e você já pode continuar.");
     } catch (err: any) {
-      setLoginMessage(err?.message || "Não foi possível enviar o link de acesso.");
+      setLoginMessage(err?.message || "Não foi possível entrar na sua conta.");
     } finally {
       setSendingLogin(false);
     }
@@ -194,7 +214,7 @@ export default function CheckoutPage() {
         if (data.code === "CUSTOMER_LOGIN_REQUIRED") {
           setShowExistingLogin(true);
           setLoginEmail(customerData.customerEmail.trim().toLowerCase());
-          setLoginMessage("Você já é cliente Deli. Faça seu login para avançar com um novo pedido.");
+          setLoginMessage("Você já é cliente Deli. Entre com seu e-mail e senha para avançar.");
           setIsSubmitting(false);
           return;
         }
@@ -265,10 +285,10 @@ export default function CheckoutPage() {
       </header>
 
       {/* Form Content */}
-      <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto p-4 lg:p-8 flex-1 flex flex-col">
-        <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[1fr_380px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between">
+      <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-3 py-4 sm:px-4 lg:p-8 flex-1 flex flex-col overflow-x-hidden">
+        <form onSubmit={handleSubmit} className="w-full min-w-0 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between">
           {/* Left Column: Form Fields */}
-          <div className="space-y-3.5 bg-[#FFFDF6] lg:p-6 lg:rounded-3xl lg:border lg:border-[#EAD8C7] lg:shadow-xs">
+          <div className="w-full min-w-0 space-y-3.5 bg-[#FFFDF6] lg:p-6 lg:rounded-3xl lg:border lg:border-[#EAD8C7] lg:shadow-xs">
             {/* Mobile Order Summary Mini Card */}
             <Link
               href="/pedido"
@@ -301,7 +321,7 @@ export default function CheckoutPage() {
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-black text-[#3C1F15]">Já sou cliente</div>
                     <p className="text-[11px] text-[#7A6357] leading-relaxed mt-0.5">
-                      A partir do segundo pedido, o login é obrigatório. Use o mesmo e-mail do seu primeiro cadastro para continuar com segurança.
+                      A partir do segundo pedido, o login é obrigatório. Entre com o e-mail e a senha da sua conta Deli para continuar.
                     </p>
                   </div>
                 </div>
@@ -320,24 +340,66 @@ export default function CheckoutPage() {
                   </button>
                 ) : (
                   <div className="space-y-2.5">
-                    <div className="relative">
-                      <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A89688]" />
-                      <input
-                        type="email"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        placeholder="E-mail usado no primeiro pedido"
-                        className="w-full bg-white border border-[#E8D9CB] rounded-xl pl-9 pr-3 py-3 text-xs text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
-                      />
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-wide text-[#6F5549] block mb-1">
+                        Login (e-mail)
+                      </label>
+                      <div className="relative">
+                        <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A89688]" />
+                        <input
+                          type="email"
+                          autoComplete="email"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          placeholder="E-mail usado no cadastro"
+                          className="w-full min-w-0 bg-white border border-[#E8D9CB] rounded-xl pl-9 pr-3 py-3 text-xs text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
+                        />
+                      </div>
                     </div>
+
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-wide text-[#6F5549] block mb-1">
+                        Senha
+                      </label>
+                      <div className="relative">
+                        <LockKeyhole size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A89688]" />
+                        <input
+                          type={showLoginPassword ? "text" : "password"}
+                          autoComplete="current-password"
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          placeholder="Sua senha"
+                          className="w-full min-w-0 bg-white border border-[#E8D9CB] rounded-xl pl-9 pr-10 py-3 text-xs text-[#3C1F15] outline-none focus:ring-2 focus:ring-[#E05A36]/30"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowLoginPassword((value) => !value)}
+                          aria-label={showLoginPassword ? "Ocultar senha" : "Mostrar senha"}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9E8679]"
+                        >
+                          {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Link
+                        href="/auth/redefinir-senha"
+                        className="text-[10px] font-black text-[#E05A36]"
+                      >
+                        ESQUECI MINHA SENHA
+                      </Link>
+                    </div>
+
                     <button
                       type="button"
-                      onClick={() => sendExistingCustomerLink()}
+                      onClick={() => signInExistingCustomer()}
                       disabled={sendingLogin}
                       className="w-full py-3 rounded-xl bg-[#3C1F15] text-white text-xs font-black disabled:opacity-60"
                     >
-                      {sendingLogin ? "ENVIANDO..." : "ENVIAR LINK DE ACESSO"}
+                      {sendingLogin ? "ENTRANDO..." : "ENTRAR"}
                     </button>
+
                     {loginMessage && (
                       <div className="text-[11px] leading-relaxed text-[#7A4B36] bg-white/70 border border-[#E8D9CB] rounded-xl p-3">
                         {loginMessage}
@@ -396,7 +458,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Date and Phone Row (Two Columns) */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Desired Date - Section 11: Dynamic min date, starts empty unless persisted */}
               <div>
                 <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#3C1F15] block mb-1">
