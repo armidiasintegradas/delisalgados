@@ -6,6 +6,7 @@ import { ArrowLeft, Mail, User, LogOut, ShoppingBag, Save, Camera, Trash2 } from
 import { BottomNav } from "@/components/public/BottomNav";
 import { createClient } from "@/lib/supabase/client";
 import { CustomerProfile } from "@/types";
+import { getFirstName } from "@/lib/formatters";
 
 export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
@@ -265,7 +266,9 @@ export default function PerfilPage() {
                   </div>
 
                   <div className="min-w-0">
-                    <h2 className="text-lg font-black text-[#3C1F15]">Seus dados</h2>
+                    <h2 className="text-lg font-black text-[#3C1F15]">
+                      Olá, {getFirstName(profile?.full_name)}!
+                    </h2>
                     <p className="text-[11px] text-[#7A6357] truncate">{profile?.email}</p>
                     <p className="text-[10px] text-[#9E8679] mt-1">
                       {uploadingAvatar ? "Atualizando foto..." : "Toque na câmera para escolher uma foto"}
@@ -288,7 +291,7 @@ export default function PerfilPage() {
                   <Trash2 size={13} />
                   Remover foto
                 </button>
-              )
+              )}
 
               {profile && (
                 <div className="space-y-3">
