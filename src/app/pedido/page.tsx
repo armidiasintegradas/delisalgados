@@ -5,10 +5,18 @@ import Link from "next/link";
 import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/formatters";
+import { MIN_ORDER_UNITS, isUnitBasedMinimum } from "@/lib/orderRules";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, totalAmount, clearCart } = useCart();
   const totalItemCount = items.length;
+  const qualifyingUnitTotal = items
+    .filter((item) => isUnitBasedMinimum(item.minimumQuantity, item.unitLabel))
+    .reduce((sum, item) => sum + item.quantity, 0);
+  const hasUnitBasedItems = items.some((item) =>
+    isUnitBasedMinimum(item.minimumQuantity, item.unitLabel)
+  );
+  const meetsOrderMinimum = !hasUnitBasedItems || qualifyingUnitTotal >= MIN_ORDER_UNITS;
 
   return (
     <div className="min-h-screen bg-[#FFF0D1] catalog-bg-pattern flex flex-col w-full max-w-[440px] lg:max-w-none mx-auto shadow-2xl lg:shadow-none relative">
@@ -161,15 +169,39 @@ export default function CartPage() {
                 </span>
               </div>
 
+              {hasUnitBasedItems && (
+                <div className={`p-3 rounded-2xl border text-[11px] font-semibold ${
+                  meetsOrderMinimum
+                    ? "bg-[#EAF7EE] border-[#CDEEDB] text-[#1E5631]"
+                    : "bg-[#FFF4E8] border-[#F0D5BE] text-[#8C5237]"
+                }`}>
+                  Pedido por unidade: <strong>{qualifyingUnitTotal} un.</strong> de {MIN_ORDER_UNITS} un. mínimas.
+                  {!meetsOrderMinimum && (
+                    <span> Adicione mais {MIN_ORDER_UNITS - qualifyingUnitTotal} un.</span>
+                  )}
+                </div>
+              )}
+
               {/* Action buttons */}
               <div className="space-y-2 pt-2">
-                <Link
-                  href="/pedido/finalizar"
-                  className="w-full py-3.5 rounded-2xl bg-[#3C1F15] hover:bg-[#27120A] text-white text-xs font-extrabold tracking-wide uppercase shadow-md flex items-center justify-center gap-2 transition active:scale-[0.98]"
-                >
-                  <span>Continuar Pedido</span>
-                  <ArrowRight size={16} />
-                </Link>
+                {meetsOrderMinimum ? (
+                  <Link
+                    href="/pedido/finalizar"
+                    className="w-full py-3.5 rounded-2xl bg-[#3C1F15] hover:bg-[#27120A] text-white text-xs font-extrabold tracking-wide uppercase shadow-md flex items-center justify-center gap-2 transition active:scale-[0.98]"
+                  >
+                    <span>Continuar Pedido</span>
+                    <ArrowRight size={16} />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full py-3.5 rounded-2xl bg-[#B9AAA2] text-white text-xs font-extrabold tracking-wide uppercase shadow flex items-center justify-center gap-2 cursor-not-allowed"
+                  >
+                    <span>Mínimo de {MIN_ORDER_UNITS} unidades</span>
+                    <ArrowRight size={16} />
+                  </button>
+                )}
 
                 <Link
                   href="/"
