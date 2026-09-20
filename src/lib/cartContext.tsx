@@ -15,6 +15,7 @@ interface CartContextType {
   totalUnits: number;
   customerData: CustomerData;
   setCustomerData: React.Dispatch<React.SetStateAction<CustomerData>>;
+  isInitialized: boolean;
 }
 
 const defaultCustomerData: CustomerData = {
@@ -244,6 +245,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         totalUnits,
         customerData,
         setCustomerData,
+        isInitialized,
       }}
     >
       {children}
