@@ -16,7 +16,7 @@ import {
   Maximize2,
   FileText
 } from "lucide-react";
-import { Order, OrderStatus } from "@/types";
+import { Order, OrderStatus, PaymentStatus } from "@/types";
 import { formatCurrency, buildWhatsAppLink } from "@/lib/formatters";
 
 export default function AdminOrdersPage() {
@@ -90,6 +90,50 @@ export default function AdminOrdersPage() {
     } catch (e) {
       console.error("Error updating status:", e);
       loadRealOrders();
+    }
+  };
+
+  const handlePaymentStatusChange = async (orderId: string, paymentStatus: PaymentStatus) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, payment_status: paymentStatus } : o))
+    );
+    if (selectedOrder?.id === orderId) {
+      setSelectedOrder((prev) => (prev ? { ...prev, payment_status: paymentStatus } : null));
+    }
+
+    try {
+      const target = orders.find((o) => o.id === orderId);
+      if (target) {
+        const res = await fetch(`/api/orders/${target.public_code}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ payment_status: paymentStatus }),
+        });
+        if (!res.ok) throw new Error("Falha ao atualizar pagamento");
+        const data = await res.json();
+        if (data.order) {
+          setOrders((prev) => prev.map((o) => (o.id === orderId ? data.order : o)));
+          setSelectedOrder(data.order);
+        }
+      }
+    } catch (e) {
+      console.error("Error updating payment status:", e);
+      loadRealOrders();
+    }
+  };
+
+  const getPaymentBadge = (status?: PaymentStatus) => {
+    switch (status) {
+      case "partially_paid":
+        return { label: "Entrada paga", bg: "bg-[#E6F0FA] text-[#1E70B8] border-[#CFE2F5]" };
+      case "paid":
+        return { label: "Pago integral", bg: "bg-[#E5F7EB] text-[#1FAA52] border-[#C3ECD0]" };
+      case "failed":
+        return { label: "Falha no pagamento", bg: "bg-[#FCECE8] text-[#C04220] border-[#FAD2C5]" };
+      case "refunded":
+        return { label: "Estornado", bg: "bg-[#F5EBE6] text-[#7A6357] border-[#E8D9CF]" };
+      default:
+        return { label: "Aguardando pagamento", bg: "bg-[#FFF4D9] text-[#B85D19] border-[#FDE0A2]" };
     }
   };
 
@@ -238,6 +282,11 @@ export default function AdminOrdersPage() {
                     <span>{ord.desired_date} · {ord.fulfillment_type === "pickup" ? "Retirada" : "Entrega"}</span>
                     <span>{ord.items?.length || 0} {ord.items?.length === 1 ? "item" : "itens"}</span>
                   </div>
+                  <div className="mt-2">
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold border ${getPaymentBadge(ord.payment_status).bg}`}>
+                      {getPaymentBadge(ord.payment_status).label}
+                    </span>
+                  </div>
                 </div>
               );
             })}
@@ -280,6 +329,12 @@ export default function AdminOrdersPage() {
                   <span className="text-[#7A6357]">WhatsApp:</span>
                   <span className="font-bold">{selectedOrder.customer_phone}</span>
                 </div>
+                {selectedOrder.customer_email && (
+                  <div className="flex justify-between">
+                    <span className="text-[#7A6357]">E-mail:</span>
+                    <span className="font-bold">{selectedOrder.customer_email}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-[#7A6357]">Data de Encomenda:</span>
                   <span className="font-bold">{selectedOrder.desired_date}</span>
@@ -296,12 +351,60 @@ export default function AdminOrdersPage() {
                     <span className="font-bold max-w-xs text-right">{selectedOrder.delivery_address}</span>
                   </div>
                 )}
+                {selectedOrder.customer_reference_point && (
+                  <div className="flex justify-between">
+                    <span className="text-[#7A6357]">Referência:</span>
+                    <span className="font-bold max-w-xs text-right">{selectedOrder.customer_reference_point}</span>
+                  </div>
+                )}
                 {selectedOrder.customer_note && (
                   <div className="pt-1.5 border-t border-[#F0E2D2] text-[11px] text-[#7A6357]">
                     <span className="font-bold block text-[#3C1F15]">Observações:</span>
                     {selectedOrder.customer_note}
                   </div>
                 )}
+              </div>
+
+              {/* Payment */}
+              <div className="p-4 rounded-2xl bg-[#FFF8EE] border border-[#F0D5BE] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] uppercase font-black tracking-wider text-[#8C7367]">Pagamento</div>
+                    <div className="text-xs font-black text-[#3C1F15]">
+                      {selectedOrder.payment_plan === "full" ? "100% no pedido" : "50% no pedido + 50% na entrega"}
+                    </div>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${getPaymentBadge(selectedOrder.payment_status).bg}`}>
+                    {getPaymentBadge(selectedOrder.payment_status).label}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="p-2 rounded-xl bg-white border border-[#F0E2D2]">
+                    <div className="text-[9px] uppercase font-bold text-[#9E8679]">Total</div>
+                    <div className="text-xs font-black">{formatCurrency(selectedOrder.total)}</div>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white border border-[#F0E2D2]">
+                    <div className="text-[9px] uppercase font-bold text-[#9E8679]">Pago</div>
+                    <div className="text-xs font-black text-[#1FAA52]">{formatCurrency(selectedOrder.amount_paid || 0)}</div>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white border border-[#F0E2D2]">
+                    <div className="text-[9px] uppercase font-bold text-[#9E8679]">Saldo</div>
+                    <div className="text-xs font-black text-[#DF5F45]">{formatCurrency(selectedOrder.balance_due ?? selectedOrder.total)}</div>
+                  </div>
+                </div>
+
+                <select
+                  value={selectedOrder.payment_status || "pending"}
+                  onChange={(e) => handlePaymentStatusChange(selectedOrder.id, e.target.value as PaymentStatus)}
+                  className="w-full bg-white border border-[#EBDCCF] rounded-xl px-3 py-2 text-xs font-bold text-[#3C1F15] focus:outline-none focus:ring-2 focus:ring-[#DF5F45]"
+                >
+                  <option value="pending">Aguardando pagamento</option>
+                  <option value="partially_paid">Entrada paga</option>
+                  <option value="paid">Pago integralmente</option>
+                  <option value="failed">Falha no pagamento</option>
+                  <option value="refunded">Estornado</option>
+                </select>
               </div>
 
               {/* Action Buttons */}
