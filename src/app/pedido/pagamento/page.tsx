@@ -104,7 +104,8 @@ function PaymentContent() {
     if (!order?.payment_reported_at || !settings?.whatsapp_number) return "";
     const phone = settings.whatsapp_number.replace(/\D/g, "");
     if (!phone) return "";
-    const message = `Olá, Deli! Já realizei o Pix do pedido ${order.public_code} no valor de ${formatCurrency(Number(order.payment_reported_amount ?? order.amount_due_now ?? 0))}. Já informei o pagamento pelo cardápio e aguardo a conferência. Obrigado!`;
+    const firstName = getFirstName(order.customer_name);
+    const message = `Olá, Deli Salgados! Meu nome é ${firstName}. Já realizei o Pix do pedido ${order.public_code} no valor de ${formatCurrency(Number(order.payment_reported_amount ?? order.amount_due_now ?? 0))}. Já informei o pagamento pelo cardápio digital e aguardo a conferência. Obrigado!`;
     return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
   }, [order, settings]);
 
