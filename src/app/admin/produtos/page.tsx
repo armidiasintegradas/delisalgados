@@ -390,7 +390,7 @@ export default function AdminProductsPage() {
         {loading ? (
           <div className="py-10 text-center text-xs text-[#8C7367]">Carregando todos os produtos...</div>
         ) : mobileProducts.length === 0 ? (
-          <div className="py-10 px-4 rounded-2xl bg-white border border-[#F0E2D2] text-center space-y-2">
+          <div className="deli-surface py-10 px-4 rounded-2xl border text-center space-y-2">
             <div className="text-xs font-bold text-[#3C1F15]">Nenhum produto encontrado</div>
             <button type="button" onClick={clearFilters} className="text-[10px] font-black text-[#DF5F45]">
               LIMPAR FILTROS
@@ -418,10 +418,10 @@ export default function AdminProductsPage() {
             return (
               <div
                 key={p.id}
-                className="bg-white rounded-2xl p-3 border border-[#F0E2D2] shadow-2xs space-y-2.5"
+                className="deli-surface rounded-2xl p-3 border space-y-2.5"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-14 h-14 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] overflow-hidden shrink-0 relative flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-xl deli-surface-soft border border-[#F0E2D2] overflow-hidden shrink-0 relative flex items-center justify-center">
                     {thumb ? (
                       <Image
                         src={thumb}
@@ -565,7 +565,7 @@ export default function AdminProductsPage() {
         </div>
 
         {/* Search Bar & Status Chips */}
-        <div className="bg-white p-3 rounded-2xl border border-[#F0E2D2] shadow-2xs space-y-3">
+        <div className="deli-surface p-3 rounded-2xl border space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="relative flex-1">
               <input
@@ -591,7 +591,7 @@ export default function AdminProductsPage() {
                   className={`px-3 py-1 rounded-full text-[11px] font-bold transition ${
                     statusFilter === st.id
                       ? "bg-[#DF5F45] text-white shadow-2xs"
-                      : "bg-[#FFF8EE] text-[#7A6357] hover:bg-[#F5ECE0]"
+                      : "deli-surface-soft text-[#7A6357] hover:bg-[#F5ECE0]"
                   }`}
                 >
                   {st.label}
@@ -629,7 +629,7 @@ export default function AdminProductsPage() {
         </div>
 
         {/* Products Table (Desktop) */}
-        <div className="bg-white rounded-3xl border border-[#F0E2D2] shadow-2xs overflow-hidden">
+        <div className="deli-surface rounded-3xl border overflow-hidden">
         {loading ? (
           <div className="py-16 text-center text-xs text-[#8C7367]">Carregando catálogo...</div>
         ) : filteredProducts.length === 0 ? (
@@ -640,7 +640,7 @@ export default function AdminProductsPage() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-[#3C1F15]">
-                <thead className="bg-[#FFF8EE] text-[#8C5237] uppercase font-bold text-[10px] tracking-wider border-b border-[#F0E2D2]">
+                <thead className="deli-surface-soft text-[#8C5237] uppercase font-bold text-[10px] tracking-wider border-b border-[#F0E2D2]">
                   <tr>
                     <th className="py-2.5 px-3 w-8 text-center">
                       <input type="checkbox" className="rounded text-[#DF5F45] focus:ring-0" />
@@ -671,7 +671,7 @@ export default function AdminProductsPage() {
 
                         <td className="py-2.5 px-3">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-xl bg-[#FFF8EE] border border-[#F0E2D2] overflow-hidden shrink-0 relative flex items-center justify-center">
+                            <div className="w-9 h-9 rounded-xl deli-surface-soft border border-[#F0E2D2] overflow-hidden shrink-0 relative flex items-center justify-center">
                               {thumb ? (
                                 <Image
                                   src={thumb}
@@ -773,7 +773,7 @@ export default function AdminProductsPage() {
                           <div className="flex items-center justify-end gap-1.5">
                             <Link
                               href={`/admin/produtos/${p.id}`}
-                              className="px-2.5 py-1 rounded-lg bg-[#FFF8EE] border border-[#EBDCCF] text-[#3C1F15] hover:bg-[#FAF3E8] text-[11px] font-bold transition flex items-center gap-1"
+                              className="px-2.5 py-1 rounded-lg deli-surface-soft border border-[#EBDCCF] text-[#3C1F15] hover:bg-[#FAF3E8] text-[11px] font-bold transition flex items-center gap-1"
                             >
                               <Edit2 size={11} className="text-[#DF5F45]" />
                               <span>Editar</span>
@@ -795,7 +795,7 @@ export default function AdminProductsPage() {
             </div>
 
             {/* Table Footer */}
-            <div className="bg-[#FFF8EE] px-4 py-2.5 border-t border-[#F0E2D2] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#7A6357]">
+            <div className="deli-surface-soft px-4 py-2.5 border-t border-[#F0E2D2] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#7A6357]">
               <span className="text-[11px]">
                 Exibindo <strong className="text-[#3C1F15]">{filteredProducts.length}</strong> de{" "}
                 <strong className="text-[#3C1F15]">{products.length}</strong> produtos cadastrados
@@ -818,7 +818,7 @@ export default function AdminProductsPage() {
       {/* Fast Bulk Price Editor Modal */}
       {isBulkPriceModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-xl bg-white rounded-3xl p-6 shadow-2xl border border-[#EBDCCF] max-h-[85vh] flex flex-col">
+          <div className="deli-surface-strong w-full max-w-xl rounded-3xl p-6 shadow-2xl border max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-[#F4E8DB]">
               <div>
                 <h2 className="text-base font-bold text-[#3C1F15]">
