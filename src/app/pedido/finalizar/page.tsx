@@ -307,7 +307,7 @@ export default function CheckoutPage() {
       <main className="w-full max-w-[440px] lg:max-w-[1280px] mx-auto px-3 py-4 sm:px-4 lg:p-8 flex-1 flex flex-col overflow-x-hidden">
         <form noValidate onSubmit={handleSubmit} className="w-full min-w-0 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start flex-1 flex flex-col justify-between">
           {/* Left Column: Form Fields */}
-          <div className="w-full min-w-0 space-y-3.5 bg-[#FFFDF6] lg:p-6 lg:rounded-3xl lg:border lg:border-[#EAD8C7] lg:shadow-xs">
+          <div className="w-full min-w-0 space-y-3.5 bg-transparent lg:bg-[#FFFDF6] lg:p-6 lg:rounded-3xl lg:border lg:border-[#EAD8C7] lg:shadow-xs">
             {/* Mobile Order Summary Mini Card */}
             <Link
               href="/pedido"
