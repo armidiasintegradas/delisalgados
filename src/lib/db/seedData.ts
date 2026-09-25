@@ -860,7 +860,7 @@ export const INITIAL_VARIANTS: ProductVariant[] = [
 
 export const INITIAL_SETTINGS: Settings = {
   "business_name": "Deli Salgados",
-  "whatsapp_number": "",
+  "whatsapp_number": "+55 81 99523-9013",
   "instagram_url": "https://www.instagram.com/deli.salgados",
   "address": "",
   "pickup_information": "",
