@@ -14,7 +14,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Order, Settings } from "@/types";
-import { formatCurrency, getFirstName } from "@/lib/formatters";
+import { formatCurrency, getFirstName, getDeliOrderWhatsApp } from "@/lib/formatters";
 import { buildPixPayload } from "@/lib/pix";
 import { PaymentSuccessModal } from "@/components/public/PaymentSuccessModal";
 import { PublicFooter } from "@/components/public/PublicFooter";
@@ -124,8 +124,8 @@ function PaymentContent() {
     : "";
 
   const paymentReportedWhatsappUrl = useMemo(() => {
-    if (!order?.payment_reported_at || !settings?.whatsapp_number) return "";
-    const phone = settings.whatsapp_number.replace(/\D/g, "");
+    if (!order?.payment_reported_at) return "";
+    const phone = getDeliOrderWhatsApp(settings?.whatsapp_number);
     if (!phone) return "";
     const firstName = getFirstName(order.customer_name);
     const message = `Olá, Deli Salgados! Meu nome é ${firstName}. Já realizei o Pix do pedido ${order.public_code} no valor de ${formatCurrency(Number(order.payment_reported_amount ?? order.amount_due_now ?? 0))}. Já informei o pagamento pelo cardápio digital e aguardo a conferência. Obrigado!`;
