@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { Order, Settings } from "@/types";
-import { formatCurrency, generateWhatsAppMessage, buildWhatsAppLink, getFirstName } from "@/lib/formatters";
+import { formatCurrency, generateWhatsAppMessage, buildWhatsAppLink, getFirstName, getDeliOrderWhatsApp } from "@/lib/formatters";
 
 function EnviadoContent() {
   const searchParams = useSearchParams();
@@ -180,7 +180,7 @@ function EnviadoContent() {
   };
 
   // Compute final WhatsApp link
-  const whatsappNumber = settings?.whatsapp_number?.replace(/\D/g, "") || "";
+  const whatsappNumber = getDeliOrderWhatsApp(settings?.whatsapp_number);
   let finalWhatsappUrl = serverWhatsappUrl;
   if (!finalWhatsappUrl && whatsappNumber && order && settings) {
     const msg = generateWhatsAppMessage(order, settings);
