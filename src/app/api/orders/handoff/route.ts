@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { DbService } from "@/lib/db";
-import { generateWhatsAppMessage, buildWhatsAppLink } from "@/lib/formatters";
+import { generateWhatsAppMessage, buildWhatsAppLink, getDeliOrderWhatsApp } from "@/lib/formatters";
 
 export async function POST(request: Request) {
   try {
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     const settings = await DbService.getSettings();
-    const whatsappNumber = settings.whatsapp_number?.replace(/\D/g, "") || "";
+    const whatsappNumber = getDeliOrderWhatsApp(settings.whatsapp_number);
     let whatsappUrl = "";
     let whatsappMessage = "";
 
