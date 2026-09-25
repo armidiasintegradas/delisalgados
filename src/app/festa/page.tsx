@@ -20,7 +20,7 @@ import { BottomNav } from "@/components/public/BottomNav";
 import { CustomerGreeting } from "@/components/public/CustomerGreeting";
 import { Product, Settings } from "@/types";
 import { useCart } from "@/lib/cartContext";
-import { buildWhatsAppLink, formatCurrency, getFirstName } from "@/lib/formatters";
+import { buildWhatsAppLink, formatCurrency, getFirstName, getDeliOrderWhatsApp } from "@/lib/formatters";
 import { PublicFooter } from "@/components/public/PublicFooter";
 
 type PartyMode = "cocktail" | "party" | "meal";
@@ -175,9 +175,10 @@ export default function FestaPage() {
     ? `${intro} Montei uma sugestão para minha festa no cardápio digital. São ${guestCount} convidados e a calculadora sugeriu ${recommendedUnits} salgados, no perfil "${comboTitle}", estimado em ${formatCurrency(comboTotal)}. Gostaria de confirmar a disponibilidade e ajustar o combo.`
     : `${intro} Gostaria de ajuda para montar um combo para minha festa.`;
 
-  const whatsappUrl = settings?.whatsapp_number
-    ? buildWhatsAppLink(settings.whatsapp_number, whatsappMessage)
-    : "";
+  const whatsappUrl = buildWhatsAppLink(
+    getDeliOrderWhatsApp(settings?.whatsapp_number),
+    whatsappMessage
+  );
 
   function addComboToCart() {
     combo.forEach((line) => addItem(line.product, line.quantity));
