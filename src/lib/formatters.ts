@@ -1,5 +1,20 @@
 import { Order, Settings } from "@/types";
 
+export const DELI_ORDER_WHATSAPP = "5581995239013";
+
+export function normalizeBrazilWhatsApp(phoneNumber?: string | null): string {
+  const digits = String(phoneNumber || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("55")) return digits;
+  if (digits.length === 10 || digits.length === 11) return `55${digits}`;
+  return digits;
+}
+
+export function getDeliOrderWhatsApp(_configuredNumber?: string | null): string {
+  // Canonical destination for all customer -> Deli order/payment messages.
+  return DELI_ORDER_WHATSAPP;
+}
+
 export function getFirstName(fullName?: string | null): string {
   const normalized = String(fullName || "").trim();
   if (!normalized) return "Cliente";
@@ -110,7 +125,7 @@ export function generateWhatsAppMessage(order: Order, settings: Settings): strin
 }
 
 export function buildWhatsAppLink(phoneNumber: string, message: string): string {
-  const cleanPhone = (phoneNumber || "").replace(/\D/g, "");
+  const cleanPhone = normalizeBrazilWhatsApp(phoneNumber);
   if (!cleanPhone) return "";
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
