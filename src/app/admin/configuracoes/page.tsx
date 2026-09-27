@@ -14,7 +14,11 @@ import {
   MessageCircle,
   Users,
   AlertTriangle,
-  ExternalLink
+  ExternalLink,
+  UserPlus,
+  Eye,
+  EyeOff,
+  RefreshCw
 } from "lucide-react";
 import { Settings } from "@/types";
 
@@ -34,6 +38,84 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const [adminUsers, setAdminUsers] = useState<any[]>([]);
+  const [loadingAdminUsers, setLoadingAdminUsers] = useState(false);
+  const [adminUsersError, setAdminUsersError] = useState<string | null>(null);
+  const [creatingAdminUser, setCreatingAdminUser] = useState(false);
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [newAdmin, setNewAdmin] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "editor" as "editor" | "administrator",
+  });
+
+  async function loadAdminUsers() {
+    setLoadingAdminUsers(true);
+    setAdminUsersError(null);
+    try {
+      const res = await fetch("/api/admin/users", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) {
+        setAdminUsers([]);
+        setAdminUsersError(data.error || "Não foi possível carregar os usuários do Admin.");
+        return;
+      }
+      setAdminUsers(Array.isArray(data.users) ? data.users : []);
+    } catch (error: any) {
+      setAdminUsersError(error?.message || "Não foi possível carregar os usuários do Admin.");
+    } finally {
+      setLoadingAdminUsers(false);
+    }
+  }
+
+  async function createAdminUser(e: React.FormEvent) {
+    e.preventDefault();
+    setAdminUsersError(null);
+    setFeedback(null);
+
+    if (!newAdmin.name.trim() || !newAdmin.email.trim() || newAdmin.password.length < 8) {
+      setAdminUsersError("Preencha nome, e-mail e uma senha temporária com pelo menos 8 caracteres.");
+      return;
+    }
+
+    setCreatingAdminUser(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAdmin),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Não foi possível cadastrar o usuário.");
+
+      setNewAdmin({ name: "", email: "", password: "", role: "editor" });
+      setFeedback("Novo usuário administrativo cadastrado com sucesso.");
+      setTimeout(() => setFeedback(null), 3500);
+      await loadAdminUsers();
+    } catch (error: any) {
+      setAdminUsersError(error?.message || "Não foi possível cadastrar o usuário.");
+    } finally {
+      setCreatingAdminUser(false);
+    }
+  }
+
+  async function updateAdminUser(id: string, patch: Record<string, unknown>) {
+    setAdminUsersError(null);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...patch }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Não foi possível atualizar o usuário.");
+      await loadAdminUsers();
+    } catch (error: any) {
+      setAdminUsersError(error?.message || "Não foi possível atualizar o usuário.");
+    }
+  }
 
   useEffect(() => {
     async function loadSettings() {
@@ -61,6 +143,7 @@ export default function AdminSettingsPage() {
       }
     }
     loadSettings();
+    loadAdminUsers();
   }, []);
 
   const handleSave = async () => {
@@ -372,6 +455,170 @@ export default function AdminSettingsPage() {
             Pix ainda não configurado. O checkout continuará registrando o pedido, mas o QR Code ficará indisponível até salvar uma chave Pix.
           </div>
         )}
+      </div>
+
+      {/* Admin users */}
+      <div className="deli-surface p-5 rounded-3xl border space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#F4E8DB]">
+          <div className="flex items-center gap-2">
+            <Users size={17} className="text-[#DF5F45]" />
+            <div>
+              <h2 className="text-xs font-black uppercase tracking-wider text-[#3C1F15]">
+                Usuários do Admin
+              </h2>
+              <p className="text-[10px] text-[#8C7367] mt-0.5">
+                Cadastre quem poderá acessar o painel de gestão da Deli.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={loadAdminUsers}
+            disabled={loadingAdminUsers}
+            className="inline-flex items-center gap-1.5 text-[10px] font-black text-[#7A6357] disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={loadingAdminUsers ? "animate-spin" : ""} />
+            ATUALIZAR
+          </button>
+        </div>
+
+        {adminUsersError && (
+          <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs">
+            {adminUsersError}
+          </div>
+        )}
+
+        <form onSubmit={createAdminUser} className="deli-surface-soft rounded-2xl border p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <UserPlus size={15} className="text-[#DF5F45]" />
+            <span className="text-[11px] font-black uppercase tracking-wider text-[#3C1F15]">
+              Novo usuário
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-[10px] font-black uppercase text-[#7A6357]">Nome *</span>
+              <input
+                value={newAdmin.name}
+                onChange={(e) => setNewAdmin((v) => ({ ...v, name: e.target.value }))}
+                placeholder="Nome do usuário"
+                className="deli-field mt-1 w-full border rounded-xl px-3 py-2.5 text-xs"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-[10px] font-black uppercase text-[#7A6357]">E-mail *</span>
+              <input
+                type="email"
+                value={newAdmin.email}
+                onChange={(e) => setNewAdmin((v) => ({ ...v, email: e.target.value }))}
+                placeholder="usuario@empresa.com"
+                className="deli-field mt-1 w-full border rounded-xl px-3 py-2.5 text-xs"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-[10px] font-black uppercase text-[#7A6357]">Senha temporária *</span>
+              <div className="relative mt-1">
+                <input
+                  type={showAdminPassword ? "text" : "password"}
+                  value={newAdmin.password}
+                  onChange={(e) => setNewAdmin((v) => ({ ...v, password: e.target.value }))}
+                  placeholder="Mínimo de 8 caracteres"
+                  className="deli-field w-full border rounded-xl pl-3 pr-10 py-2.5 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAdminPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8C7367]"
+                  aria-label={showAdminPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showAdminPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </label>
+
+            <label className="block">
+              <span className="text-[10px] font-black uppercase text-[#7A6357]">Permissão *</span>
+              <select
+                value={newAdmin.role}
+                onChange={(e) =>
+                  setNewAdmin((v) => ({
+                    ...v,
+                    role: e.target.value as "editor" | "administrator",
+                  }))
+                }
+                className="deli-field mt-1 w-full border rounded-xl px-3 py-2.5 text-xs font-bold"
+              >
+                <option value="editor">Editor — operação diária</option>
+                <option value="administrator">Administrador — acesso total</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p className="text-[10px] text-[#8C7367] leading-relaxed max-w-xl">
+              A conta é criada já confirmada no Supabase. Entregue a senha temporária ao usuário por um canal seguro e peça que ele altere depois.
+            </p>
+            <button
+              type="submit"
+              disabled={creatingAdminUser}
+              className="px-5 py-3 rounded-xl bg-[#3C1F15] text-white text-[10px] font-black uppercase tracking-wide disabled:opacity-50"
+            >
+              {creatingAdminUser ? "CADASTRANDO..." : "CADASTRAR USUÁRIO"}
+            </button>
+          </div>
+        </form>
+
+        <div className="space-y-2">
+          {loadingAdminUsers ? (
+            <div className="py-6 text-center text-xs text-[#8C7367]">Carregando usuários...</div>
+          ) : adminUsers.length === 0 ? (
+            <div className="py-6 text-center text-xs text-[#8C7367]">
+              Nenhum usuário administrativo disponível para exibição.
+            </div>
+          ) : (
+            adminUsers.map((user) => (
+              <div
+                key={user.id}
+                className="deli-surface-soft rounded-2xl border p-3 flex flex-col md:flex-row md:items-center justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <div className="text-xs font-black text-[#3C1F15] truncate">
+                    {user.name || "Usuário Deli"}
+                  </div>
+                  <div className="text-[10px] text-[#7A6357] truncate">{user.email}</div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={user.role}
+                    onChange={(e) => updateAdminUser(user.id, { role: e.target.value })}
+                    className="deli-field border rounded-xl px-2.5 py-2 text-[10px] font-bold"
+                  >
+                    <option value="editor">Editor</option>
+                    <option value="administrator">Administrador</option>
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateAdminUser(user.id, { is_active: user.is_active === false ? true : false })
+                    }
+                    className={`px-3 py-2 rounded-xl text-[10px] font-black border ${
+                      user.is_active === false
+                        ? "bg-[#FFF4F2] border-[#F3B8AA] text-[#C04220]"
+                        : "bg-[#EAF7EE] border-[#BFE7CC] text-[#1E7A45]"
+                    }`}
+                  >
+                    {user.is_active === false ? "DESATIVADO" : "ATIVO"}
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Security info card */}
